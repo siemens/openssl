@@ -22,14 +22,14 @@ B<openssl> B<s_server>
 [B<-nameopt val>]
 [B<-naccept +int>]
 [B<-serverinfo val>]
-[B<-certform PEM|DER>]
+[B<-certform PEM|DER|P12>]
 [B<-key infile>]
-[B<-keyform format>]
+[B<-keyform PEM|DER|P12>]
 [B<-pass val>]
 [B<-dcert infile>]
-[B<-dcertform PEM|DER>]
+[B<-dcertform PEM|DER|P12>]
 [B<-dkey infile>]
-[B<-dkeyform PEM|DER>]
+[B<-dkeyform PEM|DER|P12>]
 [B<-dpass val>]
 [B<-nbio_test>]
 [B<-crlf>]
@@ -146,12 +146,6 @@ B<openssl> B<s_server>
 [B<-no_alt_chains>]
 [B<-no_check_time>]
 [B<-allow_proxy_certs>]
-[B<-xkey>]
-[B<-xcert>]
-[B<-xchain>]
-[B<-xchain_build>]
-[B<-xcertform PEM|DER>]
-[B<-xkeyform PEM|DER>]
 [B<-nbio>]
 [B<-psk_identity val>]
 [B<-psk_hint val>]
@@ -264,22 +258,22 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-certform PEM|DER>
+=item B<-certform PEM|DER|P12>
 
-The certificate format to use: DER or PEM. PEM is the default.
+The certificate format to use: DER, PEM, or P12. PEM is the default.
 
 =item B<-key infile>
 
 The private key to use. If not specified then the certificate file will
 be used.
 
-=item B<-keyform format>
+=item B<-keyform PEM|DER|P12>
 
 The private format to use: DER or PEM. PEM is the default.
 
 =item B<-pass val>
 
-The private key password source. For more information about the format of B<val>
+The private key and certifiate file password source. For more information about the format of B<val>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-dcert infile>, B<-dkey infile>
@@ -293,7 +287,7 @@ and some a DSS (DSA) key. By using RSA and DSS certificates and keys
 a server can support clients which only support RSA or DSS cipher suites
 by using an appropriate certificate.
 
-=item B<-dcertform PEM|DER>, B<-dkeyform PEM|DER>, B<-dpass val>
+=item B<-dcertform PEM|DER|P12>, B<-dkeyform PEM|DER|P12>, B<-dpass val>
 
 Additional certificate and private key format and passphrase respectively.
 

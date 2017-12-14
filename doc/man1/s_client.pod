@@ -19,9 +19,9 @@ B<openssl> B<s_client>
 [B<-verify depth>]
 [B<-verify_return_error>]
 [B<-cert filename>]
-[B<-certform DER|PEM>]
+[B<-certform DER|PEM|P12>]
 [B<-key filename>]
-[B<-keyform DER|PEM>]
+[B<-keyform DER|PEM|P12>]
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
@@ -189,7 +189,7 @@ not to use a certificate.
 
 =item B<-certform format>
 
-The certificate format to use: DER or PEM. PEM is the default.
+The certificate format to use: DER, PEM, or P12. PEM is the default.
 
 =item B<-key keyfile>
 
@@ -198,7 +198,7 @@ be used.
 
 =item B<-keyform format>
 
-The private format to use: DER or PEM. PEM is the default.
+The private format to use: DER, PEM, or P12. PEM is the default.
 
 =item B<-pass arg>
 

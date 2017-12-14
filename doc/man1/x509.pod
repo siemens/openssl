@@ -86,13 +86,13 @@ various sections.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM|NET>
+=item B<-inform DER|PEM|P12|NET>
 
 This specifies the input format normally the command will expect an X509
 certificate but this can change if other options such as B<-req> are
 present. The DER format is the DER encoding of the certificate and PEM
 is the base64 encoding of the DER encoding with header and footer lines
-added. The NET option is an obscure Netscape server format that is now
+added. The P12 format The NET option is an obscure Netscape server format that is now
 obsolete. The default format is PEM.
 
 =item B<-outform DER|PEM|NET>
@@ -369,7 +369,8 @@ the request.
 
 =item B<-passin arg>
 
-The key password source. For more information about the format of B<arg>
+The password source for key or certificate files.
+For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-clrext>

@@ -786,22 +786,22 @@ const OPTIONS s_server_options[] = {
     {"serverinfo", OPT_SERVERINFO, 's',
      "PEM serverinfo file for certificate"},
     {"certform", OPT_CERTFORM, 'F',
-     "Certificate format (PEM or DER) PEM default"},
+     "Certificate format (PEM, DER, or P12) PEM default"},
     {"key", OPT_KEY, 's',
      "Private Key if not in -cert; default is " TEST_CERT},
     {"keyform", OPT_KEYFORM, 'f',
      "Key format (PEM, DER or ENGINE) PEM default"},
-    {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
+    {"pass", OPT_PASS, 's', "Private key and certifiate file pass phrase source"},
     {"dcert", OPT_DCERT, '<',
      "Second certificate file to use (usually for DSA)"},
     {"dhparam", OPT_DHPARAM, '<', "DH parameters file to use"},
     {"dcertform", OPT_DCERTFORM, 'F',
-     "Second certificate format (PEM or DER) PEM default"},
+     "Second certificate format (PEM, DER, or P12) PEM default"},
     {"dkey", OPT_DKEY, '<',
      "Second private key file to use (usually for DSA)"},
     {"dkeyform", OPT_DKEYFORM, 'F',
      "Second key format (PEM, DER or ENGINE) PEM default"},
-    {"dpass", OPT_DPASS, 's', "Second private key file pass phrase source"},
+    {"dpass", OPT_DPASS, 's', "Second private key or certificate file pass phrase source"},
     {"nbio_test", OPT_NBIO_TEST, '-', "Test with the non-blocking test bio"},
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
     {"debug", OPT_DEBUG, '-', "Print more output"},
@@ -1191,7 +1191,7 @@ int s_server_main(int argc, char *argv[])
             s_serverinfo_file = opt_arg();
             break;
         case OPT_CERTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &s_cert_format))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &s_cert_format))
                 goto opthelp;
             break;
         case OPT_KEY:
@@ -1213,7 +1213,7 @@ int s_server_main(int argc, char *argv[])
 #endif
             break;
         case OPT_DCERTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &s_dcert_format))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &s_dcert_format))
                 goto opthelp;
             break;
         case OPT_DCERT:
@@ -1629,7 +1629,7 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
 
-        s_cert = load_cert(s_cert_file, s_cert_format,
+        s_cert = load_cert_pass(s_cert_file, s_cert_format, pass,
                            "server certificate file");
 
         if (s_cert == NULL) {
@@ -1650,7 +1650,7 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             }
 
-            s_cert2 = load_cert(s_cert_file2, s_cert_format,
+            s_cert2 = load_cert_pass(s_cert_file2, s_cert_format, pass,
                                 "second server certificate file");
 
             if (s_cert2 == NULL) {
@@ -1702,7 +1702,7 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
 
-        s_dcert = load_cert(s_dcert_file, s_dcert_format,
+        s_dcert = load_cert_pass(s_dcert_file, s_dcert_format, dpass,
                             "second server certificate file");
 
         if (s_dcert == NULL) {

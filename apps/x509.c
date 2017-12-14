@@ -66,13 +66,13 @@ typedef enum OPTION_choice {
 const OPTIONS x509_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f',
-     "Input format - default PEM (one of DER, NET or PEM)"},
+     "Input format - default PEM (one of DER, P12, NET or PEM)"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"outform", OPT_OUTFORM, 'f',
      "Output format - default PEM (one of DER, NET or PEM)"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
     {"keyform", OPT_KEYFORM, 'F', "Private key format - default PEM"},
-    {"passin", OPT_PASSIN, 's', "Private key password/pass-phrase source"},
+    {"passin", OPT_PASSIN, 's', "Private key or certificate file password/pass-phrase source"},
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"subject_hash", OPT_HASH, '-', "Print subject hash value"},
     {"issuer_hash", OPT_ISSUER_HASH, '-', "Print issuer hash value"},
@@ -216,7 +216,7 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyformat))
                 goto opthelp;
             break;
         case OPT_CAFORM:
@@ -584,13 +584,13 @@ int x509_main(int argc, char **argv)
             X509_set_pubkey(x, pkey);
         }
     } else {
-        x = load_cert(infile, informat, "Certificate");
+        x = load_cert_pass(infile, informat, passin, "Certificate");
     }
 
     if (x == NULL)
         goto end;
     if (CA_flag) {
-        xca = load_cert(CAfile, CAformat, "CA Certificate");
+        xca = load_cert_pass(CAfile, CAformat, passin, "CA Certificate");
         if (xca == NULL)
             goto end;
     }
@@ -905,6 +905,8 @@ int x509_main(int argc, char **argv)
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
     ASN1_OBJECT_free(objtmp);
     release_engine(e);
+    if (passin != NULL)
+        OPENSSL_cleanse(passin, strlen(passin));
     OPENSSL_free(passin);
     return ret;
 }

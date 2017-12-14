@@ -620,13 +620,13 @@ const OPTIONS s_client_options[] = {
     {"6", OPT_6, '-', "Use IPv6 only"},
 #endif
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
-    {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
+    {"cert", OPT_CERT, '<', "Certificate file to use"},
     {"certform", OPT_CERTFORM, 'F',
-     "Certificate format (PEM or DER) PEM default"},
+     "Certificate format (PEM, DER, or P12) PEM default"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"key", OPT_KEY, 's', "Private key file to use, if not in -cert file"},
-    {"keyform", OPT_KEYFORM, 'E', "Key format (PEM, DER or engine) PEM default"},
-    {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
+    {"keyform", OPT_KEYFORM, 'E', "Key format (PEM, DER, P12, or engine) PEM default"},
+    {"pass", OPT_PASS, 's', "Private key and cert file pass phrase source"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',
@@ -1091,7 +1091,7 @@ int s_client_main(int argc, char **argv)
             sess_in = opt_arg();
             break;
         case OPT_CERTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &cert_format))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &cert_format))
                 goto opthelp;
             break;
         case OPT_CRLFORM:
@@ -1597,7 +1597,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (cert_file != NULL) {
-        cert = load_cert(cert_file, cert_format, "client certificate file");
+        cert = load_cert_pass(cert_file, cert_format, pass, "client certificate file");
         if (cert == NULL) {
             ERR_print_errors(bio_err);
             goto end;

@@ -30,10 +30,11 @@ B<openssl> B<ca>
 [B<-md arg>]
 [B<-policy arg>]
 [B<-keyfile arg>]
-[B<-keyform PEM|DER>]
+[B<-keyform PEM|DER|ENGINE>]
 [B<-key arg>]
 [B<-passin arg>]
 [B<-cert file>]
+[B<-certform PEM|DER|P12>]
 [B<-selfsign>]
 [B<-in file>]
 [B<-out file>]
@@ -125,11 +126,16 @@ written to a filename consisting of the serial number in hex with
 
 The CA certificate file.
 
+=item B<-certform PEM|DER|P12>
+
+The format of the data in certificate files.
+The default is PEM.
+
 =item B<-keyfile filename>
 
 The private key to sign requests with.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform PEM|DER|P12|ENGINE>
 
 The format of the data in the private key file.
 The default is PEM.
@@ -139,6 +145,7 @@ The default is PEM.
 The password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g. Unix with
 the 'ps' utility) this option should be used with caution.
+This option is deprecated; better use B<--passin>.
 
 =item B<-selfsign>
 
@@ -156,7 +163,8 @@ self-signed certificate.
 
 =item B<-passin arg>
 
-The key password source. For more information about the format of B<arg>
+The password source for key or certificate files.
+For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-notext>
