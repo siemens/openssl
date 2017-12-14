@@ -105,10 +105,9 @@ static int certify(X509 **xret, const char *infile, int informat,
                    long days, int batch, const char *ext_sect, CONF *conf,
                    int verbose, unsigned long certopt, unsigned long nameopt,
                    int default_op, int ext_copy, int selfsign);
-static int certify_cert(X509 **xret, const char *infile, int informat,
-                        EVP_PKEY *pkey, X509 *x509,
-                        const EVP_MD *dgst,
-                        STACK_OF(OPENSSL_STRING) *sigopts,
+static int certify_cert(X509 **xret, const char *infile, int certformat,
+                        const char *passin, EVP_PKEY *pkey, X509 *x509,
+                        const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
                         STACK_OF(OPENSSL_STRING) *vfyopts,
                         STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                         BIGNUM *serial, const char *subj, unsigned long chtype,
@@ -153,8 +152,8 @@ typedef enum OPTION_choice {
     OPT_CREATE_SERIAL, OPT_MULTIVALUE_RDN, OPT_STARTDATE, OPT_ENDDATE,
     OPT_DAYS, OPT_MD, OPT_POLICY, OPT_KEYFILE, OPT_KEYFORM, OPT_PASSIN,
     OPT_KEY, OPT_CERT, OPT_CERTFORM, OPT_SELFSIGN,
-    OPT_IN, OPT_INFORM, OPT_OUT, OPT_OUTDIR, OPT_VFYOPT,
-    OPT_SIGOPT, OPT_NOTEXT, OPT_BATCH, OPT_PRESERVEDN, OPT_NOEMAILDN,
+    OPT_IN, OPT_INFORM, OPT_OUT, OPT_OUTDIR, OPT_SIGOPT, OPT_VFYOPT,
+    OPT_NOTEXT, OPT_BATCH, OPT_PRESERVEDN, OPT_NOEMAILDN,
     OPT_GENCRL, OPT_MSIE_HACK, OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC,
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
@@ -215,16 +214,17 @@ const OPTIONS ca_options[] = {
     OPT_SECTION("Signing"),
     {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
     {"keyfile", OPT_KEYFILE, 's', "Private key"},
-    {"keyform", OPT_KEYFORM, 'f', "Private key file format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f',
+     "Private key file format (ENGINE, other values ignored)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"key", OPT_KEY, 's', "Key to decode the private key if it is encrypted"},
+    {"key", OPT_KEY, 's', "Key to decode the private key or cert files if encrypted. Better use -passin"},
     {"cert", OPT_CERT, '<', "The CA cert"},
     {"certform", OPT_CERTFORM, 'F',
-     "certificate input format (DER/PEM/P12); has no effect"},
+     "Certificate input format (DER/PEM/P12); has no effect"},
     {"selfsign", OPT_SELFSIGN, '-',
      "Sign a cert with the key associated with it"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"vfyopt", OPT_SIGOPT, 's', "Verification parameter in n:v form"},
+    {"vfyopt", OPT_VFYOPT, 's', "Verification parameter in n:v form"},
 
     OPT_SECTION("Revocation"),
     {"gencrl", OPT_GENCRL, '-', "Generate a new CRL"},
@@ -272,7 +272,8 @@ int ca_main(int argc, char **argv)
     const EVP_MD *dgst = NULL;
     char *configfile = default_config_file, *section = NULL;
     char *md = NULL, *policy = NULL, *keyfile = NULL;
-    char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL, *key = NULL;
+    char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL;
+    char *passin = NULL;
     int certformat = FORMAT_PEM, informat = FORMAT_PEM;
     const char *infile = NULL, *spkac_file = NULL, *ss_cert_file = NULL;
     const char *extensions = NULL, *extfile = NULL, *passinarg = NULL;
@@ -285,7 +286,7 @@ int ca_main(int argc, char **argv)
     char *const *pp;
     const char *p;
     size_t outdirlen = 0;
-    int create_ser = 0, free_key = 0, total = 0, total_done = 0;
+    int create_ser = 0, free_passin = 0, total = 0, total_done = 0;
     int batch = 0, default_op = 1, doupdatedb = 0, ext_copy = EXT_COPY_NONE;
     int keyformat = FORMAT_PEM, multirdn = 0, notext = 0, output_der = 0;
     int ret = 1, email_dn = 1, req = 0, verbose = 0, gencrl = 0, dorevoke = 0;
@@ -379,7 +380,7 @@ opthelp:
                 goto end;
             break;
         case OPT_KEY:
-            key = opt_arg();
+            passin = opt_arg();
             break;
         case OPT_CERT:
             certfile = opt_arg();
@@ -540,6 +541,16 @@ end_of_options:
         ERR_clear_error();
 
     /*****************************************************************/
+    /* read input password potentially needed for several use cases */
+    if (passin == NULL) {
+        free_passin = 1;
+        if (!app_passwd(passinarg, NULL, &passin, NULL)) {
+            BIO_printf(bio_err, "Error getting password\n");
+            goto end;
+        }
+    }
+
+    /*****************************************************************/
     /* report status of cert with serial number given on command line */
     if (ser_status) {
         dbfile = lookup_conf(conf, section, ENV_DATABASE);
@@ -565,15 +576,15 @@ end_of_options:
         && (keyfile = lookup_conf(conf, section, ENV_PRIVATE_KEY)) == NULL)
         goto end;
 
-    if (key == NULL) {
-        free_key = 1;
-        if (!app_passwd(passinarg, NULL, &key, NULL)) {
+    if (passin == NULL) {
+        free_passin = 1;
+        if (!app_passwd(passinarg, NULL, &passin, NULL)) {
             BIO_printf(bio_err, "Error getting password\n");
             goto end;
         }
     }
-    pkey = load_key(keyfile, keyformat, 0, key, e, "CA private key");
-    cleanse(key);
+    pkey = load_key(keyfile, keyformat, 0, passin, e, "CA private key");
+    cleanse(passin);
     if (pkey == NULL)
         /* load_key() has already printed an appropriate message */
         goto end;
@@ -585,7 +596,7 @@ end_of_options:
             && (certfile = lookup_conf(conf, section, ENV_CERTIFICATE)) == NULL)
             goto end;
 
-        x509 = load_cert(certfile, certformat, "CA certificate");
+        x509 = load_cert_pass(certfile, certformat, passin, "CA certificate");
         if (x509 == NULL)
             goto end;
 
@@ -940,8 +951,8 @@ end_of_options:
         }
         if (ss_cert_file != NULL) {
             total++;
-            j = certify_cert(&x, ss_cert_file, certformat, pkey, x509, dgst,
-                             sigopts, vfyopts, attribs,
+            j = certify_cert(&x, ss_cert_file, certformat, passin,
+                             pkey, x509, dgst, sigopts, vfyopts, attribs,
                              db, serial, subj, chtype, multirdn, email_dn,
                              startdate, enddate, days, batch, extensions,
                              conf, verbose, certopt, get_nameopt(), default_op,
@@ -1262,7 +1273,7 @@ end_of_options:
             goto end;
         } else {
             X509 *revcert;
-            revcert = load_cert(infile, certformat, infile);
+            revcert = load_cert_pass(infile, certformat, passin, infile);
             if (revcert == NULL)
                 goto end;
             if (dorevoke == 2)
@@ -1291,8 +1302,9 @@ end_of_options:
     BIO_free_all(in);
     sk_X509_pop_free(cert_sk, X509_free);
 
-    if (free_key)
-        OPENSSL_free(key);
+    cleanse(passin);
+    if (free_passin)
+        OPENSSL_free(passin);
     BN_free(serial);
     BN_free(crlnumber);
     free_index(db);
@@ -1379,9 +1391,8 @@ static int certify(X509 **xret, const char *infile, int informat,
 }
 
 static int certify_cert(X509 **xret, const char *infile, int certformat,
-                        EVP_PKEY *pkey, X509 *x509,
-                        const EVP_MD *dgst,
-                        STACK_OF(OPENSSL_STRING) *sigopts,
+                        const char *passin, EVP_PKEY *pkey, X509 *x509,
+                        const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
                         STACK_OF(OPENSSL_STRING) *vfyopts,
                         STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                         BIGNUM *serial, const char *subj, unsigned long chtype,
@@ -1395,7 +1406,7 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
     EVP_PKEY *pktmp = NULL;
     int ok = -1, i;
 
-    if ((req = load_cert(infile, certformat, infile)) == NULL)
+    if ((req = load_cert_pass(infile, certformat, passin, infile)) == NULL)
         goto end;
     if (verbose)
         X509_print(bio_err, req);

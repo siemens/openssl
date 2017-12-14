@@ -637,7 +637,7 @@ static X509 *load_cert_pwd(const char *uri, const char *pass, const char *desc)
     X509 *cert;
     char *pass_string = get_passwd(pass, desc);
 
-    cert = load_cert_pass(uri, 0, pass_string, desc);
+    cert = load_cert_pass(uri, opt_certform, pass_string, desc);
     clear_free(pass_string);
     return cert;
 }

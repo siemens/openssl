@@ -9,7 +9,7 @@ openssl-x509 - Certificate display and signing command
 
 B<openssl> B<x509>
 [B<-help>]
-[B<-inform> B<DER>|B<PEM>]
+[B<-inform> B<DER>|B<PEM>|B<P12>|B<HTTP>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-CAform> B<DER>|B<PEM>|B<P12>]

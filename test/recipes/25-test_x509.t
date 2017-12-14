@@ -35,6 +35,17 @@ ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_utf8,
 is(cmp_text($out_utf8, srctop_file("test/certs", "cyrillic.utf8")),
    0, 'Comparing utf8 output');
 
+ SKIP: {
+    skip "DES disabled", 1 if disabled("des");
+
+    my $p12 = srctop_file("test", "shibboleth.pfx");
+    my $p12pass = "σύνθημα γνώρισμα";
+    my $out_pem = "out.pem";
+    ok(run(app(["openssl", "x509", "-text", "-in", $p12, "-out", $out_pem,
+                "-inform", "P12", "-passin", "pass:$p12pass"])));
+    unlink $out_pem;
+}
+
 SKIP: {
     skip "EC disabled", 1 if disabled("ec");
 
