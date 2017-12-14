@@ -21,6 +21,8 @@ plan skip_all => "The PKCS12 command line utility is not supported by this OpenS
 
 my $pass = "σύνθημα γνώρισμα";
 
+my $out = "pkcs12.out";
+
 my $savedcp;
 if (eval { require Win32::API; 1; }) {
     # Trouble is that Win32 perl uses CreateProcessA, which
@@ -55,12 +57,19 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 1;
+plan tests => 2;
 
 # just see that we can read shibboleth.pfx protected with $pass
 ok(run(app(["openssl", "pkcs12", "-noout",
             "-password", "pass:$pass",
             "-in", srctop_file("test", "shibboleth.pfx")])),
-   "test_pkcs12");
+   "test_load_cert_pkcs12");
+
+ok(run(app(["openssl", "pkcs12", "-export",
+            "-passin", "pass:$pass", "-in", srctop_file("test", "shibboleth.pfx"),
+            "-passcert", "pass:v3-certs", "-certfile", srctop_file("test", "v3-certs.p12"),
+            "-certform", "P12", "-nokeys", "-passout", "pass:", "-out", $out])),
+   "test_load_certs_pkcs12");
+unlink $out;
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
