@@ -53,7 +53,7 @@ typedef enum OPTION_choice {
     OPT_CACERTS, OPT_NOOUT, OPT_INFO, OPT_CHAIN, OPT_TWOPASS, OPT_NOMACVER,
     OPT_DESCERT, OPT_EXPORT, OPT_NOITER, OPT_MACITER, OPT_NOMACITER,
     OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
-    OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
+    OPT_INKEY, OPT_CERTFILE, OPT_CERTFORM, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
     OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_ENGINE,
     OPT_R_ENUM
@@ -95,6 +95,8 @@ const OPTIONS pkcs12_options[] = {
     OPT_R_OPTIONS,
     {"inkey", OPT_INKEY, 's', "Private key if not infile"},
     {"certfile", OPT_CERTFILE, '<', "Load certs from file"},
+    {"certform", OPT_CERTFORM, 'F',
+     "Certificate format (PEM, DER, or P12, default PEM), also for input file"},
     {"name", OPT_NAME, 's', "Use name as friendly name"},
     {"CSP", OPT_CSP, 's', "Microsoft CSP name"},
     {"caname", OPT_CANAME, 's',
@@ -120,6 +122,7 @@ const OPTIONS pkcs12_options[] = {
 int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
+    int cert_format = FORMAT_PEM;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
     int export_cert = 0, options = 0, chain = 0, twopass = 0, keytype = 0;
@@ -234,6 +237,10 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_CERTFILE:
             certfile = opt_arg();
+            break;
+        case OPT_CERTFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &cert_format))
+                goto opthelp;
             break;
         case OPT_NAME:
             name = opt_arg();
@@ -356,7 +363,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load in all certs in input file */
         if (!(options & NOCERTS)) {
-            if (!load_certs(infile, &certs, FORMAT_PEM, NULL,
+            if (!load_certs(infile, &certs, cert_format, NULL,
                             "certificates"))
                 goto export_end;
 
@@ -385,7 +392,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Add any more certificates asked for */
         if (certfile != NULL) {
-            if (!load_certs(certfile, &certs, FORMAT_PEM, NULL,
+            if (!load_certs(certfile, &certs, cert_format, NULL,
                             "certificates from certfile"))
                 goto export_end;
         }

@@ -686,7 +686,7 @@ const OPTIONS s_client_options[] = {
     {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
      "Output more security debug output"},
     {"cert_chain", OPT_CERT_CHAIN, '<',
-     "Certificate chain file (in PEM format)"},
+     "Certificate chain file"},
     {"chainCApath", OPT_CHAINCAPATH, '/',
      "Use dir as certificate store path to build CA certificate chain"},
     {"verifyCApath", OPT_VERIFYCAPATH, '/',
@@ -1605,7 +1605,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file != NULL) {
-        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL,
+        if (!load_certs(chain_file, &chain, cert_format, NULL,
                         "client certificate chain"))
             goto end;
     }

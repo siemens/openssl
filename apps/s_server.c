@@ -843,9 +843,9 @@ const OPTIONS s_server_options[] = {
     {"crl_download", OPT_CRL_DOWNLOAD, '-',
      "Download CRL from distribution points"},
     {"cert_chain", OPT_CERT_CHAIN, '<',
-     "certificate chain file in PEM format"},
+     "certificate chain file"},
     {"dcert_chain", OPT_DCERT_CHAIN, '<',
-     "second certificate chain file in PEM format"},
+     "second certificate chain file"},
     {"chainCApath", OPT_CHAINCAPATH, '/',
      "use dir as certificate store path to build CA certificate chain"},
     {"verifyCApath", OPT_VERIFYCAPATH, '/',
@@ -1637,7 +1637,7 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         if (s_chain_file != NULL) {
-            if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL,
+            if (!load_certs(s_chain_file, &s_chain, s_cert_format, NULL,
                             "server certificate chain"))
                 goto end;
         }
@@ -1710,7 +1710,7 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         if (s_dchain_file != NULL) {
-            if (!load_certs(s_dchain_file, &s_dchain, FORMAT_PEM, NULL,
+            if (!load_certs(s_dchain_file, &s_dchain, s_dcert_format, NULL,
                             "second server certificate chain"))
                 goto end;
         }
