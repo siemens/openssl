@@ -13,6 +13,7 @@ B<openssl> B<pkcs12>
 [B<-chain>]
 [B<-inkey> I<file_or_id>]
 [B<-certfile> I<filename>]
+[B<-certform> B<DER>|B<PEM>|B<P12>|B<HTTP>]
 [B<-name> I<name>]
 [B<-caname> I<name>]
 [B<-in> I<filename>]
@@ -215,6 +216,10 @@ name is typically displayed in list boxes by software importing the file.
 =item B<-certfile> I<filename>
 
 A filename to read additional certificates from.
+
+=item B<-certform> B<PEM>|B<DER>|B<P12>|B<HTTP>
+
+The certificate format to use: DER, PEM, P12, or HTTP. PEM is the default.
 
 =item B<-caname> I<friendlyname>
 

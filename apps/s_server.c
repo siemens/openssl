@@ -835,7 +835,8 @@ const OPTIONS s_server_options[] = {
      "Second private key file to use (usually for DSA)"},
     {"dkeyform", OPT_DKEYFORM, 'F',
      "Second key file format (ENGINE, other values ignored)"},
-    {"dpass", OPT_DPASS, 's', "Second private key and cert file pass phrase source"},
+    {"dpass", OPT_DPASS, 's',
+     "Second private key and cert file pass phrase source"},
     {"dhparam", OPT_DHPARAM, '<', "DH parameters file to use"},
     {"servername", OPT_SERVERNAME, 's',
      "Servername for HostName TLS extension"},
@@ -1756,7 +1757,7 @@ int s_server_main(int argc, char *argv[])
         if (s_cert == NULL)
             goto end;
         if (s_chain_file != NULL) {
-            if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL,
+            if (!load_certs(s_chain_file, &s_chain, s_cert_format, NULL,
                             "server certificate chain"))
                 goto end;
         }
@@ -1820,7 +1821,7 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         if (s_dchain_file != NULL) {
-            if (!load_certs(s_dchain_file, &s_dchain, FORMAT_PEM, NULL,
+            if (!load_certs(s_dchain_file, &s_dchain, s_dcert_format, NULL,
                             "second server certificate chain"))
                 goto end;
         }

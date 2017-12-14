@@ -643,7 +643,7 @@ int x509_main(int argc, char **argv)
     }
 
     if (CA_flag) {
-        xca = load_cert_pass(CAfile, CAformat, passin, "CA Certificate");
+        xca = load_cert_pass(CAfile, CAformat, passin, "CA certificate");
         if (xca == NULL)
             goto end;
     }

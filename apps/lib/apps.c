@@ -737,13 +737,86 @@ void* app_malloc(int sz, const char *what)
     return vp;
 }
 
+static int load_pkcs12(BIO *in, const char *desc,
+                       pem_password_cb *pem_cb, PW_CB_DATA *cb_data,
+                       EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
+{
+    const char *pass;
+    char tpass[PEM_BUFSIZE];
+    int len, ret = 0;
+    PKCS12 *p12 = d2i_PKCS12_bio(in, NULL);
+
+    if (desc == NULL)
+        desc = "PKCS12 input";
+    if (p12 == NULL) {
+        BIO_printf(bio_err, "Error loading PKCS12 file for %s\n", desc);
+        goto die;
+    }
+    /* See if an empty password will do */
+    if (PKCS12_verify_mac(p12, "", 0) || PKCS12_verify_mac(p12, NULL, 0)) {
+        pass = "";
+    } else {
+        if (pem_cb == NULL)
+            pem_cb = (pem_password_cb *)password_callback;
+        len = pem_cb(tpass, PEM_BUFSIZE, 0, cb_data);
+        if (len < 0) {
+            BIO_printf(bio_err, "Passphrase callback error for %s\n", desc);
+            goto die;
+        }
+        if (len < PEM_BUFSIZE)
+            tpass[len] = 0;
+        if (!PKCS12_verify_mac(p12, tpass, len)) {
+            BIO_printf(bio_err,
+                       "Mac verify error (wrong password?) in PKCS12 file for %s\n",
+                       desc);
+            goto die;
+        }
+        pass = tpass;
+    }
+    ret = PKCS12_parse(p12, pass, pkey, cert, ca);
+    if (!ret)
+        BIO_printf(bio_err, "Error parsing PKCS12 file for %s\n", desc);
+ die:
+    PKCS12_free(p12);
+    return ret;
+}
+
 /*
  * Initialize or extend, if *certs != NULL, a certificate stack.
  */
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *desc)
 {
-    return load_certs_crls(file, format, pass, desc, certs, NULL);
+    int ret = 0;
+
+    if (format == FORMAT_PKCS12) {
+        BIO *bio = bio_open_default(file, 'r', format);
+
+        if (bio != NULL) {
+            PW_CB_DATA cb_data;
+
+            cb_data.password = pass;
+            cb_data.prompt_info = file;
+            ret = load_pkcs12(bio, desc, (pem_password_cb *)password_callback,
+                              &cb_data, NULL, NULL, certs);
+            BIO_free(bio);
+        }
+        return ret;
+    } else if (format == FORMAT_ASN1) { /* load only one cert in this case */
+        X509 *cert = load_cert_pass(file, format, pass, desc);
+
+        if (cert != NULL) {
+            if (*certs == NULL)
+                *certs = sk_X509_new_null();
+            if (*certs != NULL)
+                ret = sk_X509_push(*certs, cert);
+            else
+                X509_free(cert);
+        }
+        return ret;
+    }
+    else
+        return load_certs_crls(file, format, pass, desc, certs, NULL);
 }
 
 /*
