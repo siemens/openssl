@@ -54,7 +54,7 @@ typedef enum OPTION_choice {
     OPT_DESCERT, OPT_EXPORT, OPT_NOITER, OPT_MACITER, OPT_NOMACITER,
     OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
     OPT_INKEY, OPT_CERTFILE, OPT_CERTFORM, OPT_NAME, OPT_CSP, OPT_CANAME,
-    OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
+    OPT_IN, OPT_OUT, OPT_PASSCERT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
     OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_ENGINE,
     OPT_R_ENUM
 } OPTION_CHOICE;
@@ -95,8 +95,9 @@ const OPTIONS pkcs12_options[] = {
     OPT_R_OPTIONS,
     {"inkey", OPT_INKEY, 's', "Private key if not infile"},
     {"certfile", OPT_CERTFILE, '<', "Load certs from file"},
-    {"certform", OPT_CERTFORM, 'F',
+    {"certform", OPT_CERTFORM, 'f',
      "Certificate format (PEM, DER, or P12, default PEM), also for input file"},
+    {"passcert", OPT_PASSCERT, 's', "Certificate file pass phrase source"},
     {"name", OPT_NAME, 's', "Use name as friendly name"},
     {"CSP", OPT_CSP, 's', "Microsoft CSP name"},
     {"caname", OPT_CANAME, 's',
@@ -135,8 +136,8 @@ int pkcs12_main(int argc, char **argv)
     int key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
     int ret = 1, macver = 1, add_lmk = 0, private = 0;
     int noprompt = 0;
-    char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
-    char *passin = NULL, *passout = NULL, *macalg = NULL;
+    char *passcertarg = NULL, *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
+    char *passcert = NULL, *passin = NULL, *passout = NULL, *macalg = NULL;
     char *cpass = NULL, *mpass = NULL, *badpass = NULL;
     const char *CApath = NULL, *CAfile = NULL, *prog;
     int noCApath = 0, noCAfile = 0;
@@ -263,6 +264,9 @@ int pkcs12_main(int argc, char **argv)
         case OPT_OUT:
             outfile = opt_arg();
             break;
+        case OPT_PASSCERT:
+            passcertarg = opt_arg();
+            break;
         case OPT_PASSIN:
             passinarg = opt_arg();
             break;
@@ -294,6 +298,11 @@ int pkcs12_main(int argc, char **argv)
         goto opthelp;
 
     private = 1;
+
+    if (!app_passwd(passcertarg, NULL, &passcert, NULL)) {
+        BIO_printf(bio_err, "Error getting certificate password\n");
+        goto end;
+    }
 
     if (passarg != NULL) {
         if (export_cert)
@@ -363,7 +372,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load in all certs in input file */
         if (!(options & NOCERTS)) {
-            if (!load_certs(infile, &certs, cert_format, NULL,
+            if (!load_certs(infile, &certs, cert_format, passin,
                             "certificates"))
                 goto export_end;
 
@@ -392,7 +401,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Add any more certificates asked for */
         if (certfile != NULL) {
-            if (!load_certs(certfile, &certs, cert_format, NULL,
+            if (!load_certs(certfile, &certs, cert_format, passcert,
                             "certificates from certfile"))
                 goto export_end;
         }
@@ -590,6 +599,7 @@ int pkcs12_main(int argc, char **argv)
     BIO_free_all(out);
     sk_OPENSSL_STRING_free(canames);
     OPENSSL_free(badpass);
+    OPENSSL_free(passcert);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return ret;
