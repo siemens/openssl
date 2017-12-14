@@ -92,8 +92,9 @@ This specifies the input format normally the command will expect an X509
 certificate but this can change if other options such as B<-req> are
 present. The DER format is the DER encoding of the certificate and PEM
 is the base64 encoding of the DER encoding with header and footer lines
-added. The P12 format The NET option is an obscure Netscape server format that is now
-obsolete. The default format is PEM.
+added. The P12 format is used for possibly password-protected PKCS#12 files.
+The NET option is an obscure Netscape server format that is now obsolete.
+The default format is PEM.
 
 =item B<-outform DER|PEM|NET>
 
