@@ -970,7 +970,32 @@ void* app_malloc(int sz, const char *what)
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *desc)
 {
-    return load_certs_crls(file, format, pass, desc, certs, NULL);
+    int ret = 0;
+    if (format == FORMAT_PKCS12) {
+        BIO *bio = bio_open_default(file, 'r', format);
+        if (bio != NULL) {
+            PW_CB_DATA cb_data;
+            cb_data.password = pass;
+            cb_data.prompt_info = file;
+            ret = load_pkcs12(bio, desc, (pem_password_cb *)password_callback,
+                              &cb_data, NULL, NULL, certs);
+            BIO_free(bio);
+        }
+        return ret;
+    } else if (format == FORMAT_ASN1) { /* load only one cert in this case */
+        X509 *cert = load_cert_pass(file, format, pass, desc);
+        if (cert) {
+            if (!*certs)
+                *certs = sk_X509_new_null();
+            if (*certs)
+                ret = sk_X509_push(*certs, cert);
+            else
+                X509_free(cert);
+        }
+        return ret;
+    }
+    else
+        return load_certs_crls(file, format, pass, desc, certs, NULL);
 }
 
 /*
