@@ -14,6 +14,7 @@ B<openssl> B<pkcs12>
 [B<-inkey> I<file_or_id>]
 [B<-certfile> I<filename>]
 [B<-certform> B<DER>|B<PEM>|B<P12>|B<HTTP>]
+[B<-passcert> I<arg>]
 [B<-name> I<name>]
 [B<-caname> I<name>]
 [B<-in> I<filename>]
@@ -220,6 +221,12 @@ A filename to read additional certificates from.
 =item B<-certform> B<PEM>|B<DER>|B<P12>|B<HTTP>
 
 The certificate format to use: DER, PEM, P12, or HTTP. PEM is the default.
+
+=item B<-passcert> I<arg>
+
+The additional certificate file password source. For more information about
+the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
+L<openssl(1)>.
 
 =item B<-caname> I<friendlyname>
 

@@ -37,6 +37,7 @@ B<openssl> B<ca>
 [B<-passin> I<arg>]
 [B<-cert> I<file>]
 [B<-certform> B<DER>|B<PEM>|B<P12>]
+[B<-pkcs12in> I<file>]
 [B<-selfsign>]
 [B<-in> I<file>]
 [B<-inform> B<DER>|<PEM>]
@@ -149,7 +150,7 @@ This option has no effect and is retained for backward compatibility only.
 
 =item B<-keyfile> I<filename>
 
-The private key to sign requests with.
+The CA private key to sign requests with.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
@@ -179,6 +180,18 @@ The password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g., when using
 L<ps(1)> on Unix),
 this option should be used with caution.
+Better use B<-passin>.
+
+=item B<-passin> I<arg>
+
+The key password source for key files and certificate PKCS#12 files.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass Phrase Options>.
+
+=item B<-pkcs12in> I<file>
+
+The file holding the CA private key and certificate in PKCS#12 format.
+This implies B<-keyfile file -cert file -keyform P12 -certform P12>.
 
 =item B<-selfsign>
 
@@ -193,12 +206,6 @@ certificate appears among the entries in the certificate database
 (see the configuration option B<database>), and uses the same
 serial number counter as all other certificates sign with the
 self-signed certificate.
-
-=item B<-passin> I<arg>
-
-The key password source for key files and certificate PKCS#12 files.
-For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-notext>
 

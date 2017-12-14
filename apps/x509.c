@@ -228,7 +228,7 @@ int x509_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &informat))
                 goto opthelp;
             break;
         case OPT_IN:
