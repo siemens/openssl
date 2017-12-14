@@ -629,10 +629,14 @@ static int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
 }
 #endif
 
-X509 *load_cert(const char *file, int format, const char *cert_descrip)
+X509 *load_cert_pass(const char *file, int format, const char *pass, const char *cert_descrip)
 {
     X509 *x = NULL;
     BIO *cert;
+    PW_CB_DATA cb_data;
+
+    cb_data.password = pass;
+    cb_data.prompt_info = file;
 
     if (format == FORMAT_HTTP) {
 #if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
@@ -654,10 +658,12 @@ X509 *load_cert(const char *file, int format, const char *cert_descrip)
         x = d2i_X509_bio(cert, NULL);
     } else if (format == FORMAT_PEM) {
         x = PEM_read_bio_X509_AUX(cert, NULL,
-                                  (pem_password_cb *)password_callback, NULL);
+                                  (pem_password_cb *)password_callback, &cb_data);
     } else if (format == FORMAT_PKCS12) {
-        if (!load_pkcs12(cert, cert_descrip, NULL, NULL, NULL, &x, NULL))
-            goto end;
+        EVP_PKEY *pkey = NULL; /* &pkey is required by PKCS12_parse */
+        load_pkcs12(cert, cert_descrip, (pem_password_cb *)password_callback, &cb_data,
+                    &pkey, &x, NULL);
+        EVP_PKEY_free(pkey);
     } else {
         BIO_printf(bio_err, "bad input format specified for %s\n", cert_descrip);
         goto end;
