@@ -791,7 +791,7 @@ const OPTIONS s_server_options[] = {
      "Private Key if not in -cert; default is " TEST_CERT},
     {"keyform", OPT_KEYFORM, 'f',
      "Key format (PEM, DER or ENGINE) PEM default"},
-    {"pass", OPT_PASS, 's', "Private key and certifiate file pass phrase source"},
+    {"pass", OPT_PASS, 's', "Private key and certificate file pass phrase source"},
     {"dcert", OPT_DCERT, '<',
      "Second certificate file to use (usually for DSA)"},
     {"dhparam", OPT_DHPARAM, '<', "DH parameters file to use"},

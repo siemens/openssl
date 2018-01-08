@@ -273,7 +273,7 @@ The private format to use: DER or PEM. PEM is the default.
 
 =item B<-pass val>
 
-The private key and certifiate file password source. For more information about the format of B<val>
+The private key and certificate file password source. For more information about the format of B<val>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-dcert infile>, B<-dkey infile>
