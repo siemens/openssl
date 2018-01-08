@@ -971,8 +971,10 @@ int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *desc)
 {
     int ret = 0;
+
     if (format == FORMAT_PKCS12) {
         BIO *bio = bio_open_default(file, 'r', format);
+
         if (bio != NULL) {
             PW_CB_DATA cb_data;
             cb_data.password = pass;
@@ -984,6 +986,7 @@ int load_certs(const char *file, STACK_OF(X509) **certs, int format,
         return ret;
     } else if (format == FORMAT_ASN1) { /* load only one cert in this case */
         X509 *cert = load_cert_pass(file, format, pass, desc);
+
         if (cert) {
             if (!*certs)
                 *certs = sk_X509_new_null();
