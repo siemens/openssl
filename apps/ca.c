@@ -141,7 +141,7 @@ typedef enum OPTION_choice {
     OPT_ENGINE, OPT_VERBOSE, OPT_CONFIG, OPT_NAME, OPT_SUBJ, OPT_UTF8,
     OPT_CREATE_SERIAL, OPT_MULTIVALUE_RDN, OPT_STARTDATE, OPT_ENDDATE,
     OPT_DAYS, OPT_MD, OPT_POLICY, OPT_KEYFILE, OPT_KEYFORM, OPT_PASSIN,
-    OPT_KEY, OPT_CERT, OPT_CERTFORM, OPT_SELFSIGN, OPT_IN, OPT_OUT, OPT_OUTDIR,
+    OPT_KEY, OPT_CERT, OPT_CERTFORM, OPT_PKCS12IN, OPT_SELFSIGN, OPT_IN, OPT_OUT, OPT_OUTDIR,
     OPT_SIGOPT, OPT_NOTEXT, OPT_BATCH, OPT_PRESERVEDN, OPT_NOEMAILDN,
     OPT_GENCRL, OPT_MSIE_HACK, OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC,
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
@@ -171,12 +171,14 @@ const OPTIONS ca_options[] = {
     {"days", OPT_DAYS, 'p', "Number of days to certify the cert for"},
     {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
     {"policy", OPT_POLICY, 's', "The CA 'policy' to support"},
-    {"keyfile", OPT_KEYFILE, 's', "Private key"},
+    {"keyfile", OPT_KEYFILE, 's', "The CA private key"},
     {"keyform", OPT_KEYFORM, 'f', "Private key file format (PEM|DER|P12|ENGINE)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"key", OPT_KEY, 's', "Key to decode the private key or cert files if encrypted. Better use -passin"},
     {"cert", OPT_CERT, '<', "The CA cert"},
-    {"certform", OPT_CERTFORM, 'f', "Certifiate file format (PEM|DER|P12)"},
+    {"certform", OPT_CERTFORM, 'f', "Certificate file format (PEM|DER|P12)"},
+    {"pkcs12in", OPT_PKCS12IN, '<', "File holding CA private key and certificate in PKCS#12 format"},
+    {OPT_MORE_STR, 1, 1, " (implies -keyfile infile -cert infile -keyform P12 -certform P12)"},
     {"selfsign", OPT_SELFSIGN, '-',
      "Sign a cert with the key associated with it"},
     {"in", OPT_IN, '<', "The input PEM encoded cert request(s)"},
@@ -347,6 +349,10 @@ opthelp:
         case OPT_CERTFORM:
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &certformat))
                 goto opthelp;
+            break;
+        case OPT_PKCS12IN:
+            keyfile = certfile = opt_arg();
+            keyformat = certformat = FORMAT_PKCS12;
             break;
         case OPT_SELFSIGN:
             selfsign = 1;
