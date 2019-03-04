@@ -16,7 +16,7 @@
 
 # include <openssl/opensslconf.h>
 
-# ifndef OPENSSL_NO_CRMF
+# ifndef OPENSSL_NO_CMP
 #  include <openssl/opensslv.h>
 #  if OPENSSL_VERSION_NUMBER < 0x10100002L
 #   define ossl_inline __inline
@@ -208,7 +208,11 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
 #  ifdef __cplusplus
 }
 #  endif
+<<<<<<< HEAD
 # endif /* !defined OPENSSL_NO_CRMF */
+=======
+# endif /* !defined OPENSSL_NO_CMP */
+>>>>>>> dc6206c301 (purge (meanwhile superfluous) #ifndef NO_CRMF)
 #endif /* !defined OSSL_HEADER_CRMF_H */
 
 #if OPENSSL_VERSION_NUMBER < 0x10101000L && !defined(OSSL_HEADER_CRMF_ERROR_CODES)
