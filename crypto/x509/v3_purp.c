@@ -14,6 +14,7 @@
 #include <openssl/x509_vfy.h>
 #include "crypto/x509.h"
 #include "internal/tsan_assist.h"
+#include "x509_local.h"
 
 static void x509v3_cache_extensions(X509 *x);
 
@@ -471,9 +472,17 @@ static void x509v3_cache_extensions(X509 *x)
     if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
         x->ex_flags |= EXFLAG_SI;
         /* If SKID matches AKID also indicate self signed */
-        if (X509_check_akid(x, x->akid) == X509_V_OK &&
-            !ku_reject(x, KU_KEY_CERT_SIGN))
-            x->ex_flags |= EXFLAG_SS;
+        if (X509_check_akid(x, x->akid) == X509_V_OK) {
+            /* check if the signature alg matches the PUBKEY alg */
+            EVP_PKEY *pkey = X509_get0_pubkey(x);
+            X509_ALGOR *s_algor = &x->cert_info.signature;
+            int s_pknid = NID_undef, s_mdnid = NID_undef;
+            if (pkey != NULL
+                    && OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
+                                           &s_mdnid, &s_pknid)
+                    && EVP_PKEY_type(s_pknid) == EVP_PKEY_base_id(pkey))
+                x->ex_flags |= EXFLAG_SS;
+        }
     }
     x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
     x->nc = X509_get_ext_d2i(x, NID_name_constraints, &i, NULL);
@@ -758,51 +767,60 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
 }
 
 /*-
- * Various checks to see if one certificate issued the second.
- * This can be used to prune a set of possible issuer certificates
- * which have been looked up using some simple method such as by
- * subject name.
+ * Various checks to see if one certificate potentially issued the second.
+ * This can be used to prune a set of possible issuer certificates which
+ * have been looked up using some simple method such as by subject name.
  * These are:
  * 1. Check issuer_name(subject) == subject_name(issuer)
  * 2. If akid(subject) exists, check that it matches issuer
  * 3. Check that issuer public key algorithm matches subject signature algorithm
- * 4. If key_usage(issuer) exists, check that it supports certificate signing
- * returns 0 for OK, positive for reason for mismatch, reasons match
- * codes for X509_verify_cert()
+ * Note that this does not include checking if keyUsage(issuer) supports
+ * issuing subject nor performing the actual signature check.
+ * Returns 0 for OK, or positive for reason for mismatch
+ * where reason codes match those for X509_verify_cert().
  */
 
 int X509_check_issued(X509 *issuer, X509 *subject)
 {
+    EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
+    X509_ALGOR *s_algor = &subject->cert_info.signature;
+    int s_pknid = NID_undef, s_mdnid = NID_undef;
+    int ret;
+
     if (X509_NAME_cmp(X509_get_subject_name(issuer),
-                      X509_get_issuer_name(subject)))
+                      X509_get_issuer_name(subject)) != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
     x509v3_cache_extensions(issuer);
     x509v3_cache_extensions(subject);
 
-    if (subject->akid) {
-        int ret = X509_check_akid(issuer, subject->akid);
-        if (ret != X509_V_OK)
-            return ret;
-    }
+    ret = X509_check_akid(issuer, subject->akid);
+    if (ret != X509_V_OK)
+        return ret;
 
-    {
-        /*
-         * Check if the subject signature algorithm matches the issuer's PUBKEY
-         * algorithm
-         */
-        EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
-        X509_ALGOR *s_algor = &subject->cert_info.signature;
-        int s_pknid = NID_undef, s_mdnid = NID_undef;
+    if (issuer == subject) /* self-issued */
+        return X509_V_OK;
 
-        if (i_pkey == NULL)
-            return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
-
-        if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
-                                 &s_mdnid, &s_pknid)
+    /* check if the subject signature alg matches the issuer's PUBKEY alg */
+    if (i_pkey == NULL)
+        return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+    if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
+                             &s_mdnid, &s_pknid)
+        /* TODO better return a specific reason that sig alg cannot be found */
             || EVP_PKEY_type(s_pknid) != EVP_PKEY_base_id(i_pkey))
-            return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
-    }
+        return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
+    return X509_V_OK;
+}
+
+/*-
+ * Check if certificate I<issuer> is allowed to issue certificate I<subject>
+ * according to the B<keyUsage> field of I<issuer> if present
+ * depending on any proxyCertInfo extension of I<subject>.
+ * Returns 0 for OK, or positive for reason for rejection
+ * where reason codes match those for X509_verify_cert().
+ */
+int X509_signing_allowed(const X509 *issuer, const X509 *subject)
+{
 
     if (subject->ex_flags & EXFLAG_PROXY) {
         if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))
@@ -815,7 +833,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
 {
 
-    if (!akid)
+    if (akid == NULL)
         return X509_V_OK;
 
     /* Check key ids (if present) */

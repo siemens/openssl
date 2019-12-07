@@ -370,7 +370,19 @@ SKIP: {
 
     # ED25519 certificate from draft-ietf-curdle-pkix-04
     ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
-       "ED25519 signature");
+       "accept ED25519 ee cert signature w trusted ED25519 self-signed cert");
+
+    ok(!verify("root-ed25519", "sslserver", ["ee-ed25519"], []),
+       "fail trusted ED25519-signed self-issued cert non-match");
+
+    ok(verify("root-ed25519", "sslserver", ["root-ed25519"], []),
+       "accept trusted ED25519 self-signed cert");
+
+    ok(!verify("ee-ed25519", "sslserver", ["ee-ed25519"], []),
+       "fail trusted ED25519-signed self-issued cert");
+
+    ok(verify("ee-ed25519", "sslserver", ["ee-ed25519"], ["-partial_chain"]),
+       "accept last-resort direct leaf match ED25519-signed self-issued cert");
 
 }
 
