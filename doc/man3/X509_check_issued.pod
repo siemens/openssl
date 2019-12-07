@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-X509_check_issued - checks if certificate is issued by another
-certificate
+X509_check_issued
+ - checks if certificate is potentially issued by another certificate
 
 =head1 SYNOPSIS
 
@@ -14,18 +14,19 @@ certificate
 
 =head1 DESCRIPTION
 
-This function checks if certificate I<subject> was issued using CA
-certificate I<issuer>. This function takes into account not only
+X509_check_issued()) checks if certificate I<subject> was potentially issued
+using certificate I<issuer>. This function takes into account not only
 matching of issuer field of I<subject> with subject field of I<issuer>,
 but also compares B<authorityKeyIdentifier> extension of I<subject> with
 B<subjectKeyIdentifier> of I<issuer> if B<authorityKeyIdentifier>
-present in the I<subject> certificate and checks B<keyUsage> field of
-I<issuer>.
+present in the I<subject> certificate.
+It does not check if the B<keyUsage> field of I<issuer> supports issuing
+I<subject> and does not perform the actual signature check.
 
 =head1 RETURN VALUES
 
-Function return B<X509_V_OK> if certificate I<subject> is issued by
-I<issuer> or some B<X509_V_ERR*> constant to indicate an error.
+The function returns B<X509_V_OK> if all checks pass
+or some B<X509_V_ERR*> constant to indicate an error.
 
 =head1 SEE ALSO
 
@@ -35,7 +36,7 @@ L<openssl-verify(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

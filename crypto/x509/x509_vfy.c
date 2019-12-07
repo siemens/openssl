@@ -104,8 +104,13 @@ static int null_callback(int ok, X509_STORE_CTX *e)
     return ok;
 }
 
-/* Return 1 is a certificate is self signed */
-static int cert_self_signed(X509 *x)
+/*
+ * Return 1 if a certificate is considered self-signed.
+ * This function does not really check for self-signedness but relies on
+ * matching issuer and subject names (i.e., the cert being self-issued) and the
+ * authority key identifier (if present) matching the subject key identifier.
+ */
+static int cert_apparently_self_signed(X509 *x)
 {
     /*
      * FIXME: x509v3_cache_extensions() needs to detect more failures and not
@@ -327,19 +332,17 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
-    int ret;
-    if (x == issuer)
-        return cert_self_signed(x);
-    ret = X509_check_issued(issuer, x);
+    int ret = X509_check_issued(issuer, x);
     if (ret == X509_V_OK) {
         int i;
         X509 *ch;
-        /* Special case: single self signed certificate */
-        if (cert_self_signed(x) && sk_X509_num(ctx->chain) == 1)
+        /* Special case: single self-issued certificate */
+        if (X509_check_issued(x, x) == X509_V_OK
+                && sk_X509_num(ctx->chain) == 1)
             return 1;
         for (i = 0; i < sk_X509_num(ctx->chain); i++) {
             ch = sk_X509_value(ctx->chain, i);
-            if (ch == issuer || !X509_cmp(ch, issuer)) {
+            if (ch == issuer || X509_cmp(ch, issuer) == 0) {
                 ret = X509_V_ERR_PATH_LOOP;
                 break;
             }
@@ -1738,14 +1741,19 @@ static int internal_verify(X509_STORE_CTX *ctx)
 
         /*
          * Skip signature check for self signed certificates unless explicitly
-         * asked for.  It doesn't add any security and just wastes time.  If
-         * the issuer's public key is unusable, report the issuer certificate
+         * asked for because it does not add any security and just wastes time.
+         * If the issuer's public key is not available or its key usage does
+         * not support issuing the subject cert, report the issuer certificate
          * and its depth (rather than the depth of the subject).
          */
         if (xs != xi || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)) {
+            int ret = X509_signing_allowed(xi, xs);
+            int issuer_depth = n + (xi == xs ? 0 : 1);
+            if (ret != X509_V_OK && !verify_cb_cert(ctx, xi, issuer_depth, ret))
+                return 0;
             if ((pkey = X509_get0_pubkey(xi)) == NULL) {
-                if (!verify_cb_cert(ctx, xi, xi != xs ? n+1 : n,
-                        X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
+                ret = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
+                if (!verify_cb_cert(ctx, xi, issuer_depth, ret))
                     return 0;
             } else if (X509_verify(xs, pkey) <= 0) {
                 if (!verify_cb_cert(ctx, xs, n,
@@ -2890,7 +2898,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
-    int ss = cert_self_signed(cert);
+    int ss = cert_apparently_self_signed(cert);
     STACK_OF(X509) *sktmp = NULL;
     unsigned int search;
     int may_trusted = 0;
@@ -3080,7 +3088,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         search = 0;
                         continue;
                     }
-                    ss = cert_self_signed(x);
+                    ss = cert_apparently_self_signed(x);
                 } else if (num == ctx->num_untrusted) {
                     /*
                      * We have a self-signed certificate that has the same
@@ -3192,7 +3200,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 
             X509_up_ref(x = xtmp);
             ++ctx->num_untrusted;
-            ss = cert_self_signed(xtmp);
+            ss = cert_apparently_self_signed(xtmp);
 
             /*
              * Check for DANE-TA trust of the topmost untrusted certificate.
