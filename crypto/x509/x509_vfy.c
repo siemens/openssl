@@ -109,6 +109,7 @@ static int null_callback(int ok, X509_STORE_CTX *e)
  * This function does not really check for self-signedness but relies on
  * matching issuer and subject names (i.e., the cert being self-issued) and the
  * authority key identifier (if present) matching the subject key identifier.
+ * Moreover the algorithm of the public key in the cert must support signing.
  */
 static int cert_apparently_self_signed(X509 *x)
 {
