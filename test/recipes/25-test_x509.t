@@ -41,6 +41,7 @@ SKIP: {
     # producing and checking self-issued (but not self-signed) cert
     my @path = qw(test certs);
     my $subj = "/CN=CA"; # using same DN as in issuer of ee-cert.pem
+    my $extfile = srctop_file("test", "v3_ca_exts.cnf");
     my $pkey = srctop_file(@path, "ca-key.pem"); #  issuer private key
     my $pubkey = "ca-pubkey.pem"; # the corresponding issuer public key
     # use any (different) key for signing our self-issued cert:
@@ -50,9 +51,10 @@ SKIP: {
     ok(run(app(["openssl", "pkey", "-in", $pkey, "-pubout", "-out", $pubkey]))
        &&
        run(app(["openssl", "x509", "-new", "-force_pubkey", $pubkey,
-                "-subj", $subj, "-signkey", $signkey, "-out", $selfout]))
+                "-subj", $subj, "-extfile", $extfile,
+                "-signkey", $signkey, "-out", $selfout]))
        &&
-       run(app(["openssl", "verify", "-no_check_time",
+       run(app(["openssl", "verify", "-no_check_time", "-partial_chain",
                 "-trusted", $selfout, $testcert])));
     unlink $pubkey;
     unlink $selfout;

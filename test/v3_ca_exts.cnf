@@ -1,0 +1,5 @@
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer:always
+basicConstraints = critical,CA:true,pathlen:1
+keyUsage = cRLSign, keyCertSign
+issuerAltName=issuer:copy
