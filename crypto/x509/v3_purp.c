@@ -477,10 +477,10 @@ static void x509v3_cache_extensions(X509 *x)
             /* check if the signature alg matches the PUBKEY alg */
             EVP_PKEY *pkey = X509_get0_pubkey(x);
             X509_ALGOR *s_algor = &x->cert_info.signature;
-            int s_pknid = NID_undef, s_mdnid = NID_undef;
+            int s_pknid = NID_undef;
             if (pkey != NULL
                     && OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
-                                           &s_mdnid, &s_pknid)
+                                           NULL, &s_pknid)
                     && EVP_PKEY_type(s_pknid) == EVP_PKEY_base_id(pkey))
                 x->ex_flags |= EXFLAG_SS;
         }
@@ -785,7 +785,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 {
     EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
     X509_ALGOR *s_algor = &subject->cert_info.signature;
-    int s_pknid = NID_undef, s_mdnid = NID_undef;
+    int s_pknid = NID_undef;
     int ret;
 
     if (X509_NAME_cmp(X509_get_subject_name(issuer),
@@ -805,8 +805,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
     /* check if the subject signature alg matches the issuer's PUBKEY alg */
     if (i_pkey == NULL)
         return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
-                             &s_mdnid, &s_pknid)
+    if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm), NULL, &s_pknid)
         /* TODO better return a specific reason that sig alg cannot be found */
             || EVP_PKEY_type(s_pknid) != EVP_PKEY_base_id(i_pkey))
         return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
