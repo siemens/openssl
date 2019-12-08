@@ -82,8 +82,9 @@ current system time. I<timestamp> is the number of seconds since
 
 =item B<-check_ss_sig>
 
-Verify the signature on the self-signed root CA. This is disabled by default
-because it doesn't add any security.
+Verify the signature on the last (trusted) certificate in a chain,
+which typically is a self-signed root CA certificate.
+This check is disabled by default because it does not add any security.
 
 =item B<-CRLfile> I<file>
 
@@ -153,8 +154,8 @@ a verification time, the check is not suppressed.
 =item B<-partial_chain>
 
 Allow verification to succeed even if a I<complete> chain cannot be built to a
-self-signed trust-anchor, provided it is possible to construct a chain to a
-trusted certificate that might not be self-signed.
+self-signed trust anchor, provided it is possible to construct a chain to any
+trusted certificate (which may be an intermediate or self-issued certificate).
 
 =item B<-policy> I<arg>
 
@@ -207,7 +208,7 @@ effect.
 =item B<-untrusted> I<file>
 
 A I<file> of additional untrusted certificates (intermediate issuer CAs) used
-to construct a certificate chain from the subject certificate to a trust-anchor.
+to construct a certificate chain from the subject certificate to a trust anchor.
 The I<file> should contain one or more certificates in PEM format.
 This option can be specified more than once to include untrusted certificates
 from multiple I<file>s.
@@ -219,7 +220,7 @@ B<-partial_chain> option is specified.
 The I<file> contains one or more certificates in PEM format.
 With this option, no additional (e.g., default) certificate lists are
 consulted.
-That is, the only trust-anchors are those listed in I<file>.
+That is, the only trust anchors are those listed in I<file>.
 This option can be specified more than once to include trusted certificates
 from multiple I<file>s.
 This option implies the B<-no-CAfile>, B<-no-CApath> and B<-no-CAstore> options.
@@ -416,8 +417,10 @@ Unspecified error; should not happen.
 
 =item B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT>
 
-The issuer certificate of a looked up certificate could not be found. This
-normally means the list of trusted certificates is not complete.
+The issuer certificate of a looked up certificate could not be found.
+This normally means the list of trusted certificates is not complete.
+To enable using trusted self-issued but not self-signed certificates
+the B<-partial_chain> option may be set.
 
 =item B<X509_V_ERR_UNABLE_TO_GET_CRL>
 
@@ -493,7 +496,7 @@ be found in the list of trusted certificates.
 =item B<X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN>
 
 The certificate chain could be built up using the untrusted certificates
-but the root could not be found locally.
+but the self-signed root could not be found trusted locally.
 
 =item B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY>
 
@@ -503,7 +506,8 @@ certificate of an untrusted certificate cannot be found.
 =item B<X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE>
 
 No signatures could be verified because the chain contains only one
-certificate and it is not self signed.
+certificate and it is not self-signed
+(nor self-issued in case the B<-partial_chain> option is set).
 
 =item B<X509_V_ERR_CERT_CHAIN_TOO_LONG>
 

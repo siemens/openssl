@@ -107,8 +107,8 @@ A maximal depth chain contains 2 more certificates than the limit, since
 neither the end-entity certificate nor the trust-anchor count against this
 limit.
 Thus a B<depth> limit of 0 only allows the end-entity certificate to be signed
-directly by the trust-anchor, while with a B<depth> limit of 1 there can be one
-intermediate CA certificate between the trust-anchor and the end-entity
+directly by the trust anchor, while with a B<depth> limit of 1 there can be one
+intermediate CA certificate between the trust anchor and the end-entity
 certificate.
 
 X509_VERIFY_PARAM_set_auth_level() sets the authentication security level to
@@ -264,8 +264,9 @@ they are enabled.
 If B<X509_V_FLAG_USE_DELTAS> is set delta CRLs (if present) are used to
 determine certificate status. If not set deltas are ignored.
 
-B<X509_V_FLAG_CHECK_SS_SIGNATURE> enables checking of the root CA self signed
-certificate signature. By default this check is disabled because it doesn't
+B<X509_V_FLAG_CHECK_SS_SIGNATURE> requires verifying the signature of the last
+(trusted) certificate in a chain, which typically is a self-signed root CA
+certificate. By default this check is disabled because it does not
 add any additional security but in some cases applications might want to
 check the signature anyway. A side effect of not checking the root CA
 signature is that disabled or unsupported message digests on the root CA
@@ -290,15 +291,15 @@ found that is trusted.
 As of OpenSSL 1.1.0, with B<X509_V_FLAG_TRUSTED_FIRST> always set, this option
 has no effect.
 
-The B<X509_V_FLAG_PARTIAL_CHAIN> flag causes intermediate certificates in the
-trust store to be treated as trust-anchors, in the same way as the self-signed
-root CA certificates.
+The B<X509_V_FLAG_PARTIAL_CHAIN> flag causes non-self-signed (i.e.,
+intermediate or just self-issued) certificates in the trust store to be treated
+as trust anchors, in the same way as self-signed "root" CA certificates.
 This makes it possible to trust certificates issued by an intermediate CA
 without having to trust its ancestor root CA.
 With OpenSSL 1.1.0 and later and <X509_V_FLAG_PARTIAL_CHAIN> set, chain
-construction stops as soon as the first certificate from the trust store is
-added to the chain, whether that certificate is a self-signed "root"
-certificate or a not self-signed intermediate certificate.
+construction stops as soon as the first certificate contained in the trust store
+is added to the chain, whether that certificate is a self-signed "root"
+certificate or a not self-signed "intermediate" or self-issued certificate.
 Thus, when an intermediate certificate is found in the trust store, the
 verified chain passed to callbacks may be shorter than it otherwise would
 be without the B<X509_V_FLAG_PARTIAL_CHAIN> flag.
