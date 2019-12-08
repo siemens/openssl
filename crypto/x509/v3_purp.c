@@ -475,14 +475,17 @@ static void x509v3_cache_extensions(X509 *x)
         /* If SKID matches AKID also indicate self signed */
         if (X509_check_akid(x, x->akid) == X509_V_OK) {
             /* check if the signature alg matches the PUBKEY alg */
-            EVP_PKEY *pkey = X509_get0_pubkey(x);
-            X509_ALGOR *s_algor = &x->cert_info.signature;
-            int s_pknid = NID_undef;
-            if (pkey != NULL
-                    && OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
-                                           NULL, &s_pknid)
-                    && EVP_PKEY_type(s_pknid) == EVP_PKEY_base_id(pkey))
-                x->ex_flags |= EXFLAG_SS;
+            X509_PUBKEY *xpkey = X509_get_X509_PUBKEY(x);
+            const X509_ALGOR *sigalg = X509_get0_tbs_sigalg(x);
+            if (xpkey != NULL && sigalg != NULL) {
+               EVP_PKEY *pkey = X509_PUBKEY_get0(xpkey);
+               int pkey_nid;
+               if (pkey != NULL
+                       && OBJ_find_sigid_algs(OBJ_obj2nid(sigalg->algorithm),
+                                              NULL, &pkey_nid)
+                       && EVP_PKEY_type(pkey_nid) == EVP_PKEY_base_id(pkey))
+                    x->ex_flags |= EXFLAG_SS;
+            }
         }
     }
     x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
@@ -785,7 +788,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 {
     EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
     X509_ALGOR *s_algor = &subject->cert_info.signature;
-    int s_pknid = NID_undef;
+    int s_pknid;
     int ret;
 
     if (X509_NAME_cmp(X509_get_subject_name(issuer),
