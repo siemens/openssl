@@ -345,6 +345,7 @@ static void setup_crldp(X509 *x)
 #define ns_reject(x, usage) \
         (((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
+/* this caches also further information, e.g., if the cert is self-issued */
 static void x509v3_cache_extensions(X509 *x)
 {
     BASIC_CONSTRAINTS *bs;
