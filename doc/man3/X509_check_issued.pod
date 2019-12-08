@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-X509_check_issued
- - checks if certificate is potentially issued by another certificate
+X509_check_issued - checks if certificate is potentially issued
+by another certificate
 
 =head1 SYNOPSIS
 
