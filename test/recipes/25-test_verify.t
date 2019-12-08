@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 137;
+plan tests => 141;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -381,7 +381,7 @@ SKIP: {
     ok(!verify("ee-ed25519", "sslserver", ["ee-ed25519"], []),
        "fail trusted ED25519-signed self-issued cert");
 
-    ok(verify("ee-ed25519", "sslserver", ["ee-ed25519"], ["-partial_chain"]),
+    ok(verify("ee-ed25519", "sslserver", ["ee-ed25519"], [], "-partial_chain"),
        "accept last-resort direct leaf match ED25519-signed self-issued cert");
 
 }
