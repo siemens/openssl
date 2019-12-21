@@ -337,6 +337,23 @@ static void setup_crldp(X509 *x)
         setup_dp(x, sk_DIST_POINT_value(x->crldp, i));
 }
 
+/* Check that issuer public key algorithm matches subject signature algorithm */
+static int EVP_PKEY_check_sig_alg_match(EVP_PKEY *pkey, X509 *subject)
+{
+    const X509_ALGOR *sigalg = X509_get0_tbs_sigalg(subject);
+    int pkey_nid;
+
+    if (pkey == NULL)
+        return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+    if (sigalg == NULL)
+        return X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE;
+    if (!OBJ_find_sigid_algs(OBJ_obj2nid(sigalg->algorithm), NULL, &pkey_nid)
+        /* TODO better return a specific reason that sig alg cannot be found */
+            || EVP_PKEY_type(pkey_nid) != EVP_PKEY_base_id(pkey))
+        return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
+    return X509_V_OK;
+}
+
 #define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
 #define ku_reject(x, usage) \
         (((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
@@ -471,22 +488,11 @@ static void x509v3_cache_extensions(X509 *x)
     x->akid = X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
     /* Does subject name match issuer ? */
     if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
-        x->ex_flags |= EXFLAG_SI;
-        /* If SKID matches AKID also indicate self signed */
-        if (X509_check_akid(x, x->akid) == X509_V_OK) {
-            /* check if the signature alg matches the PUBKEY alg */
-            X509_PUBKEY *xpkey = X509_get_X509_PUBKEY(x);
-            const X509_ALGOR *sigalg = X509_get0_tbs_sigalg(x);
-            if (xpkey != NULL && sigalg != NULL) {
-               EVP_PKEY *pkey = X509_PUBKEY_get0(xpkey);
-               int pkey_nid;
-               if (pkey != NULL
-                       && OBJ_find_sigid_algs(OBJ_obj2nid(sigalg->algorithm),
-                                              NULL, &pkey_nid)
-                       && EVP_PKEY_type(pkey_nid) == EVP_PKEY_base_id(pkey))
-                    x->ex_flags |= EXFLAG_SS;
-            }
-        }
+        x->ex_flags |= EXFLAG_SI; /* so self-issued */
+        if (X509_check_akid(x, x->akid) == X509_V_OK /* If SKID matches AKID */
+            && /* .. and the signature alg matches the PUBKEY alg: */
+            EVP_PKEY_check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
+            x->ex_flags |= EXFLAG_SS; /* indicate self-signed */
     }
     x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
     x->nc = X509_get_ext_d2i(x, NID_name_constraints, &i, NULL);
@@ -786,9 +792,6 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
 
 int X509_check_issued(X509 *issuer, X509 *subject)
 {
-    EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
-    X509_ALGOR *s_algor = &subject->cert_info.signature;
-    int s_pknid;
     int ret;
 
     if (X509_NAME_cmp(X509_get_subject_name(issuer),
@@ -806,13 +809,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
         return X509_V_OK;
 
     /* check if the subject signature alg matches the issuer's PUBKEY alg */
-    if (i_pkey == NULL)
-        return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm), NULL, &s_pknid)
-        /* TODO better return a specific reason that sig alg cannot be found */
-            || EVP_PKEY_type(s_pknid) != EVP_PKEY_base_id(i_pkey))
-        return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
-    return X509_V_OK;
+    return EVP_PKEY_check_sig_alg_match(X509_get0_pubkey(issuer), subject);
 }
 
 /*-
