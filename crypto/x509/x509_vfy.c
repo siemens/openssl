@@ -2901,6 +2901,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
     int self_signed = apparently_self_signed(cert);
+    int self_issued = check_self_issued(cert);
     STACK_OF(X509) *sktmp = NULL;
     unsigned int search;
     int may_trusted = 0;
@@ -3091,6 +3092,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         continue;
                     }
                     self_signed = apparently_self_signed(x);
+                    self_issued = check_self_issued(x);
                 } else if (num == ctx->num_untrusted) {
                     /*
                      * We have a self-signed certificate that has the same
@@ -3137,7 +3139,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         search = 0;
                         continue;
                     }
-                    if (!self_signed)
+                    if (!self_issued)
                         continue;
                 }
             }
@@ -3160,6 +3162,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                 search |= S_DOALTERNATE;
                 alt_untrusted = ctx->num_untrusted - 1;
                 self_signed = 0;
+                self_issued = 0;
             }
         }
 
@@ -3204,6 +3207,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             X509_up_ref(x = xtmp);
             ++ctx->num_untrusted;
             self_signed = apparently_self_signed(xtmp);
+            self_issued = check_self_issued(xtmp);
 
             /*
              * Check for DANE-TA trust of the topmost untrusted certificate.
