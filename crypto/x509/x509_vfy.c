@@ -111,9 +111,9 @@ static int check_self_issued(X509 *x)
 
 /*
  * Return 1 if a certificate is considered self-signed.
- * This function does not really check for self-signedness but relies on
- * matching issuer and subject names (i.e., the cert being self-issued) and the
- * authority key identifier (if present) matching the subject key identifier.
+ * This does not verify self-signedness but relies on x509v3_cache_extensions()
+ * matching issuer and subjqect names (i.e., the cert being self-issued) and any
+ * present authority key identifier matching the subject key identifier etc.
  * Moreover the algorithm of the public key in the cert must support signing.
  */
 static int apparently_self_signed(X509 *x)
@@ -528,7 +528,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             if (!verify_cb_cert(ctx, x, i, X509_V_ERR_PATH_LENGTH_EXCEEDED))
                 return 0;
         }
-        /* Increment path length if not a self issued intermediate CA */
+        /* Increment path length if not a self-issued intermediate CA */
         if (i > 0 && (x->ex_flags & EXFLAG_SI) == 0)
             plen++;
         /*
@@ -594,7 +594,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
         X509 *x = sk_X509_value(ctx->chain, i);
         int j;
 
-        /* Ignore self issued certs unless last in chain */
+        /* Ignore self-issued certs unless last in chain */
         if (i && (x->ex_flags & EXFLAG_SI))
             continue;
 
@@ -1493,7 +1493,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     int cnum = ctx->error_depth;
     int chnum = sk_X509_num(ctx->chain) - 1;
 
-    /* if we have an alternative CRL issuer cert use that */
+    /* If we have an alternative CRL issuer cert use that */
     if (ctx->current_issuer)
         issuer = ctx->current_issuer;
     /*
@@ -1504,7 +1504,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         issuer = sk_X509_value(ctx->chain, cnum + 1);
     else {
         issuer = sk_X509_value(ctx->chain, chnum);
-        /* If not self signed, can't check signature */
+        /* If not self-issued, can't check signature */
         if (!ctx->check_issued(ctx, issuer, issuer) &&
             !verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER))
             return 0;
@@ -1742,7 +1742,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
         EVP_PKEY *pkey;
 
         /*
-         * Skip signature check for self signed certificates unless explicitly
+         * Skip signature check for self-signed certificates unless explicitly
          * asked for because it does not add any security and just wastes time.
          * If the issuer's public key is not available or its key usage does
          * not support issuing the subject cert, report the issuer certificate

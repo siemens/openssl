@@ -488,8 +488,8 @@ static void x509v3_cache_extensions(X509 *x)
     x->akid = X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
     /* Does subject name match issuer ? */
     if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
-        x->ex_flags |= EXFLAG_SI; /* so self-issued */
-        if (X509_check_akid(x, x->akid) == X509_V_OK /* If SKID matches AKID */
+        x->ex_flags |= EXFLAG_SI; /* cert is self-issued */
+        if (X509_check_akid(x, x->akid) == X509_V_OK /* SKID matches AKID */
             && /* .. and the signature alg matches the PUBKEY alg: */
             EVP_PKEY_check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
             x->ex_flags |= EXFLAG_SS; /* indicate self-signed */
@@ -784,8 +784,8 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
  * 1. Check issuer_name(subject) == subject_name(issuer)
  * 2. If akid(subject) exists, check that it matches issuer
  * 3. Check that issuer public key algorithm matches subject signature algorithm
- * Note that this does not include checking if keyUsage(issuer) supports
- * issuing subject nor performing the actual signature check.
+ * Note that this does not include checking that any keyUsage(issuer) allows
+ * certificate signing and does not include actually checking the signature.
  * Returns 0 for OK, or positive for reason for mismatch
  * where reason codes match those for X509_verify_cert().
  */

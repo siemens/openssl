@@ -265,7 +265,7 @@ If B<X509_V_FLAG_USE_DELTAS> is set delta CRLs (if present) are used to
 determine certificate status. If not set deltas are ignored.
 
 B<X509_V_FLAG_CHECK_SS_SIGNATURE> requires verifying the signature of the last
-(trusted) certificate in a chain, which typically is a self-signed root CA
+certificate in a chain, which typically is a trusted self-signed root CA
 certificate. By default this check is disabled because it does not
 add any additional security but in some cases applications might want to
 check the signature anyway. A side effect of not checking the root CA
@@ -291,11 +291,11 @@ found that is trusted.
 As of OpenSSL 1.1.0, with B<X509_V_FLAG_TRUSTED_FIRST> always set, this option
 has no effect.
 
-The B<X509_V_FLAG_PARTIAL_CHAIN> flag causes non-self-signed (i.e.,
-intermediate or just self-issued) certificates in the trust store to be treated
-as trust anchors, in the same way as self-signed "root" CA certificates.
-This makes it possible to trust certificates issued by an intermediate CA
-without having to trust its ancestor root CA.
+The B<X509_V_FLAG_PARTIAL_CHAIN> flag causes non-self-signed certificates in the
+trust store to be treated as trust anchors, in the same way as self-signed
+root CA certificates.
+This makes it possible to trust self-issued certificates as well as certificates
+issued by an intermediate CA without having to trust its ancestor root CA.
 With OpenSSL 1.1.0 and later and <X509_V_FLAG_PARTIAL_CHAIN> set, chain
 construction stops as soon as the first certificate contained in the trust store
 is added to the chain, whether that certificate is a self-signed "root"
