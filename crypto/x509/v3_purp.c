@@ -805,9 +805,6 @@ int X509_check_issued(X509 *issuer, X509 *subject)
     if (ret != X509_V_OK)
         return ret;
 
-    if (issuer == subject) /* self-issued */
-        return X509_V_OK;
-
     /* check if the subject signature alg matches the issuer's PUBKEY alg */
     return EVP_PKEY_check_sig_alg_match(X509_get0_pubkey(issuer), subject);
 }
