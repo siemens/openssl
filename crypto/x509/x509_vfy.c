@@ -321,7 +321,7 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         issuer = sk_X509_value(sk, i);
-        if (issuer != x && ctx->check_issued(ctx, x, issuer)) {
+        if (ctx->check_issued(ctx, x, issuer)) {
             rv = issuer;
             if (x509_check_cert_time(ctx, rv, -1))
                 break;
@@ -341,7 +341,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
         int i;
         X509 *ch;
         /* Special case: single self-issued certificate */
-        if (sk_X509_num(ctx->chain) == 1 && likely_self_issued(x))
+        if (likely_self_issued(x) && sk_X509_num(ctx->chain) == 1)
             return 1;
         for (i = 0; i < sk_X509_num(ctx->chain); i++) {
             ch = sk_X509_value(ctx->chain, i);
@@ -2901,6 +2901,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
     int self_signed = apparently_self_signed(cert);
+    int self_issued = likely_self_issued(cert);
     STACK_OF(X509) *sktmp = NULL;
     unsigned int search;
     int may_trusted = 0;
@@ -3091,6 +3092,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         continue;
                     }
                     self_signed = apparently_self_signed(x);
+                    self_issued = likely_self_issued(x);
                 } else if (num == ctx->num_untrusted) {
                     /*
                      * We have a self-signed certificate that has the same
@@ -3111,7 +3113,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 
                 /*
                  * We've added a new trusted certificate to the chain, recheck
-                 * trust.  If not done, and not self-signed look deeper.
+                 * trust.  If not done, and not self-issued look deeper.
                  * Whether or not we're doing "trusted first", we no longer
                  * look for untrusted certificates from the peer's chain.
                  *
@@ -3137,7 +3139,11 @@ static int build_chain(X509_STORE_CTX *ctx)
                         search = 0;
                         continue;
                     }
-                    if (!self_signed)
+#if 0
+                    if (!self_issued)
+#else
+                    self_issued=self_issued; if (!self_signed)
+#endif
                         continue;
                 }
             }
@@ -3160,6 +3166,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                 search |= S_DOALTERNATE;
                 alt_untrusted = ctx->num_untrusted - 1;
                 self_signed = 0;
+                self_issued = 0;
             }
         }
 
@@ -3204,6 +3211,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             X509_up_ref(x = xtmp);
             ++ctx->num_untrusted;
             self_signed = apparently_self_signed(xtmp);
+            self_issued = likely_self_issued(xtmp);
 
             /*
              * Check for DANE-TA trust of the topmost untrusted certificate.
