@@ -54,8 +54,8 @@ SKIP: {
                 "-subj", $subj, "-extfile", $extfile,
                 "-signkey", $signkey, "-out", $selfout]))
        &&
-       run(app(["openssl", "verify", "-no_check_time", "-partial_chain",
-                "-trusted", $selfout, $testcert])));
+       run(app(["openssl", "verify", "-no_check_time",
+                "-trusted", $selfout, "-partial_chain", $testcert])));
     unlink $pubkey;
     unlink $selfout;
 }

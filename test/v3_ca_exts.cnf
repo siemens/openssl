@@ -1,5 +1,4 @@
-subjectKeyIdentifier=hash
-authorityKeyIdentifier=keyid:always,issuer:always
-basicConstraints = critical,CA:true,pathlen:1
+basicConstraints = CA:true
 keyUsage = cRLSign, keyCertSign
-issuerAltName=issuer:copy
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always

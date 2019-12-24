@@ -340,16 +340,14 @@ static void setup_crldp(X509 *x)
 /* Check that issuer public key algorithm matches subject signature algorithm */
 static int EVP_PKEY_check_sig_alg_match(EVP_PKEY *pkey, X509 *subject)
 {
-    const X509_ALGOR *sigalg = X509_get0_tbs_sigalg(subject);
     int pkey_nid;
 
     if (pkey == NULL)
         return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
-    if (sigalg == NULL)
-        return X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE;
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(sigalg->algorithm), NULL, &pkey_nid)
-        /* TODO better return a specific reason that sig alg cannot be found */
-            || EVP_PKEY_type(pkey_nid) != EVP_PKEY_base_id(pkey))
+    if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info.signature.algorithm),
+                            NULL, &pkey_nid) == 0)
+        return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
+    if (EVP_PKEY_type(pkey_nid) != EVP_PKEY_base_id(pkey))
         return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
     return X509_V_OK;
 }
@@ -784,13 +782,22 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
  * 1. Check issuer_name(subject) == subject_name(issuer)
  * 2. If akid(subject) exists, check that it matches issuer
  * 3. Check that issuer public key algorithm matches subject signature algorithm
- * Note that this does not include checking that any keyUsage(issuer) allows
- * certificate signing and does not include actually checking the signature.
+ * 4. Check that any key_usage(issuer) allows certificate signing
+ * Note that this does not include actually checking the signature.
  * Returns 0 for OK, or positive for reason for mismatch
  * where reason codes match those for X509_verify_cert().
  */
-
 int X509_check_issued(X509 *issuer, X509 *subject)
+{
+    int ret;
+
+    if ((ret = X509_likely_issued(issuer, subject)) != X509_V_OK)
+        return ret;
+    return X509_signing_allowed(issuer, subject);
+}
+
+/* do the checks 1., 2., and 3. as described above for X509_check_issued() */
+int X509_likely_issued(X509 *issuer, X509 *subject)
 {
     int ret;
 
@@ -818,7 +825,6 @@ int X509_check_issued(X509 *issuer, X509 *subject)
  */
 int X509_signing_allowed(const X509 *issuer, const X509 *subject)
 {
-
     if (subject->ex_flags & EXFLAG_PROXY) {
         if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))
             return X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
@@ -829,7 +835,6 @@ int X509_signing_allowed(const X509 *issuer, const X509 *subject)
 
 int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
 {
-
     if (akid == NULL)
         return X509_V_OK;
 
@@ -860,7 +865,7 @@ int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
                 break;
             }
         }
-        if (nm && X509_NAME_cmp(nm, X509_get_issuer_name(issuer)))
+        if (nm != NULL && X509_NAME_cmp(nm, X509_get_issuer_name(issuer)) != 0)
             return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
     }
     return X509_V_OK;

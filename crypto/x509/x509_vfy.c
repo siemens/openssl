@@ -104,17 +104,16 @@ static int null_callback(int ok, X509_STORE_CTX *e)
     return ok;
 }
 
-static int check_self_issued(X509 *x)
+static int likely_self_issued(X509 *x)
 {
-    return X509_check_issued(x, x) == X509_V_OK;
+    return X509_likely_issued(x, x) == X509_V_OK;
 }
 
 /*
  * Return 1 if a certificate is considered self-signed.
  * This does not verify self-signedness but relies on x509v3_cache_extensions()
- * matching issuer and subjqect names (i.e., the cert being self-issued) and any
+ * matching issuer and subject names (i.e., the cert being self-issued) and any
  * present authority key identifier matching the subject key identifier etc.
- * Moreover the algorithm of the public key in the cert must support signing.
  */
 static int apparently_self_signed(X509 *x)
 {
@@ -322,7 +321,7 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         issuer = sk_X509_value(sk, i);
-        if (ctx->check_issued(ctx, x, issuer)) {
+        if (issuer != x && ctx->check_issued(ctx, x, issuer)) {
             rv = issuer;
             if (x509_check_cert_time(ctx, rv, -1))
                 break;
@@ -335,12 +334,14 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
-    int ret = X509_check_issued(issuer, x);
+    int ret;
+
+    ret = X509_likely_issued(issuer, x);
     if (ret == X509_V_OK) {
         int i;
         X509 *ch;
         /* Special case: single self-issued certificate */
-        if (check_self_issued(x) && sk_X509_num(ctx->chain) == 1)
+        if (sk_X509_num(ctx->chain) == 1 && likely_self_issued(x))
             return 1;
         for (i = 0; i < sk_X509_num(ctx->chain); i++) {
             ch = sk_X509_value(ctx->chain, i);
@@ -1740,7 +1741,6 @@ static int internal_verify(X509_STORE_CTX *ctx)
      */
     while (n >= 0) {
         EVP_PKEY *pkey;
-
         /*
          * Skip signature check for self-signed certificates unless explicitly
          * asked for because it does not add any security and just wastes time.
@@ -1749,8 +1749,8 @@ static int internal_verify(X509_STORE_CTX *ctx)
          * and its depth (rather than the depth of the subject).
          */
         if (xs != xi || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)) {
-            int ret = X509_signing_allowed(xi, xs);
             int issuer_depth = n + (xi == xs ? 0 : 1);
+            int ret = X509_signing_allowed(xi, xs);
             if (ret != X509_V_OK && !verify_cb_cert(ctx, xi, issuer_depth, ret))
                 return 0;
             if ((pkey = X509_get0_pubkey(xi)) == NULL) {
@@ -1758,8 +1758,8 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 if (!verify_cb_cert(ctx, xi, issuer_depth, ret))
                     return 0;
             } else if (X509_verify(xs, pkey) <= 0) {
-                if (!verify_cb_cert(ctx, xs, n,
-                                    X509_V_ERR_CERT_SIGNATURE_FAILURE))
+                ret = X509_V_ERR_CERT_SIGNATURE_FAILURE;
+                if (!verify_cb_cert(ctx, xs, n, ret))
                     return 0;
             }
         }
@@ -2901,7 +2901,6 @@ static int build_chain(X509_STORE_CTX *ctx)
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
     int self_signed = apparently_self_signed(cert);
-    int self_issued = check_self_issued(cert);
     STACK_OF(X509) *sktmp = NULL;
     unsigned int search;
     int may_trusted = 0;
@@ -3092,7 +3091,6 @@ static int build_chain(X509_STORE_CTX *ctx)
                         continue;
                     }
                     self_signed = apparently_self_signed(x);
-                    self_issued = check_self_issued(x);
                 } else if (num == ctx->num_untrusted) {
                     /*
                      * We have a self-signed certificate that has the same
@@ -3113,7 +3111,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 
                 /*
                  * We've added a new trusted certificate to the chain, recheck
-                 * trust.  If not done, and not self-issued look deeper.
+                 * trust.  If not done, and not self-signed look deeper.
                  * Whether or not we're doing "trusted first", we no longer
                  * look for untrusted certificates from the peer's chain.
                  *
@@ -3139,7 +3137,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         search = 0;
                         continue;
                     }
-                    if (!self_issued)
+                    if (!self_signed)
                         continue;
                 }
             }
@@ -3162,7 +3160,6 @@ static int build_chain(X509_STORE_CTX *ctx)
                 search |= S_DOALTERNATE;
                 alt_untrusted = ctx->num_untrusted - 1;
                 self_signed = 0;
-                self_issued = 0;
             }
         }
 
@@ -3207,7 +3204,6 @@ static int build_chain(X509_STORE_CTX *ctx)
             X509_up_ref(x = xtmp);
             ++ctx->num_untrusted;
             self_signed = apparently_self_signed(xtmp);
-            self_issued = check_self_issued(xtmp);
 
             /*
              * Check for DANE-TA trust of the topmost untrusted certificate.
