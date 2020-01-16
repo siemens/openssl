@@ -145,6 +145,66 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
 
     if (n == 1)
         BN_zero(r);
+    /*-
+     * Begin code added by Siemens AG
+     * Copyright (C) 2019 Siemens AG all rights reserved
+     */
+# ifndef FIPS_MODE
+    /*
+     * Bounded random number according to Method 2 in Table B4 on p. 70
+     * of the BSI document
+     * "BSI - Technical Guideline, Cryptographic Mechanisms: Recommendations and
+     * Key Lengths, BSI TR-02102-1, Version 2018-02, May 29, 2018"
+     *
+     * Instead of a modulo reduction a mapping according to Lemire is
+     * used to convert from 0 < r < 2^n to 0 < r < range.
+     */
+# define BN_RAND_RANGE_BSI_TR_02102_1_EXTRA_BITS 64
+    else {
+        BIGNUM *rl = NULL;
+        BN_CTX *rctx = NULL;
+        if ((rl = BN_new()) == NULL) {
+            return 0;
+        }
+# define USE_TESTVEC 0
+# if USE_TESTVEC == 0
+        if (!bnrand(flag, rl, n + BN_RAND_RANGE_BSI_TR_02102_1_EXTRA_BITS,
+                    BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx)) {
+            BN_free(rl);
+            return 0;
+        }
+# else
+        /* Hack for local insertion of deterministic entropy input */
+        FILE *frndraw;
+        char buf[500] = { 0 };
+        char *c = buf;
+        frndraw = fopen("rndraw.in", "r");
+        do {
+            if (fread(c, 1, 1, frndraw) <= 0) {
+                break;
+            }
+        } while (*c++ != '\n' && c < buf + sizeof(buf));
+        BN_hex2bn(&rl, buf);
+        printf("%s %d %d\n", BN_bn2hex(rl), BN_num_bits(rl),
+               n + BN_RAND_RANGE_BSI_TR_02102_1_EXTRA_BITS);
+        fclose(frndraw);
+# endif
+        if (((rctx = BN_CTX_new()) == NULL)
+            || !BN_mul(rl, rl, range, rctx)
+            || !BN_rshift(rl, rl, n + BN_RAND_RANGE_BSI_TR_02102_1_EXTRA_BITS)
+            || (BN_copy(r, rl) == NULL)) {
+            BN_free(rl);
+            BN_CTX_free(rctx);
+            return 0;
+        }
+
+        BN_free(rl);
+        BN_CTX_free(rctx);
+    }
+#else
+    /*
+     * End code added by Siemens AG
+     */
     else if (!BN_is_bit_set(range, n - 2) && !BN_is_bit_set(range, n - 3)) {
         /*
          * range = 100..._2, so 3*range (= 11..._2) is exactly one bit longer
@@ -189,6 +249,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
         }
         while (BN_cmp(r, range) >= 0);
     }
+#endif /* code line added by Siemens AG */
 
     bn_check_top(r);
     return 1;
