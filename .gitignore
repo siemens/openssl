@@ -186,4 +186,5 @@ pod2htmd.tmp
 doc-nits
 .vscode/launch.json
 .vscode/tasks.json
+.vscode/settings.json
 .gitignore

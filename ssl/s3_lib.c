@@ -89,7 +89,7 @@ static SSL_CIPHER tls13_ciphers[] = {
         TLS1_3_CK_MACCIPHERS_SHA256_SHA256,
         SSL_kANY,
         SSL_aANY,
-        SSL_eNULL,
+        SSL_MACCIPHER_SHA256,
         SSL_SHA256,
         TLS1_3_VERSION, TLS1_3_VERSION,
         0, 0,

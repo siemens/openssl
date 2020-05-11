@@ -1,5 +1,31 @@
 {
     "files.associations": {
-        "evp.h": "c"
-    }
+        "evp.h": "c",
+        "array": "c",
+        "iterator": "c",
+        "string": "c",
+        "string_view": "c",
+        "vector": "c",
+        "__config": "c",
+        "__hash_table": "c",
+        "__locale": "c",
+        "functional": "c",
+        "filesystem": "c",
+        "iomanip": "c",
+        "ios": "c",
+        "locale": "c",
+        "ostream": "c",
+        "sstream": "c",
+        "thread": "c",
+        "type_traits": "c",
+        "*.tcc": "c",
+        "bitset": "c",
+        "istream": "c",
+        "limits": "c",
+        "ratio": "c",
+        "streambuf": "c",
+        "queue": "c",
+        "stack": "c"
+    },
+    "C_Cpp.dimInactiveRegions": false
 }

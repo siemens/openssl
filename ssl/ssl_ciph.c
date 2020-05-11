@@ -43,8 +43,9 @@
 #define SSL_ENC_CHACHA_IDX      19
 #define SSL_ENC_ARIA128GCM_IDX  20
 #define SSL_ENC_ARIA256GCM_IDX  21
-#define SSL_ENC_NUM_IDX         22
-
+#define SSL_ENC_MACCIPHERSHA256_IDX        22
+#define SSL_ENC_MACCIPHERSHA384_IDX        23
+#define SSL_ENC_NUM_IDX         24
 /* NB: make sure indices in these tables match values above */
 
 typedef struct {
@@ -76,6 +77,8 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_CHACHA20POLY1305, NID_chacha20_poly1305}, /* SSL_ENC_CHACHA_IDX 19 */
     {SSL_ARIA128GCM, NID_aria_128_gcm}, /* SSL_ENC_ARIA128GCM_IDX 20 */
     {SSL_ARIA256GCM, NID_aria_256_gcm}, /* SSL_ENC_ARIA256GCM_IDX 21 */
+    {SSL_MACCIPHER_SHA256, NID_maccipher_sha256}, /*SSL_ENC_MACCIPHERSHA256_IDX  22*/
+    {SSL_MACCIPHER_SHA384, NID_maccipher_sha384} /*SSL_ENC_MACCIPHERSHA256_IDX  23*/
 };
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX];
@@ -309,6 +312,10 @@ static const SSL_CIPHER cipher_aliases[] = {
      SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
     {0, SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA, NULL, 0,
      SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
+
+    {0, SSL_TXT_MACCIPHER_SHA256, 0 ,0,0,SSL_MACCIPHER_SHA256, 0,0,0,0},
+    {0, SSL_TXT_MACCIPHER_SHA384, 0 ,0,0,SSL_MACCIPHER_SHA384, 0,0,0,0},
+    {0, SSL_TXT_MACCIPHER, 0 ,0,0,SSL_MACCIPHER_SHA256 | SSL_MACCIPHER_SHA384, 0,0,0,0},
 
 };
 

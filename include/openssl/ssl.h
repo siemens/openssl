@@ -130,6 +130,9 @@ extern "C" {
 # define SSL_TXT_ARIA_GCM        "ARIAGCM"
 # define SSL_TXT_ARIA128         "ARIA128"
 # define SSL_TXT_ARIA256         "ARIA256"
+# define SSL_TXT_MACCIPHER_SHA256 "MACCIPHER-SHA256"
+# define SSL_TXT_MACCIPHER_SHA384 "MACCIPHER-SHA384"
+# define SSL_TXT_MACCIPHER "MACCIPHER"
 
 # define SSL_TXT_MD5             "MD5"
 # define SSL_TXT_SHA1            "SHA1"
