@@ -3,6 +3,7 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+
 #define MACCIPHER_SHA256_KEY_SIZE 64
 
 
@@ -61,34 +62,36 @@ static int maccipher_sha256_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     EVP_MACCIPHER_SHA256_KEY *key = data(ctx);
 
-    if (EVP_CIPHER_CTX_encrypting(ctx)) {
-        if (in != out)
-            memcpy(out, in, inl);
-      
-        int k = inl - SHA256_DIGEST_LENGTH;
-        key->md = key->tail;
-        SHA256_Update(&key->md, in, inl - SHA256_DIGEST_LENGTH);
-        SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md);
-        key->md = key->head;
-        SHA256_Update(&key->md, out + inl - SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH);
-        SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md); 
- 
-    }
-    else
-    {
-        if (in != out)
-            memcpy(out, in, inl);
+    if (out != NULL){
+        if (EVP_CIPHER_CTX_encrypting(ctx)) {
+            if (in != out )
+                memcpy(out, in, inl);
+        
+            int k = inl - SHA256_DIGEST_LENGTH;
+            key->md = key->tail;
+            SHA256_Update(&key->md, in, inl - SHA256_DIGEST_LENGTH);
+            SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md);
+            key->md = key->head;
+            SHA256_Update(&key->md, out + inl - SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH);
+            SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md); 
+    
+        }
+        else
+        {
+            if (in != out)
+                memcpy(out, in, inl);
 
-        int k = inl - SHA256_DIGEST_LENGTH;
-        key->md = key->tail;
-        SHA256_Update(&key->md, in, inl - SHA256_DIGEST_LENGTH);
-        SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md);
-        key->md = key->head;
-        SHA256_Update(&key->md, out + inl - SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH);
-        SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md); 
+            int k = inl - SHA256_DIGEST_LENGTH;
+            key->md = key->tail;
+            SHA256_Update(&key->md, in, inl - SHA256_DIGEST_LENGTH);
+            SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md);
+            key->md = key->head;
+            SHA256_Update(&key->md, out + inl - SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH);
+            SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md); 
 
-        if (CRYPTO_memcmp(out + inl - SHA256_DIGEST_LENGTH, in + inl - SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH))
-                return 0;
+            if (CRYPTO_memcmp(out + inl - SHA256_DIGEST_LENGTH, in + inl - SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH))
+                    return 0;
+        }
     }
     
     return 1;
@@ -104,7 +107,7 @@ static int maccipher_sha256_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, 
         case EVP_CTRL_AEAD_SET_MAC_KEY:
         {
             unsigned int i;
-            unsigned char hmac_key[64];
+            unsigned char hmac_key[MACCIPHER_SHA256_KEY_SIZE];
             
             memset(hmac_key, 0, sizeof(hmac_key));
 
@@ -130,7 +133,7 @@ static int maccipher_sha256_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, 
             SHA256_Update(&key_data->tail, hmac_key, sizeof(hmac_key)); 
             OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
 
-            return 32;
+            return SHA256_DIGEST_LENGTH;
         }
 
         case EVP_CTRL_GET_IVLEN: 

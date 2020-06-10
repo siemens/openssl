@@ -179,7 +179,8 @@ extern "C" {
 #  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
                                    "TLS_CHACHA20_POLY1305_SHA256:" \
                                    "TLS_AES_128_GCM_SHA256:" \
-                                   "TLS_SHA256_SHA256" 
+                                   "TLS_SHA256_SHA256:" \
+                                   "TLS_SHA384_SHA384" 
 # else
 #  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
                                    "TLS_AES_128_GCM_SHA256"
