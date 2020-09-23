@@ -161,7 +161,7 @@ const OPTIONS cms_options[] = {
     {"nodetach", OPT_NODETACH, '-', "Use opaque signing"},
     {"nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute"},
     {"noattr", OPT_NOATTR, '-', "Don't include any signed attributes"},
-    {"binary", OPT_BINARY, '-', "Don't translate message to text"},
+    {"binary", OPT_BINARY, '-', "Treat input as binary: do not translate to canonical form"},
     {"keyid", OPT_KEYID, '-', "Use subject key identifier"},
     {"nosigs", OPT_NOSIGS, '-', "Don't verify message signature"},
     {"nocerts", OPT_NOCERTS, '-',
@@ -231,7 +231,7 @@ const OPTIONS cms_options[] = {
     {NULL}
 };
 
-static CMS_ContentInfo *load_content_info(int informat, BIO *in, BIO **indata,
+static CMS_ContentInfo *load_content_info(int informat, BIO *in, int flags, BIO **indata,
                                           const char *name,
                                           OSSL_LIB_CTX *libctx,
                                           const char *propq)
@@ -245,7 +245,7 @@ static CMS_ContentInfo *load_content_info(int informat, BIO *in, BIO **indata,
     }
     switch (informat) {
     case FORMAT_SMIME:
-        ci = SMIME_read_CMS_ex(in, indata, &ret);
+        ci = SMIME_read_CMS_ex(in, flags, indata, &ret);
         break;
     case FORMAT_PEM:
         ci = PEM_read_bio_CMS(in, &ret, NULL, NULL);
@@ -266,6 +266,34 @@ err:
     CMS_ContentInfo_free(ret);
     return NULL;
 }
+
+static void warn_binary(const char *file, int flags)
+{
+    BIO *bio;
+    unsigned char linebuf[1024], *cur, *end;
+    int len;
+
+    if ((flags & CMS_BINARY) != 0)
+        return; /* no need to warn if -binary was given */
+    if ((bio = bio_open_default(file, 'r', FORMAT_BINARY)) == NULL)
+        return; /* cannot give a proper warning since there is an error */
+    while ((len = BIO_gets(bio, (char *)linebuf, sizeof(linebuf))) > 0) {
+        end = linebuf + len;
+        for (cur = linebuf; cur < end; cur++) {
+            if (*cur == '\0') {
+                BIO_printf(bio_err, "Warning: input file '%s' contains NUL character; better use -binary option\n", file);
+                goto end;
+            }
+            if (*cur >= 0x80) {
+                BIO_printf(bio_err, "Warning: input file '%s' contains 8-bit character; better use -binary option\n", file);
+                goto end;
+            }
+        }
+    }
+ end:
+    BIO_free(bio);
+}
+
 
 int cms_main(int argc, char **argv)
 {
@@ -456,7 +484,7 @@ int cms_main(int argc, char **argv)
                                 OPT_FMT_PEMDER | OPT_FMT_SMIME, &rctformat))
                     goto opthelp;
             } else {
-                rcms = load_content_info(rctformat, rctin, NULL, "recipient",
+                rcms = load_content_info(rctformat, rctin, 0, NULL, "recipient",
                                          libctx, app_get0_propq());
             }
             break;
@@ -790,13 +818,12 @@ int cms_main(int argc, char **argv)
     if (!(operation & SMIME_SIGNERS))
         flags &= ~CMS_DETACHED;
 
-    if (!(operation & SMIME_OP))
-        if (flags & CMS_BINARY)
+    if ((flags & CMS_BINARY) != 0) {
+        if (!(operation & SMIME_OP))
             outformat = FORMAT_BINARY;
-
-    if (!(operation & SMIME_IP))
-        if (flags & CMS_BINARY)
+        if (!(operation & SMIME_IP))
             informat = FORMAT_BINARY;
+    }
 
     if (operation == SMIME_ENCRYPT) {
         if (!cipher) {
@@ -872,16 +899,20 @@ int cms_main(int argc, char **argv)
             goto end;
     }
 
-    in = bio_open_default(infile, 'r', informat);
+    warn_binary(infile, flags);
+    in = bio_open_default(infile, 'r',
+                          (flags & CMS_BINARY) != 0 ? FORMAT_BINARY : informat);
     if (in == NULL)
         goto end;
 
     if (operation & SMIME_IP) {
-        cms = load_content_info(informat, in, &indata, "SMIME", libctx, app_get0_propq());
+        cms = load_content_info(informat, in, flags, &indata, "SMIME",
+                                libctx, app_get0_propq());
         if (cms == NULL)
             goto end;
         if (contfile != NULL) {
             BIO_free(indata);
+            warn_binary(contfile, flags);
             if ((indata = BIO_new_file(contfile, "rb")) == NULL) {
                 BIO_printf(bio_err, "Can't read content file %s\n", contfile);
                 goto end;
@@ -902,13 +933,14 @@ int cms_main(int argc, char **argv)
 
     if (rctfile != NULL) {
         char *rctmode = (rctformat == FORMAT_ASN1) ? "rb" : "r";
+
         if ((rctin = BIO_new_file(rctfile, rctmode)) == NULL) {
             BIO_printf(bio_err, "Can't open receipt file %s\n", rctfile);
             goto end;
         }
 
-        rcms = load_content_info(rctformat, rctin, NULL, "recipient", libctx,
-                                 app_get0_propq());
+        rcms = load_content_info(rctformat, rctin, 0, NULL, "recipient", libctx,
+                                 app_get0_propq);
         if (rcms == NULL)
             goto end;
     }
