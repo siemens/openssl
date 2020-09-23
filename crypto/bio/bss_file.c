@@ -346,10 +346,22 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
+static long file_pos(BIO *bp)
+{
+    if ((bp->flags & BIO_FLAGS_UPLINK_INTERNAL) != 0)
+        return UP_ftell(bp->ptr);
+    else
+        return ftell((FILE *)bp->ptr);
+}
+
 static int file_gets(BIO *bp, char *buf, int size)
 {
     int ret = 0;
+    long before, after;
 
+    before = file_pos(bp);
+    if (before < 0)
+        goto err;
     buf[0] = '\0';
     if (bp->flags & BIO_FLAGS_UPLINK_INTERNAL) {
         if (!UP_fgets(buf, size, bp->ptr))
@@ -358,8 +370,15 @@ static int file_gets(BIO *bp, char *buf, int size)
         if (!fgets(buf, size, (FILE *)bp->ptr))
             goto err;
     }
-    if (buf[0] != '\0')
-        ret = strlen(buf);
+    after = file_pos(bp);
+    if (after < before)
+        goto err;
+    /* fgets should guarantee that input length == after - before <= size - 1 */
+    if (after - before < size - 1)
+        size = after - before + 1;
+    while (ret < size - 1)
+        if (buf[ret++] == '\n')
+            break;
  err:
     return ret;
 }
