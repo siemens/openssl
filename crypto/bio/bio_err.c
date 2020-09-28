@@ -24,6 +24,7 @@ static const ERR_STRING_DATA BIO_str_reasons[] = {
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_BROKEN_PIPE), "broken pipe"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_CONNECT_ERROR), "connect error"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_CONNECT_TIMEOUT), "connect timeout"},
+    {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_FGETS_ERROR), "fgets error"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET),
     "gethostbyname addr is not af inet"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_GETSOCKNAME_ERROR), "getsockname error"},

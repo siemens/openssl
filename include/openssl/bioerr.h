@@ -28,6 +28,7 @@
 # define BIO_R_BROKEN_PIPE                                124
 # define BIO_R_CONNECT_ERROR                              103
 # define BIO_R_CONNECT_TIMEOUT                            147
+# define BIO_R_FGETS_ERROR                                106
 # define BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET          107
 # define BIO_R_GETSOCKNAME_ERROR                          132
 # define BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS              133

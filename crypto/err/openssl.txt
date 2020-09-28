@@ -132,6 +132,7 @@ BIO_R_BAD_FOPEN_MODE:101:bad fopen mode
 BIO_R_BROKEN_PIPE:124:broken pipe
 BIO_R_CONNECT_ERROR:103:connect error
 BIO_R_CONNECT_TIMEOUT:147:connect timeout
+BIO_R_FGETS_ERROR:106:fgets error
 BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET:107:gethostbyname addr is not af inet
 BIO_R_GETSOCKNAME_ERROR:132:getsockname error
 BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS:133:getsockname truncated address
