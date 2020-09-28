@@ -26,9 +26,9 @@
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(CMS_ContentInfo *cms);
-static CMS_ReceiptRequest *make_receipt_request(
-    STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
-    STACK_OF(OPENSSL_STRING) *rr_from, OSSL_LIB_CTX *libctx);
+static CMS_ReceiptRequest
+*make_receipt_request(STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
+                      STACK_OF(OPENSSL_STRING) *rr_from);
 static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
                               STACK_OF(OPENSSL_STRING) *param);
 
@@ -231,14 +231,12 @@ const OPTIONS cms_options[] = {
     {NULL}
 };
 
-static CMS_ContentInfo *load_content_info(int informat, BIO *in, int flags, BIO **indata,
-                                          const char *name,
-                                          OSSL_LIB_CTX *libctx,
-                                          const char *propq)
+static CMS_ContentInfo *load_content_info(int informat, BIO *in, int flags,
+                                          BIO **indata, const char *name)
 {
     CMS_ContentInfo *ret, *ci;
 
-    ret = CMS_ContentInfo_new_ex(libctx, propq);
+    ret = CMS_ContentInfo_new_ex(app_get0_libctx(), app_get0_propq());
     if (ret == NULL) {
         BIO_printf(bio_err, "Error allocating CMS_contentinfo\n");
         return NULL;
@@ -262,7 +260,7 @@ static CMS_ContentInfo *load_content_info(int informat, BIO *in, int flags, BIO 
         goto err;
     }
     return ret;
-err:
+ err:
     CMS_ContentInfo_free(ret);
     return NULL;
 }
@@ -293,7 +291,6 @@ static void warn_binary(const char *file, int flags)
  end:
     BIO_free(bio);
 }
-
 
 int cms_main(int argc, char **argv)
 {
@@ -484,8 +481,7 @@ int cms_main(int argc, char **argv)
                                 OPT_FMT_PEMDER | OPT_FMT_SMIME, &rctformat))
                     goto opthelp;
             } else {
-                rcms = load_content_info(rctformat, rctin, 0, NULL, "recipient",
-                                         libctx, app_get0_propq());
+                rcms = load_content_info(rctformat, rctin, 0, NULL, "recipient");
             }
             break;
         case OPT_CERTFILE:
@@ -614,8 +610,8 @@ int cms_main(int argc, char **argv)
             signerfile = opt_arg();
             break;
         case OPT_ORIGINATOR:
-             originatorfile = opt_arg();
-             break;
+            originatorfile = opt_arg();
+            break;
         case OPT_INKEY:
             /* If previous -inkey argument add signer to list */
             if (keyfile != NULL) {
@@ -870,8 +866,8 @@ int cms_main(int argc, char **argv)
     if (originatorfile != NULL) {
         if ((originator = load_cert(originatorfile,
                                     "originator certificate file")) == NULL) {
-             ERR_print_errors(bio_err);
-             goto end;
+            ERR_print_errors(bio_err);
+            goto end;
         }
     }
 
@@ -906,8 +902,7 @@ int cms_main(int argc, char **argv)
         goto end;
 
     if (operation & SMIME_IP) {
-        cms = load_content_info(informat, in, flags, &indata, "SMIME",
-                                libctx, app_get0_propq());
+        cms = load_content_info(informat, in, flags, &indata, "SMIME");
         if (cms == NULL)
             goto end;
         if (contfile != NULL) {
@@ -939,8 +934,7 @@ int cms_main(int argc, char **argv)
             goto end;
         }
 
-        rcms = load_content_info(rctformat, rctin, 0, NULL, "recipient", libctx,
-                                 app_get0_propq);
+        rcms = load_content_info(rctformat, rctin, 0, NULL, "recipient");
         if (rcms == NULL)
             goto end;
     }
@@ -1069,13 +1063,11 @@ int cms_main(int argc, char **argv)
             if (econtent_type != NULL)
                 CMS_set1_eContentType(cms, econtent_type);
 
-            if (rr_to != NULL) {
-                rr = make_receipt_request(rr_to, rr_allorfirst, rr_from, libctx);
-                if (rr == NULL) {
-                    BIO_puts(bio_err,
-                             "Signed Receipt Request Creation Error\n");
-                    goto end;
-                }
+            if (rr_to != NULL
+                && ((rr = make_receipt_request(rr_to, rr_allorfirst, rr_from))
+                    == NULL)) {
+                BIO_puts(bio_err, "Signed Receipt Request Creation Error\n");
+                goto end;
             }
         } else {
             flags |= CMS_REUSE_DIGEST;
@@ -1424,10 +1416,9 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
     return NULL;
 }
 
-static CMS_ReceiptRequest *make_receipt_request(
-   STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
-   STACK_OF(OPENSSL_STRING) *rr_from,
-   OSSL_LIB_CTX *libctx)
+static CMS_ReceiptRequest
+*make_receipt_request(STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
+                      STACK_OF(OPENSSL_STRING) *rr_from)
 {
     STACK_OF(GENERAL_NAMES) *rct_to = NULL, *rct_from = NULL;
     CMS_ReceiptRequest *rr;
@@ -1442,7 +1433,8 @@ static CMS_ReceiptRequest *make_receipt_request(
         rct_from = NULL;
     }
     rr = CMS_ReceiptRequest_create0_ex(NULL, -1, rr_allorfirst, rct_from,
-                                       rct_to, libctx, app_get0_propq());
+                                       rct_to, app_get0_libctx(),
+                                       app_get0_propq());
     return rr;
  err:
     sk_GENERAL_NAMES_pop_free(rct_to, GENERAL_NAMES_free);
