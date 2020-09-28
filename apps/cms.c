@@ -269,21 +269,30 @@ static void warn_binary(const char *file, int flags)
 {
     BIO *bio;
     unsigned char linebuf[1024], *cur, *end;
-    int len;
+    int line, len;
 
+# ifndef OPENSSL_SYS_WINDOWS /* ftell() does not give reliable results there */
     if ((flags & CMS_BINARY) != 0)
         return; /* no need to warn if -binary was given */
+# endif
     if ((bio = bio_open_default(file, 'r', FORMAT_BINARY)) == NULL)
         return; /* cannot give a proper warning since there is an error */
-    while ((len = BIO_gets(bio, (char *)linebuf, sizeof(linebuf))) > 0) {
+    for (line = 1; (len = BIO_gets(bio, (char *)linebuf, sizeof(linebuf))) > 0;
+         line++) {
         end = linebuf + len;
         for (cur = linebuf; cur < end; cur++) {
-            if (*cur == '\0') {
-                BIO_printf(bio_err, "Warning: input file '%s' contains NUL character; better use -binary option\n", file);
-                goto end;
-            }
-            if (*cur >= 0x80) {
-                BIO_printf(bio_err, "Warning: input file '%s' contains 8-bit character; better use -binary option\n", file);
+            if (*cur == '\0' || *cur >= 0x80) {
+                BIO_printf(bio_err, "Warning: input file '%s' line=%d col=%ld ",
+                           file, line, cur - linebuf + 1);
+                BIO_printf(bio_err, *cur == '\0'
+                           ? "contains NUL character; "
+                           : "contains 8-bit character; ");
+                BIO_printf(bio_err,
+# ifndef OPENSSL_SYS_WINDOWS /* ftell() does not give reliable results there */
+                           (flags & CMS_BINARY) != 0 ?
+                           "verification will likely fail because ftell() appears broken on Windows shared builds\n" :
+# endif
+                           "better use -binary option\n");
                 goto end;
             }
         }
