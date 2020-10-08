@@ -948,7 +948,11 @@ int cms_main(int argc, char **argv)
             goto end;
     }
 
-    out = bio_open_default(outfile, 'w', outformat);
+    out = bio_open_default(outfile, 'w',
+                           (operation & SMIME_SIGNERS) != 0
+                               && (flags & CMS_BINARY) != 0
+                               && (flags & CMS_DETACHED) == 0
+                           ? FORMAT_BINARY : outformat);
     if (out == NULL)
         goto end;
 

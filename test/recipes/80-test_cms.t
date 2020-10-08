@@ -827,36 +827,31 @@ subtest "CMS binary input tests\n" => sub {
 
     plan tests => 8;
 
-  SKIP: {
-      skip "This sub-test is not supported in a shared library build on Windows", 8
-          if $^O eq 'MSWin32' && !disabled("shared");
+    ok(run(app(["openssl", "cms", "-sign", "-md", "sha256",
+                "-signer", $cert, "-inkey", $key,
+                "-binary", "-in", $input, "-out", $signed])),
+       "sign binary input");
+    ok(run(app(["openssl", "cms", "-verify", "-CAfile", $cert,
+                "-binary", "-in", $signed, "-out", $verified])),
+       "verify binary input");
+    ok(compare_binary($input, $verified),
+       "compare verified binary input");
+    ok(!run(app(["openssl", "cms", "-verify", "-CAfile", $cert, "-crlfeol",
+                 "-binary", "-in", $signed, "-out", $verified])),
+       "verify binary input wrong crlfeol");
 
-      ok(run(app(["openssl", "cms", "-sign", "-md", "sha256",
-                  "-signer", $cert, "-inkey", $key,
-                  "-binary", "-in", $input, "-out", $signed])),
-         "sign binary input");
-      ok(run(app(["openssl", "cms", "-verify", "-CAfile", $cert,
-                  "-binary", "-in", $signed, "-out", $verified])),
-         "verify binary input");
-      ok(compare_binary($input, $verified),
-         "compare verified binary input");
-      ok(!run(app(["openssl", "cms", "-verify", "-CAfile", $cert, "-crlfeol",
-                   "-binary", "-in", $signed, "-out", $verified])),
-         "verify binary input wrong crlfeol");
-
-      ok(run(app(["openssl", "cms", "-sign", "-md", "sha256", "-crlfeol",
-                  "-signer", $cert, "-inkey", $key,
-                  "-binary", "-in", $input, "-out", $signed.".crlf"])),
-         "sign binary input crlfeol");
-      ok(run(app(["openssl", "cms", "-verify", "-CAfile", $cert, "-crlfeol",
-                  "-binary", "-in", $signed.".crlf", "-out", $verified.".crlf"])),
-         "verify binary input crlfeol");
-      ok(compare_binary($input, $verified.".crlf"),
-         "compare verified binary input crlfeol");
-      ok(!run(app(["openssl", "cms", "-verify", "-CAfile", $cert,
-                   "-binary", "-in", $signed.".crlf", "-out", $verified.".crlf"])),
-         "verify binary input missing crlfeol");
-    }
+    ok(run(app(["openssl", "cms", "-sign", "-md", "sha256", "-crlfeol",
+                "-signer", $cert, "-inkey", $key,
+                "-binary", "-in", $input, "-out", $signed.".crlf"])),
+       "sign binary input crlfeol");
+    ok(run(app(["openssl", "cms", "-verify", "-CAfile", $cert, "-crlfeol",
+                "-binary", "-in", $signed.".crlf", "-out", $verified.".crlf"])),
+       "verify binary input crlfeol");
+    ok(compare_binary($input, $verified.".crlf"),
+       "compare verified binary input crlfeol");
+    ok(!run(app(["openssl", "cms", "-verify", "-CAfile", $cert,
+                 "-binary", "-in", $signed.".crlf", "-out", $verified.".crlf"])),
+       "verify binary input missing crlfeol");
 };
 
 sub check_availability {
