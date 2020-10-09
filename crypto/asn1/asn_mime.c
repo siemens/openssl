@@ -523,7 +523,8 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
         int eolcnt = 0;
         if (flags & SMIME_TEXT)
             BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
-        while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
+        while (/*printf("\n#### BIO_gets() called by SMIME_crlf_copy flags=%x\n", flags),*/   
+               (len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
             eol = strip_eol(linebuf, &len, flags);
             if (len) {
                 /* Not EOF: write out all CRLF */
@@ -600,6 +601,7 @@ static int bio_gets(BIO *bio, int flags, char *buf, int size)
                 break;
         }
         *ptr = '\0';
+        if (0&&(int)strlen(buf)!=ptr - buf) printf("\n#### bio_gets tell=%d str=%.5d len=%.5d ##%s##", BIO_tell(bio), (int)strlen(buf), ptr - buf, buf);  
         return (int)(ptr - buf);
     }
 #endif
@@ -627,7 +629,8 @@ static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **r
     *ret = parts;
     if (*ret == NULL)
         return 0;
-    while ((len = bio_gets(bio, flags, linebuf, MAX_SMLEN)) > 0) {
+    while (/*printf("\n#### bio_gets() called by multi_split"),*/   
+           (len = bio_gets(bio, flags, linebuf, MAX_SMLEN)) > 0) {
         state = mime_bound_check(linebuf, len, bound, blen);
         if (state == 1) {
             first = 1;
@@ -695,7 +698,8 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
     headers = sk_MIME_HEADER_new(mime_hdr_cmp);
     if (headers == NULL)
         return NULL;
-    while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
+    while (/*printf("\n#### BIO_gets() called by mime_parse_hdr"),*/  
+           (len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
         /* If whitespace at line start then continuation line */
         if (mhdr && ossl_isspace(linebuf[0]))
             state = MIME_NAME;

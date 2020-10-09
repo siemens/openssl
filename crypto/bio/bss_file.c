@@ -93,6 +93,7 @@ BIO *BIO_new_file(const char *filename, const char *mode)
     /* we did fopen -> we disengage UPLINK */
     BIO_clear_flags(ret, BIO_FLAGS_UPLINK_INTERNAL);
     BIO_set_fp(ret, file, fp_flags);
+    if (strcmp(filename, "smcont.signed") == 0) printf("######## smcont.signed fp_flags =%x\n", fp_flags);  
     return ret;
 }
 
@@ -401,6 +402,7 @@ static int file_gets(BIO *bp, char *buf, int size)
             break;
 
  err:
+    if (0&&(int)strlen(buf)!=ret){ printf("\n#### BIO_gets tell=%d", BIO_tell(bp));     printf(" str=%.5d len=%.5d ##%s##", (int)strlen(buf), ret, buf); }   
     if (ret == 0 && !(BIO_feof(bp))) {
         BIOerr(0, BIO_R_FGETS_ERROR);
 #ifndef _MSC_VER /* ftell() does not give reliable results on Windows */
