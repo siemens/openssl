@@ -357,6 +357,7 @@ static long file_pos(BIO *bp)
 
 static int file_gets(BIO *bp, char *buf, int size)
 {
+    int end_on_NUL = 0;
     int ret = 0;
 #ifndef OPENSSL_SYS_WINDOWS /* ftell() does not give reliable results there */
     long before, after = -1;
@@ -381,12 +382,17 @@ static int file_gets(BIO *bp, char *buf, int size)
     /* fgets should guarantee that input length == after - before <= size - 1 */
     if (after - before < size - 1)
         size = after - before + 1;
-    while (ret < size - 1)
-        if (buf[ret++] == '\n')
-            break;
 #else
-    ret = strlen(buf);
+    if (BIO_feof(bp))
+        /*
+         * In this case we can tell exactly how many chars have been read
+         * only if the last line/chunk does not contain NUL chars.
+         */
+        end_on_NUL = 1;
 #endif
+    while (ret < size - 1)
+        if ((end_on_NUL && buf[ret] == '\0') || buf[ret++] == '\n')
+            break;
 
  err:
     if (ret == 0 && !(BIO_feof(bp))) {
