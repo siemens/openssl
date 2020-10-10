@@ -33,7 +33,11 @@
 #if !defined(OPENSSL_NO_STDIO)
 
 # define BIO_feof(b) (((b)->flags & BIO_FLAGS_UPLINK_INTERNAL) != 0 \
-                      ? (long)UP_feof((b)->ptr) : (long)feof((b)->ptr))
+                      ? (long)UP_feof((b)->ptr) \
+                      : (long)feof((b)->ptr))
+# define BIO_fread(p,n,s,b) (((b)->flags & BIO_FLAGS_UPLINK_INTERNAL) != 0 \
+                             ? UP_fread(p, n, s, (b)->ptr)              \
+                             : fread(p, n, s, (FILE *)(b)->ptr))
 static int file_write(BIO *h, const char *buf, int num);
 static int file_read(BIO *h, char *buf, int size);
 static int file_puts(BIO *h, const char *str);
@@ -142,10 +146,7 @@ static int file_read(BIO *b, char *out, int outl)
     int ret = 0;
 
     if (b->init && (out != NULL)) {
-        if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
-            ret = UP_fread(out, 1, (int)outl, b->ptr);
-        else
-            ret = fread(out, 1, (int)outl, (FILE *)b->ptr);
+        ret = BIO_fread(out, 1, (size_t)outl, b);
         if (ret == 0
             && (b->flags & BIO_FLAGS_UPLINK_INTERNAL
                 ? UP_ferror((FILE *)b->ptr) : ferror((FILE *)b->ptr))) {
@@ -357,16 +358,24 @@ static long file_pos(BIO *bp)
 
 static int file_gets(BIO *bp, char *buf, int size)
 {
-    int end_on_NUL = 0;
     int ret = 0;
-#ifndef OPENSSL_SYS_WINDOWS /* ftell() does not give reliable results there */
+
+#ifdef OPENSSL_SYS_WINDOWS
+    /*
+     * fgets() would wrongly translate LF to CR+LF on binary input,
+     * so using fread() per char although this is not efficient
+     */
+    while (ret < size - 1 && !BIO_feof(bp))
+        if ((buf[ret++] = BIO_fread(buf, 1, 1, bp)) == '\n')
+            break;
+    buf[ret] = '\0';
+#else
     long before, after = -1;
     char strbuf[32];
 
     before = file_pos(bp);
     if (before < 0)
         goto err;
-#endif
     buf[0] = '\0';
     if (bp->flags & BIO_FLAGS_UPLINK_INTERNAL) {
         if (!UP_fgets(buf, size, bp->ptr))
@@ -375,26 +384,19 @@ static int file_gets(BIO *bp, char *buf, int size)
         if (!fgets(buf, size, (FILE *)bp->ptr))
             goto err;
     }
-#ifndef OPENSSL_SYS_WINDOWS  /* ftell() does not give reliable results there */
     after = file_pos(bp);
     if (after < before)
         goto err;
     /* fgets should guarantee that input length == after - before <= size - 1 */
     if (after - before < size - 1)
         size = after - before + 1;
-#else
-    if (BIO_feof(bp))
-        /*
-         * In this case we can tell exactly how many chars have been read
-         * only if the last line/chunk does not contain NUL chars.
-         */
-        end_on_NUL = 1;
-#endif
     while (ret < size - 1)
-        if ((end_on_NUL && buf[ret] == '\0') || buf[ret++] == '\n')
+        if (buf[ret++] == '\n')
             break;
 
  err:
+#endif
+
     if (ret == 0 && !(BIO_feof(bp))) {
         BIOerr(0, BIO_R_FGETS_ERROR);
 #ifndef OPENSSL_SYS_WINDOWS /* ftell() does not give reliable results there */
