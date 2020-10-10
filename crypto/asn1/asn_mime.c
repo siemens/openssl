@@ -581,11 +581,35 @@ int SMIME_text(BIO *in, BIO *out)
     return 1;
 }
 
+/* like BIO_gets() but with workaround for reading binary data on Windows */
+static int bio_gets(BIO *bio, int flags, char *buf, int size)
+{
+#ifdef _MSC_VER
+    if ((flags & CMS_BINARY) != 0) {
+        char *ptr = buf, *end = buf + size - 1;
+        int ret;
+
+        /*
+         * (BIO_)gets() would wrongly translate LF to CR+LF on binary input,
+         * so using BIO_read() for each char although this is not efficient
+         */
+        while (ptr < end && !BIO_eof(bio)) {
+            if ((ret = BIO_read(bio, ptr, 1)) < 1)
+                return ret;
+            if (*ptr++ == '\n')
+                break;
+        }
+        *ptr = '\0';
+        return (int)(ptr - buf);
+    }
+#endif
+    return BIO_gets(bio, buf, size);
+}
+
 /*
  * Split a multipart/XXX message body into component parts: result is
  * canonical parts in a STACK of bios
  */
-
 static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **ret)
 {
     char linebuf[MAX_SMLEN];
@@ -603,7 +627,7 @@ static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **r
     *ret = parts;
     if (*ret == NULL)
         return 0;
-    while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
+    while ((len = bio_gets(bio, flags, linebuf, MAX_SMLEN)) > 0) {
         state = mime_bound_check(linebuf, len, bound, blen);
         if (state == 1) {
             first = 1;
