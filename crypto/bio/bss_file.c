@@ -346,7 +346,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-#ifndef OPENSSL_SYS_WINDOWS /* ftell() does not give reliable results there */
+#ifndef _MSC_VER /* ftell() does not give reliable results on Windows */
 static long file_pos(BIO *bp)
 {
     if ((bp->flags & BIO_FLAGS_UPLINK_INTERNAL) != 0)
@@ -359,23 +359,27 @@ static long file_pos(BIO *bp)
 static int file_gets(BIO *bp, char *buf, int size)
 {
     int ret = 0;
-
-#ifdef OPENSSL_SYS_WINDOWS
-    /*
-     * fgets() would wrongly translate LF to CR+LF on binary input,
-     * so using fread() per char although this is not efficient
-     */
-    while (ret < size - 1 && !BIO_feof(bp))
-        if ((buf[ret++] = BIO_fread(buf, 1, 1, bp)) == '\n')
-            break;
-    buf[ret] = '\0';
-#else
+#ifndef _MSC_VER /* ftell() does not give reliable results on Windows */
     long before, after = -1;
     char strbuf[32];
 
     before = file_pos(bp);
     if (before < 0)
         goto err;
+#else
+    if (0) {
+        /*
+         * fgets() would wrongly translate LF to CR+LF on binary input,
+         * so using fread() per char although this is not efficient
+         */
+        while (ret < size - 1 && !BIO_feof(bp)
+               && BIO_fread(buf + ret, 1, 1, bp) == 1)
+            if (buf[ret++] == '\n')
+                break;
+        buf[ret] = '\0';
+        goto err;
+    }
+#endif
     buf[0] = '\0';
     if (bp->flags & BIO_FLAGS_UPLINK_INTERNAL) {
         if (!UP_fgets(buf, size, bp->ptr))
@@ -384,22 +388,22 @@ static int file_gets(BIO *bp, char *buf, int size)
         if (!fgets(buf, size, (FILE *)bp->ptr))
             goto err;
     }
+#ifndef _MSC_VER /* ftell() does not give reliable results on Windows */
     after = file_pos(bp);
     if (after < before)
         goto err;
     /* fgets should guarantee that input length == after - before <= size - 1 */
     if (after - before < size - 1)
         size = after - before + 1;
+#endif
     while (ret < size - 1)
         if (buf[ret++] == '\n')
             break;
 
  err:
-#endif
-
     if (ret == 0 && !(BIO_feof(bp))) {
         BIOerr(0, BIO_R_FGETS_ERROR);
-#ifndef OPENSSL_SYS_WINDOWS /* ftell() does not give reliable results there */
+#ifndef _MSC_VER /* ftell() does not give reliable results on Windows */
         BIO_snprintf(strbuf, sizeof(strbuf), "%ld", before);
         ERR_add_error_data(2, "pos before=", strbuf);
         BIO_snprintf(strbuf, sizeof(strbuf), "%ld", after);
