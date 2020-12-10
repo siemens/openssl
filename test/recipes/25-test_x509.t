@@ -43,7 +43,7 @@ is(cmp_text($out_utf8, srctop_file("test/certs", "cyrillic.utf8")),
     my $out_pem = "out.pem";
     ok(run(app(["openssl", "x509", "-text", "-in", $p12, "-out", $out_pem,
                 "-passin", "pass:$p12pass"])));
-    unlink $out_pem;
+    # not unlinking $out_pem
 }
 
 SKIP: {
@@ -67,8 +67,8 @@ SKIP: {
        &&
        run(app(["openssl", "verify", "-no_check_time",
                 "-trusted", $selfout, "-partial_chain", $testcert])));
-    unlink $pubkey;
-    unlink $selfout;
+    # not unlinking $pubkey
+    # not unlinking $selfout
 }
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
@@ -93,7 +93,7 @@ subtest 'x500 -- subjectAltName' => sub {
      my $out = "ext.out";
      ok(run(app(["openssl", "x509", "-text", "-in", $fp, "-out", $out])));
      ok(has_doctor_id($out));
-     unlink $out;
+     # not unlinking $out
 };
 
 sub has_doctor_id { 
