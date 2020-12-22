@@ -321,7 +321,8 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 {
     int i;
-    X509 *issuer, *rv = NULL;
+    int except = (x->ex_flags & EXFLAG_SI) != 0 && sk_X509_num(ctx->chain) == 1;
+    X509 *issuer;
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         issuer = sk_X509_value(sk, i);
@@ -330,14 +331,10 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
          * Candidate issuer cert cannot be the same as the subject cert 'x'.
          */
         if (issuer != x && ctx->check_issued(ctx, x, issuer)
-            && (((x->ex_flags & EXFLAG_SI) != 0 && sk_X509_num(ctx->chain) == 1)
-                || !sk_X509_contains(ctx->chain, issuer))) {
-            rv = issuer;
-            if (x509_check_cert_time(ctx, rv, -1))
-                break;
-        }
+                && (except || !sk_X509_contains(ctx->chain, issuer)))
+            return issuer;
     }
-    return rv;
+    return NULL;
 }
 
 /* Check that the given certificate 'x' is issued by the certificate 'issuer' */
@@ -3056,6 +3053,14 @@ static int build_chain(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_OUT_OF_MEM;
             return 0;
         }
+    }
+
+    /* For efficiency, prune all currently invalid (expired) untrusted certs */
+    for (i = sk_X509_num(sk_untrusted) - 1; i >= 0; i--) {
+        X509 *cert = sk_X509_value(sk_untrusted, i);
+
+        if (!x509_check_cert_time(ctx, cert, -1))
+            (void)sk_X509_delete_ptr(sk_untrusted, cert);
     }
 
     /*
