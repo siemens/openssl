@@ -23,12 +23,12 @@ X509_STORE_CTX_verify_fn
  void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
  void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
 
- int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
-                         X509 *x509, STACK_OF(X509) *chain);
+ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *trust_store,
+                         X509 *target, STACK_OF(X509) *untrusted);
 
  void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 
- void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x);
+ void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *target);
  STACK_OF(X509) *X509_STORE_CTX_get0_chain(const X509_STORE_CTX *ctx);
  void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *chain);
  void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);
@@ -71,18 +71,22 @@ It must be called before each call to X509_verify_cert(), i.e. a I<ctx> is only
 good for one call to X509_verify_cert(); if you want to verify a second
 certificate with the same I<ctx> then you must call X509_STORE_CTX_cleanup()
 and then X509_STORE_CTX_init() again before the second call to
-X509_verify_cert(). The trusted certificate store is set to I<store>, the end
-entity certificate to be verified is set to I<x509> and a set of additional
-certificates (which will be untrusted but may be used to build the chain) in
-I<chain>. Any or all of the I<store>, I<x509> and I<chain> parameters can be
+X509_verify_cert().
+The trusted certificate store is set to I<trust_store> of type B<X509_STORE>.
+This may be NULL because there are no trusted certificates or because
+they are provided simply as a list using X509_STORE_CTX_set0_trusted_stack().
+The end entity certificate to be verified is set to I<target>,
+and a set of additional certificates may be provided in I<untrusted>,
+which will be untrusted but may be used to build the chain.
+Any or all of the I<trust_store>, I<target> and I<untrusted> parameters can be
 B<NULL>.
 
 X509_STORE_CTX_set0_trusted_stack() sets the set of trusted certificates of
 I<ctx> to I<sk>. This is an alternative way of specifying trusted certificates
-instead of using an B<X509_STORE>.
+instead of using an B<X509_STORE> where its complexity is not needed.
 
 X509_STORE_CTX_set_cert() sets the certificate to be verified in I<ctx> to
-I<x>.
+I<target>.
 
 X509_STORE_CTX_set0_verified_chain() sets the validated chain used
 by I<ctx> to be I<chain>.

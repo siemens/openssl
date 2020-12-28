@@ -333,8 +333,8 @@ static int execute_cmp_build_cert_chain_test(CMP_PROTECT_TEST_FIXTURE *fixture)
     OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
     X509_STORE *store;
     STACK_OF(X509) *chain =
-        ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, NULL,
-                                  fixture->certs, fixture->cert);
+        OSSL_build_cert_chain(ctx->libctx, ctx->propq, NULL,
+                              fixture->certs, fixture->cert);
 
     if (TEST_ptr(chain)) {
         /* Check whether chain built is equal to the expected one */
@@ -348,8 +348,8 @@ static int execute_cmp_build_cert_chain_test(CMP_PROTECT_TEST_FIXTURE *fixture)
             && TEST_true(X509_STORE_add_cert(store, root))) {
         X509_VERIFY_PARAM_set_flags(X509_STORE_get0_param(store),
                                     X509_V_FLAG_NO_CHECK_TIME);
-        chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
-                                          store, fixture->certs, fixture->cert);
+        chain = OSSL_build_cert_chain(ctx->libctx, ctx->propq,
+                                      store, fixture->certs, fixture->cert);
         ret = TEST_int_eq(fixture->expected, chain != NULL);
         if (ret && chain != NULL) {
             /* Check whether chain built is equal to the expected one */

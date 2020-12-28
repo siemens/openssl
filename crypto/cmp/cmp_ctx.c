@@ -749,8 +749,8 @@ int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
         return 0;
 
     ossl_cmp_debug(ctx, "trying to build chain for own CMP signer cert");
-    chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, own_trusted,
-                                      ctx->untrusted, ctx->cert);
+    chain = OSSL_build_cert_chain(ctx->libctx, ctx->propq, own_trusted,
+                                  ctx->untrusted, ctx->cert);
     if (chain == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_FAILED_BUILDING_OWN_CHAIN);
         return 0;

@@ -208,11 +208,23 @@ static int test_req_distinguishing_id(void)
 
 static int test_self_signed(const char *filename, int expected)
 {
-    X509 *cert;
+    X509 *cert = load_cert_from_file(filename); /* may result in NULL */
+    STACK_OF(X509) *trusted = sk_X509_new_null();
+    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
     int ret;
 
-    cert = load_cert_from_file(filename); /* may result in NULL */
     ret = TEST_int_eq(X509_self_signed(cert, 1), expected);
+
+    if (cert != NULL) {
+        if (trusted != NULL)
+            ret = ret && TEST_true(sk_X509_push(trusted, cert));
+        ret = ret && TEST_true(X509_STORE_CTX_init(ctx, NULL, cert, NULL));
+        X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
+        ret = ret && TEST_int_eq(X509_verify_cert(ctx), expected);
+    }
+
+    X509_STORE_CTX_free(ctx);
+    sk_X509_free(trusted);
     X509_free(cert);
     return ret;
 }

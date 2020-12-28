@@ -148,9 +148,8 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         if (ctx->chain == NULL) {
             ossl_cmp_debug(ctx,
                            "trying to build chain for own CMP signer cert");
-            ctx->chain =
-                ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, NULL,
-                                          ctx->untrusted, ctx->cert);
+            ctx->chain = OSSL_build_cert_chain(ctx->libctx, ctx->propq, NULL,
+                                               ctx->untrusted, ctx->cert);
             if (ctx->chain != NULL) {
                 ossl_cmp_debug(ctx,
                                "success building chain for own CMP signer cert");

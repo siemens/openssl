@@ -63,7 +63,7 @@
 
 #define CRL_SCORE_TIME_DELTA    0x002
 
-static int build_chain(X509_STORE_CTX *ctx);
+static int build_chain(X509_STORE_CTX *ctx, int prefer_short);
 static int verify_chain(X509_STORE_CTX *ctx);
 static int dane_verify(X509_STORE_CTX *ctx);
 static int null_callback(int ok, X509_STORE_CTX *e);
@@ -148,8 +148,6 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
             break;
         xtmp = NULL;
     }
-    if (xtmp != NULL && !X509_up_ref(xtmp))
-        xtmp = NULL;
     sk_X509_pop_free(certs, X509_free);
     return xtmp;
 }
@@ -225,7 +223,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
      * Before either returning with an error, or continuing with CRL checks,
      * instantiate chain public key parameters.
      */
-    if ((ok = build_chain(ctx)) == 0 ||
+    if ((ok = build_chain(ctx, 1 /* prefer short chain */)) == 0 ||
         (ok = check_chain(ctx)) == 0 ||
         (ok = check_auth_level(ctx)) == 0 ||
         (ok = check_id(ctx)) == 0 || 1)
@@ -348,7 +346,7 @@ static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
     return x509_likely_issued(issuer, x) == X509_V_OK;
 }
 
-/* Alternative lookup method: look from a STACK stored in other_ctx */
+/* Alternative get_issuer method: look from a STACK stored in other_ctx */
 static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
     *issuer = find_issuer(ctx, ctx->other_ctx, x);
@@ -363,6 +361,7 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     return 0;
 }
 
+/* Alternative lookup method: look from a STACK stored in other_ctx */
 static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
                                        const X509_NAME *nm)
 {
@@ -860,12 +859,12 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
          * we'll accept X509_TRUST_UNTRUSTED when not self-signed.
          */
         trust = X509_check_trust(mx, ctx->param->trust, 0);
-        if (trust == X509_TRUST_REJECTED) {
-            X509_free(mx);
+        if (trust == X509_TRUST_REJECTED)
             goto rejected;
-        }
 
         /* Replace leaf with trusted match */
+        if (!X509_up_ref(mx))
+            return X509_TRUST_UNTRUSTED;
         (void) sk_X509_set(ctx->chain, 0, mx);
         X509_free(x);
         ctx->num_untrusted = 0;
@@ -2319,6 +2318,10 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 {
     int ret = 1;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     ctx->store = store;
     ctx->cert = x509;
     ctx->untrusted = chain;
@@ -2978,7 +2981,7 @@ static int get_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *cert)
     return ok;
 }
 
-static int build_chain(X509_STORE_CTX *ctx)
+static int build_chain(X509_STORE_CTX *ctx, int prefer_short)
 {
     SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
@@ -3113,6 +3116,18 @@ static int build_chain(X509_STORE_CTX *ctx)
                 i = alt_untrusted;
             }
             x = sk_X509_value(ctx->chain, i-1);
+
+            /*
+             * If prefer_short, which is usually set, stop with success if
+             * the current cert is in the trust store
+             * and its trust is not rejected
+             * and it is self-signed or partial chains are accepted.
+             */
+            if (prefer_short && lookup_cert_match(ctx, x) != NULL) {
+                trust = check_trust(ctx, num);
+                if (trust == X509_TRUST_TRUSTED)
+                    break;
+            }
 
             ok = (depth < num) ? 0 : get_issuer(&xtmp, ctx, x);
 
@@ -3358,6 +3373,49 @@ static int build_chain(X509_STORE_CTX *ctx)
                               ? X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT
                               : X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY);
     }
+}
+
+STACK_OF(X509) *OSSL_build_cert_chain(OSSL_LIB_CTX *libctx, const char *propq,
+                                      X509_STORE *store,
+                                      STACK_OF(X509) *inter, X509 *cert)
+{
+    STACK_OF(X509) *chain = NULL, *result = NULL;
+    int finish_chain = store != NULL;
+    X509_STORE_CTX *ctx = NULL;
+
+    if (cert == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+
+    if ((ctx = X509_STORE_CTX_new_ex(libctx, propq)) == NULL)
+        goto err;
+    if (!X509_STORE_CTX_init(ctx, store, cert, finish_chain ? inter : NULL))
+        goto err;
+    if (!finish_chain)
+        X509_STORE_CTX_set0_trusted_stack(ctx, inter);
+    if (!X509_add_cert_new(&ctx->chain, cert, X509_ADD_FLAG_UP_REF)) {
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
+        goto err;
+    }
+    ctx->num_untrusted = 1;
+
+    if (!build_chain(ctx, finish_chain) && finish_chain)
+        goto err;
+    chain = ctx->chain;
+
+    /* result list to store the up_ref'ed not self-signed certificates */
+    if ((result = sk_X509_new_null()) == NULL)
+        goto err;
+    if (!X509_add_certs(result, chain,
+                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_SS)) {
+        sk_X509_free(result);
+        result = NULL;
+    }
+
+ err:
+    X509_STORE_CTX_free(ctx);
+    return result;
 }
 
 static const int minbits_table[] = { 80, 112, 128, 192, 256 };
