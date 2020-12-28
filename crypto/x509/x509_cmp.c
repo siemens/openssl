@@ -257,8 +257,8 @@ unsigned long X509_NAME_hash(const X509_NAME *x)
 
     /* Make sure X509_NAME structure contains valid cached encoding */
     i2d_X509_NAME(x, NULL);
-    if (!EVP_Digest(x->canon_enc, x->canon_enclen, md, NULL, EVP_sha1(),
-                    NULL))
+    if (!EVP_Digest(x->canon_enc, x->canon_enclen, md, NULL, EVP_sha1(), NULL))
+        /* TODO(3.0) This fails if SHA1 is not supported, e.g., in test_ssl_old */
         return 0;
 
     ret = (((unsigned long)md[0]) | ((unsigned long)md[1] << 8L) |

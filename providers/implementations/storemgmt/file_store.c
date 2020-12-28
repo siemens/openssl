@@ -485,6 +485,8 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         BIO_snprintf(ctx->_.dir.search_name, sizeof(ctx->_.dir.search_name),
                      "%08lx", hash);
         X509_NAME_free(x509_name);
+        if (hash == 0)
+            return 0;
     }
     return 1;
 }
