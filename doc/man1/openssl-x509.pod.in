@@ -17,8 +17,9 @@ B<openssl> B<x509>
 [B<-copy_extensions> I<arg>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-vfyopt> I<nm>:I<v>]
-[B<-signkey> I<filename>|I<uri>]
+[B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-signkey> I<filename>|I<uri>]
 [B<-out> I<filename>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-nocert>]
@@ -118,13 +119,13 @@ Generate a certificate from scratch, not using an input certificate
 or certificate request. So the B<-in> option must not be used in this case.
 Instead, the B<-subj> option needs to be given.
 The public key to include can be given with the B<-force_pubkey> option
-and defaults to the key given with the B<-signkey> option,
+and defaults to the key given with the B<-key> option,
 which implies self-signature.
 
 =item B<-x509toreq>
 
 Output a PCSK#10 certificate request (rather than a certificate).
-The B<-signkey> option must be used to provide the private key for self-signing;
+The B<-key> option must be used to provide the private key for self-signing;
 the corresponding public key is placed in the subjectPKInfo field.
 
 X.509 extensions included in a certificate input are not copied by default.
@@ -157,7 +158,7 @@ See L<openssl-format-options(1)> for details.
 Pass options to the signature algorithm during verify operations.
 Names and values of these options are algorithm-specific.
 
-=item B<-signkey> I<filename>|I<uri>
+=item B<-key> I<filename>|I<uri>
 
 This option causes the new certificate or certificate request
 to be self-signed using the supplied private key.
@@ -175,6 +176,10 @@ and the end date to a value determined by the B<-days> option.
 The key input format; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl-format-options(1)> for details.
+
+=item B<-signkey> I<filename>|I<uri>
+
+This option is deprecated since OpenSSL 3.0; use B<-key> instead.
 
 =item B<-out> I<filename>
 
@@ -342,7 +347,7 @@ Check that the certificate matches the specified IP address.
 =item B<-set_serial> I<n>
 
 Specifies the serial number to use. This option can be used with either
-the B<-signkey> or B<-CA> options. If used in conjunction with the B<-CA> option
+the B<-key> or B<-CA> options. If used in conjunction with the B<-CA> option
 the serial number file (as specified by the B<-CAserial> option) is not used.
 
 The serial number can be decimal or hex (if preceded by C<0x>).
@@ -386,7 +391,7 @@ or certificate request.
 =item B<-force_pubkey> I<filename>
 
 When a certificate is created set its public key to the key in I<filename>
-instead of the key contained in the input or given with the B<-signkey> option.
+instead of the key contained in the input or given with the B<-key> option.
 
 This option is useful for creating self-issued certificates that are not
 self-signed, for instance when the key cannot be used for signing, such as DH.
@@ -396,7 +401,7 @@ generate a certificate containing any desired public key.
 =item B<-clrext>
 
 When a transforming a certificate to a new certificate
-(for example with the B<-signkey> or B<-CA> option)
+(for example with the B<-key> or B<-CA> option)
 by default all certificate extensions are retained
 except for any subject identifier and authority key identifier.
 For those, new values are generated unless prohibited by configuration.
@@ -432,7 +437,7 @@ for testing.
 
 The digest to use.
 This affects any signing or printing option that uses a message
-digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options.
+digest, such as the B<-fingerprint>, B<-key> and B<-CA> options.
 Any digest supported by the L<openssl-dgst(1)> command can be used.
 If not specified then SHA1 is used with B<-fingerprint> or
 the default digest for the signing algorithm is used, typically SHA256.
@@ -450,7 +455,7 @@ When present, this behaves like a "micro CA" as follows:
 The subject name of the "CA" certificate is placed as issuer name in the new
 certificate, which is then signed using the "CA" key given as detailed below.
 
-This option cannot be used in conjunction with the B<-signkey> option.
+This option cannot be used in conjunction with the B<-key> option.
 This option is normally combined with the B<-req> option referencing a CSR.
 Without the B<-req> option the input must be a self-signed certificate
 unless the B<-new> option is given, which generates a certificate from scratch.
@@ -694,13 +699,13 @@ Convert a certificate from PEM to DER format:
 
 Convert a certificate to a certificate request:
 
- openssl x509 -x509toreq -in cert.pem -out req.pem -signkey key.pem
+ openssl x509 -x509toreq -in cert.pem -out req.pem -key key.pem
 
 Convert a certificate request into a self-signed certificate using
 extensions for a CA:
 
  openssl x509 -req -in careq.pem -extfile openssl.cnf -extensions v3_ca \
-        -signkey key.pem -out cacert.pem
+        -key key.pem -out cacert.pem
 
 Sign a certificate request using the CA certificate above and add user
 certificate extensions:
@@ -871,6 +876,8 @@ have become obsolete in OpenSSL 3.0.0 and have no effect.
 The B<-CAform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
+
+The B<-signkey> option was deprecated in OpenSSL 3.0, too; use B<-key> instead.
 
 The B<-C> option was removed in OpenSSL 3.0.
 
