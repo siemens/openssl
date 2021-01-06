@@ -895,6 +895,12 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
+ * Added the `<-copy_extensions` option to the `x509` command for use with
+   `-req` and `-x509toreq`. When given with the `copy` or `copyall` argument,
+   all extensions in the request are copied to the certificate or vice versa.
+
+   *David von Oheimb*, *Kirill Stefanenkov <kirill_stefanenkov@rambler.ru>*
+
  * Added several checks to X509_verify_cert() according to requirements in
    RFC 5280 in case `X509_V_FLAG_X509_STRICT` is set
    (which may be done by using the CLI option `-x509_strict`):
