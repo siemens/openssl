@@ -236,6 +236,10 @@ int X509_REQ_add1_attr_by_NID(X509_REQ *req,
                               int nid, int type,
                               const unsigned char *bytes, int len)
 {
+	if (req == NULL || bytes == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+	}
     if (X509at_add1_attr_by_NID(&req->req_info.attributes, nid,
                                 type, bytes, len))
         return 1;
