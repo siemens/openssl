@@ -84,6 +84,7 @@ static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
 
 X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 {
+    /* TODO generalize to allow PEM input */
     return (X509 *)simple_get_asn1(url, bio, rbio, timeout,
                                    ASN1_ITEM_rptr(X509));
 }
@@ -118,6 +119,7 @@ int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
 
 X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 {
+    /* TODO generalize to allow PEM input */
     return (X509_CRL *)simple_get_asn1(url, bio, rbio, timeout,
                                        ASN1_ITEM_rptr(X509_CRL));
 }

@@ -49,8 +49,10 @@ struct ossl_http_req_ctx_st {
     BIO *mem;                   /* Memory BIO response is built into */
     int method_POST;            /* HTTP method is "POST" (else "GET") */
     const char *expected_ct;    /* expected Content-Type, or NULL */
-    int expect_asn1;            /* response must be ASN.1-encoded */
+    int expect_asn1;            /* 1: resp must be ASN.1, 0: forbid, -1: may */
+    int is_asn1;                /* response is ASN.1-encoded, -1: unclear */
     long len_to_send;           /* number of bytes in request still to send */
+    int got_content_len;        /* we have received Content-Length header */
     unsigned long resp_len;     /* length of response */
     unsigned long max_resp_len; /* Maximum length of response */
     time_t max_time;            /* Maximum end time of the transfer, or 0 */
@@ -64,7 +66,7 @@ struct ossl_http_req_ctx_st {
 #define OHS_FIRSTLINE       1 /* First line being read */
 #define OHS_REDIRECT        0xa /* Looking for redirection location */
 #define OHS_HEADERS         2 /* MIME headers being read */
-#define OHS_ASN1_HEADER     3 /* HTTP initial header (tag+length) being read */
+#define OHS_MATCH_ASN1      3 /* Trying to match ASN.1 begin (tag+length) */
 #define OHS_CONTENT         4 /* HTTP content octets being read */
 #define OHS_WRITE_INIT     (5 | OHS_NOREAD) /* 1st call: ready to start send */
 #define OHS_WRITE          (6 | OHS_NOREAD) /* Request being sent */
@@ -100,7 +102,6 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
     rctx->method_POST = method_POST;
     rctx->expected_ct = expected_content_type;
     rctx->expect_asn1 = expect_asn1;
-    rctx->resp_len = 0;
     OSSL_HTTP_REQ_CTX_set_max_response_length(rctx, max_resp_len);
     rctx->max_time = timeout > 0 ? time(NULL) + timeout : 0;
     /* everything else is 0, e.g. rctx->len_to_send, or NULL, e.g. rctx->mem  */
@@ -116,13 +117,22 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     OPENSSL_free(rctx);
 }
 
-BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(OSSL_HTTP_REQ_CTX *rctx)
+BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(const OSSL_HTTP_REQ_CTX *rctx)
 {
     if (rctx == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
     return rctx->mem;
+}
+
+int OSSL_HTTP_REQ_CTX_is_asn1(const OSSL_HTTP_REQ_CTX *rctx)
+{
+    if (rctx == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
+        return -2;
+    }
+    return rctx->is_asn1;
 }
 
 void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
@@ -173,6 +183,9 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
 
     if (BIO_printf(rctx->mem, "%s "HTTP_PREFIX"1.0\r\n", path) <= 0)
         return 0;
+    rctx->got_content_len = 0;
+    rctx->resp_len = 0;
+    rctx->is_asn1 = -1;
     rctx->state = OHS_HTTP_HEADER;
     return 1;
 }
@@ -259,6 +272,7 @@ int OSSL_HTTP_REQ_CTX_i2d(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
         return 0;
     }
 
+    rctx->expect_asn1 = 1;
     res = (mem = HTTP_asn1_item2bio(it, req)) != NULL
         && OSSL_HTTP_REQ_CTX_set_content(rctx, content_type, mem);
     BIO_free(mem);
@@ -603,6 +617,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 }
                 if (!check_set_resp_len(rctx, resp_len))
                     return 0;
+                rctx->got_content_len = 1;
             }
         }
 
@@ -611,8 +626,10 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             if (*p != '\r' && *p != '\n')
                 break;
         }
-        if (*p != '\0') /* not end of headers */
+        if (*p != '\0')
             goto next_line;
+
+        /* reached end of headers */
 
         if (rctx->expected_ct != NULL) {
             ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MISSING_CONTENT_TYPE,
@@ -625,58 +642,68 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
-        if (!rctx->expect_asn1) {
-            rctx->state = OHS_CONTENT;
-            goto content;
-        }
-
-        rctx->state = OHS_ASN1_HEADER;
+        rctx->state = OHS_MATCH_ASN1;
 
         /* Fall thru */
-    case OHS_ASN1_HEADER:
+    case OHS_MATCH_ASN1:
         /*
-         * Now reading ASN1 header: can read at least 2 bytes which is enough
+         * Try reading ASN1 header: can read at least 2 bytes which is enough
          * for ASN1 SEQUENCE header and either length field or at least the
          * length of the length field.
          */
         n = BIO_get_mem_data(rctx->mem, &p);
-        if (n < 2)
+        if (rctx->resp_len >= 2 && n < 2)
             goto next_io;
 
         /* Check it is an ASN1 SEQUENCE */
-        if (*p++ != (V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED)) {
-            ERR_raise(ERR_LIB_HTTP, HTTP_R_MISSING_ASN1_ENCODING);
-            return 0;
-        }
-
-        /* Check out length field */
-        if ((*p & 0x80) != 0) {
-            /*
-             * If MSB set on initial length octet we can now always read 6
-             * octets: make sure we have them.
-             */
-            if (n < 6)
-                goto next_io;
-            n = *p & 0x7F;
-            /* Not NDEF or excessive length */
-            if (n == 0 || (n > 4)) {
-                ERR_raise(ERR_LIB_HTTP, HTTP_R_ERROR_PARSING_ASN1_LENGTH);
+        if (n >= 2 && *p++ == (V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED)) {
+            rctx->is_asn1 = 1;
+            if (rctx->expect_asn1 == 0) {
+                ERR_raise(ERR_LIB_HTTP, HTTP_R_UNEXPECTED_ASN1_ENCODING);
                 return 0;
             }
-            p++;
-            resp_len = 0;
-            for (i = 0; i < n; i++) {
-                resp_len <<= 8;
-                resp_len |= *p++;
-            }
-            resp_len += n + 2;
-        } else {
-            resp_len = *p + 2;
-        }
-        if (!check_set_resp_len(rctx, resp_len))
-            return 0;
 
- content:
+            /* Check out length field */
+            if ((*p & 0x80) != 0) {
+                /*
+                 * If MSB set on initial length octet we can now always read 6
+                 * octets: make sure we have them.
+                 */
+                if (n < 6)
+                    goto next_io;
+                n = *p & 0x7F;
+                /* Not NDEF or excessive length */
+                if (n == 0 || (n > 4)) {
+                    ERR_raise(ERR_LIB_HTTP, HTTP_R_ERROR_PARSING_ASN1_LENGTH);
+                    return 0;
+                }
+                p++;
+                resp_len = 0;
+                for (i = 0; i < n; i++) {
+                    resp_len <<= 8;
+                    resp_len |= *p++;
+                }
+                resp_len += n + 2;
+            } else {
+                resp_len = *p + 2;
+            }
+            if (!check_set_resp_len(rctx, resp_len))
+                return 0;
+        } else if (n >= 2 || (rctx->got_content_len
+                              && (unsigned long)n == rctx->resp_len)) {
+            rctx->is_asn1 = 0;
+            if (rctx->expect_asn1 == 1) {
+                ERR_raise(ERR_LIB_HTTP, HTTP_R_MISSING_ASN1_ENCODING);
+                return 0;
+            }
+        } else { /* we cannot determine whether content has ASN.1 encoding */
+            rctx->is_asn1 = -1;
+            if (rctx->expect_asn1 != -1) {
+                ERR_raise(ERR_LIB_HTTP, HTTP_R_UNCERTAIN_ASN1_ENCODING);
+                return 0;
+            }
+        }
+
         rctx->state = OHS_CONTENT;
 
         /* Fall thru */

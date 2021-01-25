@@ -11,6 +11,7 @@ OSSL_HTTP_REQ_CTX_i2d,
 OSSL_HTTP_REQ_CTX_nbio,
 OSSL_HTTP_REQ_CTX_sendreq_d2i,
 OSSL_HTTP_REQ_CTX_get0_mem_bio,
+OSSL_HTTP_REQ_CTX_is_asn1,
 OSSL_HTTP_REQ_CTX_set_max_response_length
 - HTTP client low-level functions
 
@@ -40,7 +41,8 @@ OSSL_HTTP_REQ_CTX_set_max_response_length
  ASN1_VALUE *OSSL_HTTP_REQ_CTX_sendreq_d2i(OSSL_HTTP_REQ_CTX *rctx,
                                            const ASN1_ITEM *it);
 
- BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(OSSL_HTTP_REQ_CTX *rctx);
+ BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(const OSSL_HTTP_REQ_CTX *rctx);
+ int OSSL_HTTP_REQ_CTX_is_asn1(const OSSL_HTTP_REQ_CTX *rctx);
  void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
                                                 unsigned long len);
 
@@ -66,9 +68,9 @@ that the B<HTTP_DEFAULT_MAX_RESP_LEN> is used, which currently is 100 KiB),
 a response timeout measure in seconds (I<timeout>,
 where 0 indicates no timeout, i.e., waiting indefinitely),
 the expected MIME content type of the response (I<expected_content_type>,
-which may be NULL for no expectation),
-and a flag indicating that the response is expected to be
-a DER encoded ASN.1 structure (I<expect_asn1>).
+which may be NULL for no expectation), and an
+indicator whether the response is expected to be a DER encoded ASN.1 structure
+(I<expect_asn1>; 1 means required, 0 means forbidden, -1 means allowed).
 The allocated context structure is also populated with an internal allocated
 memory B<BIO>, which collects the HTTP request and additional headers as text.
 The returned context should only be used for a single HTTP request/response.
@@ -78,11 +80,11 @@ The I<wbio> and I<rbio> are not free'd and it is up to the application
 to do so.
 
 OSSL_HTTP_REQ_CTX_set_request_line() adds the HTTP request line to the context.
-The I<method_POST> argument may be 1 to indicate that the C<POST>
-method is to be used, or 0 to indicate that the C<GET> method is to be used.
-The HTTP I<server> and its I<port> must be given if the request shall go through
-an HTTP (but not HTTPS) proxy, otherwise they should be left NULL.
-I<path> is the HTTP request path; if left NULL, C</> is used.
+The request method itself becomes C<GET> or C<POST> depending on the value
+of I<method_POST> in the OSSL_HTTP_REQ_CTX_new() call.  I<server> and I<port>
+may be set to indicate a proxy server and port that the request should go
+through, otherwise they should be left NULL.  I<path> is the HTTP request path;
+if left NULL, C</> is used.
 
 OSSL_HTTP_REQ_CTX_add1_header() adds header I<name> with value I<value> to the
 context I<rctx>. It can be called more than once to add multiple headers.
@@ -90,8 +92,9 @@ For example, to add a C<Host> header for C<example.com> you would call:
 
  OSSL_HTTP_REQ_CTX_add1_header(ctx, "Host", "example.com");
 
-OSSL_HTTP_REQ_CTX_i2d() finalizes the HTTP request context by adding the DER
-encoding of I<req>, using the ASN.1 template I<it> to do the encoding.  The
+OSSL_HTTP_REQ_CTX_i2d() finalizes the HTTP request context by adding
+the DER encoding of I<req>, using the ASN.1 template I<it> to do the encoding.
+It sets the expectation that also the response is a DER encoded ASN.1 structure.
 HTTP header C<Content-Length> is automatically filled out, and if
 I<content_type> isn't NULL, the HTTP header C<Content-Type> is also added with
 its content as value.  All of this ends up in the internal memory B<BIO>.
@@ -115,6 +118,10 @@ Before sending the request, this could used to affect the HTTP request text.
 I<Use with caution!>
 After receiving a response, this represents the current state
 of reading the response headers or contents received via HTTP.
+
+OSSL_HTTP_REQ_CTX_is_asn1() returns 1 if the response is ASN.1 encoded,
+0 if it is not, and -1 if we do not know because the server response was
+insufficient, or -2 of an error occurred.
 
 OSSL_HTTP_REQ_CTX_set_max_response_length() sets the maximum allowed
 response content length for I<rctx> to I<len>. If not set or I<len> is 0
@@ -174,6 +181,8 @@ OSSL_HTTP_REQ_CTX_sendreq_d2i() returns a pointer to an B<ASN1_VALUE> for
 success and NULL for failure.
 
 OSSL_HTTP_REQ_CTX_get0_mem_bio() returns the internal memory B<BIO>.
+
+OSSL_HTTP_REQ_CTX_is_asn1() returns an integer as described above.
 
 =head1 SEE ALSO
 
