@@ -57,15 +57,13 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
     X509_STORE_CTX *store_ctx = NULL;
     SSL_CTX *ssl_ctx = NULL;
     X509_STORE *store = NULL;
-    X509 *cert = NULL;
     int ret = 0;
     int store_ctx_idx = SSL_get_ex_data_X509_STORE_CTX_idx();
 
     if (!TEST_ptr(store_ctx = X509_STORE_CTX_new())
             || !TEST_ptr(ssl_ctx = SSL_get_SSL_CTX(ssl))
             || !TEST_ptr(store = SSL_CTX_get_cert_store(ssl_ctx))
-            || !TEST_ptr(cert = sk_X509_value(chain, 0))
-            || !TEST_true(X509_STORE_CTX_init(store_ctx, store, cert, chain))
+            || !TEST_true(X509_STORE_CTX_init(store_ctx, store, NULL, chain))
             || !TEST_true(X509_STORE_CTX_set_ex_data(store_ctx, store_ctx_idx,
                                                      ssl)))
         goto end;

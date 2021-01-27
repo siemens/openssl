@@ -76,11 +76,12 @@ The trusted certificate store is set to I<trust_store> of type B<X509_STORE>.
 This may be NULL because there are no trusted certificates or because
 they are provided simply as a list using X509_STORE_CTX_set0_trusted_stack().
 The end entity certificate to be verified is set to I<target>,
-and a set of additional certificates may be provided in I<untrusted>,
-which will be untrusted but may be used to build the chain.
+and a list of additional certificates may be provided in I<untrusted>,
+which will not be trusted but may be used to build the chain.
 Any or all of the I<trust_store>, I<target> and I<untrusted> parameters can be
-B<NULL>. Yet note that if I<target> is NULL the verification target will need to
-be set using X509_STORE_CTX_set_cert() before L<X509_verify_cert(3)> is invoked.
+B<NULL>. Yet note that L<X509_verify_cert(3)> will need a verification target.
+This can also be set using X509_STORE_CTX_set_cert(), or by default
+the first element of the list of untrusted certificates is taken if present.
 
 X509_STORE_CTX_set0_trusted_stack() sets the set of trusted certificates of
 I<ctx> to I<sk>. This is an alternative way of specifying trusted certificates

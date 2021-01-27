@@ -263,9 +263,15 @@ static int verify_chain(X509_STORE_CTX *ctx)
 
 int X509_verify_cert(X509_STORE_CTX *ctx)
 {
-    SSL_DANE *dane = ctx->dane;
     int ret;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        ctx->error = X509_V_ERR_INVALID_CALL;
+        return -1;
+    }
+    if (ctx->cert == NULL && sk_X509_num(ctx->untrusted) >= 1)
+        ctx->cert = sk_X509_value(ctx->untrusted, 0);
     if (ctx->cert == NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
         ctx->error = X509_V_ERR_INVALID_CALL;
@@ -292,7 +298,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     CB_FAIL_IF(!check_key_level(ctx, ctx->cert),
                ctx, ctx->cert, 0, X509_V_ERR_EE_KEY_TOO_SMALL);
 
-    if (DANETLS_ENABLED(dane))
+    if (DANETLS_ENABLED(ctx->dane))
         ret = dane_verify(ctx);
     else
         ret = verify_chain(ctx);
