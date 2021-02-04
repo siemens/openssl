@@ -3039,8 +3039,10 @@ static int build_chain(X509_STORE_CTX *ctx)
                 i = alt_untrusted;
             }
             curr = sk_X509_value(ctx->chain, i - 1);
+            if ((self_signed = X509_self_signed(curr, 0)) < 0)
+                goto int_err;
 
-            ok = depth < num ? 0 : get_issuer(&issuer, ctx, curr);
+            ok = self_signed || depth < num ? 0 : get_issuer(&issuer, ctx, curr);
 
             if (ok < 0) {
                 trust = X509_TRUST_REJECTED;
@@ -3177,6 +3179,8 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (!ossl_assert(num == ctx->num_untrusted))
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
+            if ((self_signed = X509_self_signed(curr, 0)) < 0)
+                goto int_err;
             issuer = (self_signed || depth < num) ?
                 NULL : find_issuer(ctx, sk_untrusted, curr);
             if (issuer == NULL) {
