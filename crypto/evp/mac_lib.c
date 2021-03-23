@@ -119,15 +119,15 @@ int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
 int EVP_MAC_final(EVP_MAC_CTX *ctx,
                   unsigned char *out, size_t *outl, size_t outsize)
 {
-    size_t l;
+    size_t len;
     int res = 1;
 
     if (out != NULL)
-        res = ctx->meth->final(ctx->data, out, &l, outsize);
+        res = ctx->meth->final(ctx->data, out, &len, outsize);
     else
-        l = EVP_MAC_CTX_get_mac_size(ctx);
+        len = EVP_MAC_CTX_get_mac_size(ctx);
     if (outl != NULL)
-        *outl = l;
+        *outl = len;
     return res;
 }
 
@@ -183,4 +183,57 @@ int EVP_MAC_names_do_all(const EVP_MAC *mac,
         return evp_names_do_all(mac->prov, mac->name_id, fn, data);
 
     return 1;
+}
+
+unsigned char *EVP_MAC_calc(EVP_MAC *mac, const OSSL_PARAM *params,
+                            const void *key, int keylen,
+                            const unsigned char *data, size_t datalen,
+                            unsigned char *out, size_t outsize,
+                            unsigned int *outlen)
+{
+    EVP_MAC_CTX *ctx  = NULL;
+    size_t len;
+    unsigned char *res = NULL;
+
+    if (outlen != NULL)
+        *outlen = 0;
+    if ((ctx = EVP_MAC_CTX_new(mac)) != NULL
+            && EVP_MAC_CTX_set_params(ctx, params)
+            && EVP_MAC_init(ctx, key, keylen, params)
+            && EVP_MAC_update(ctx, data, datalen)
+            && EVP_MAC_final(ctx, out, &len, outsize)) {
+        if (out == NULL) {
+            out = OPENSSL_malloc(len);
+            if (out != NULL && !EVP_MAC_final(ctx, out, NULL, len)) {
+                OPENSSL_free(out);
+                out = NULL;
+            }
+        }
+        res = out;
+        if (res != NULL && outlen != NULL)
+            *outlen = (unsigned int)len;
+    }
+    EVP_MAC_CTX_free(ctx);
+    return res;
+}
+
+unsigned char *OSSL_Q_mac(OSSL_LIB_CTX *libctx, const char *mac_name,
+                          const char *propq, const OSSL_PARAM *params,
+                          const void *key, int keylen,
+                          const unsigned char *data, size_t datalen,
+                          unsigned char *out, size_t outsize,
+                          unsigned int *outlen)
+{
+    EVP_MAC *mac = EVP_MAC_fetch(libctx, mac_name, propq);
+    unsigned char *res;
+
+    if (outlen != NULL)
+        *outlen = 0;
+    if (mac == NULL)
+        return NULL;
+    res = EVP_MAC_calc(mac, params, key, keylen,
+                       data, datalen, out, outsize, outlen);
+    EVP_MAC_free(mac);
+    return res;
+
 }

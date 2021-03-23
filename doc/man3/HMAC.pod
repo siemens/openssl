@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+OSSL_HMAC,
 HMAC,
 HMAC_CTX_new,
 HMAC_CTX_reset,
@@ -19,6 +20,12 @@ HMAC_size
 =head1 SYNOPSIS
 
  #include <openssl/hmac.h>
+
+ unsigned char *OSSL_HMAC(OSSL_LIB_CTX *libctx, const char *propq,
+                          const char *digest, const void *key, int keylen,
+                          const unsigned char *data, size_t datalen,
+                          unsigned char *out, size_t outsize,
+                          unsigned int *outlen);
 
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -53,9 +60,29 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
-All of the functions described on this page are deprecated. Applications should
-instead use L<EVP_MAC_CTX_new(3)>, L<EVP_MAC_CTX_free(3)>, L<EVP_MAC_init(3)>,
-L<EVP_MAC_update(3)> and L<EVP_MAC_final(3)>.
+OSSL_HMAC() computes the message authentication code of the B<datalen> bytes
+at B<data> using the hash function B<digest>
+and the key B<key> which is B<key_len> bytes long.
+If I<out> is not NULL, it places the result in the memory pointed at by I<out>,
+but only if I<outsize> is at least the output size of the digest function,
+which is no more than B<EVP_MAX_MD_SIZE> (otherwise no computation is made).
+If I<out> is NULL, it allocates and uses a buffer of suitable length,
+which will be returned on success and must be freed by the caller.
+In either case, also on error,
+it assigns the number of bytes written to I<*outlen> unless I<outlen> is NULL.
+
+All of the functions described below are deprecated.
+Applications should instead use L<EVP_MAC_CTX_new(3)>, L<EVP_MAC_CTX_free(3)>,
+L<EVP_MAC_init(3)>, L<EVP_MAC_update(3)> and L<EVP_MAC_final(3)>
+or the more convenient functions L<EVP_MAC_calc(3)> or OSSL_HMAC().
+Calls to
+
+    HMAC(evp_md, key, keylen, data, datalen, out, outlen)
+
+where I<out> is not NULL and has sufficient space can be replaced by
+
+    OSSL_MAC(NULL, NULL, EVP_MD_name(evp_md), key, keylen,
+             data, datalen, out, EVP_MD_size(evp_md), outlen)
 
 HMAC is a MAC (message authentication code), i.e. a keyed hash
 function used for message authentication, which is based on a hash
@@ -121,8 +148,8 @@ HMAC_size() returns the length in bytes of the underlying hash function output.
 
 =head1 RETURN VALUES
 
-HMAC() returns a pointer to the message authentication code or NULL if
-an error occurred.
+OSSL_HMAC() and HMAC() return a pointer to the message authentication code
+or NULL if an error occurred.
 
 HMAC_CTX_new() returns a pointer to a new B<HMAC_CTX> on success or
 NULL if an error occurred.
@@ -142,11 +169,13 @@ RFC 2104
 
 =head1 SEE ALSO
 
-L<SHA1(3)>, L<evp(7)>
+EVP_MAC_calc(), L<SHA1(3)>, L<evp(7)>
 
 =head1 HISTORY
 
-All of these functions were deprecated in OpenSSL 3.0.
+OSSL_HMAC() was added in OpenSSL 3.0.
+
+All other functions were deprecated in OpenSSL 3.0.
 
 HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL 1.1.0.
 

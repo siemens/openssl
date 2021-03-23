@@ -17,9 +17,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include "internal/cryptlib.h"
-#include <openssl/hmac.h>
 #include <openssl/opensslconf.h>
+#include <openssl/hmac.h>
+#include <openssl/core_names.h>
 #include "hmac_local.h"
+
+unsigned char *OSSL_HMAC(OSSL_LIB_CTX *libctx, const char *propq,
+                         const char *digest, const void *key, int keylen,
+                         const unsigned char *data, size_t datalen,
+                         unsigned char *out, size_t outsize,
+                         unsigned int *outlen)
+{
+    OSSL_PARAM params[2] =
+        { OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                           (char *)digest, 0),
+          OSSL_PARAM_END };
+
+    return OSSL_Q_mac(libctx, "HMAC", propq, params, key, keylen,
+                      data, datalen, out, outsize, outlen);
+}
 
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
                  const EVP_MD *md, ENGINE *impl)

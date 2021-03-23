@@ -27,6 +27,13 @@
 # ifdef  __cplusplus
 extern "C" {
 # endif
+
+unsigned char *OSSL_HMAC(OSSL_LIB_CTX *libctx, const char *propq,
+                         const char *digest, const void *key, int keylen,
+                         const unsigned char *data, size_t datalen,
+                         unsigned char *out, size_t outsize,
+                         unsigned int *outlen);
+
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 size_t HMAC_size(const HMAC_CTX *e);
 OSSL_DEPRECATEDIN_3_0 HMAC_CTX *HMAC_CTX_new(void);

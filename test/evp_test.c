@@ -1245,7 +1245,7 @@ static int mac_test_run_mac(EVP_TEST *t)
     MAC_DATA *expected = t->data;
     EVP_MAC_CTX *ctx = NULL;
     unsigned char *got = NULL;
-    size_t got_len;
+    unsigned int got_len;
     int i;
     OSSL_PARAM params[21];
     size_t params_n = 0;
@@ -1330,39 +1330,19 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
     params[params_n] = OSSL_PARAM_construct_end();
 
-    if ((ctx = EVP_MAC_CTX_new(expected->mac)) == NULL) {
-        t->err = "MAC_CREATE_ERROR";
+    got = EVP_MAC_calc(expected->mac, params, expected->key, expected->key_len,
+                       expected->input, expected->input_len, NULL, 0, &got_len);
+        t->err = "MAC_ERROR";
+    if (got == NULL)
         goto err;
-    }
-
-    if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
-        t->err = "MAC_INIT_ERROR";
+    t->err = "TEST_MAC_ERR";
+    if (!memory_err_compare(t, "TEST_MAC_ERR", expected->output,
+                            expected->output_len, got, got_len))
         goto err;
-    }
-    if (!EVP_MAC_update(ctx, expected->input, expected->input_len)) {
-        t->err = "MAC_UPDATE_ERROR";
-        goto err;
-    }
-    if (!EVP_MAC_final(ctx, NULL, &got_len, 0)) {
-        t->err = "MAC_FINAL_LENGTH_ERROR";
-        goto err;
-    }
-    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
-        t->err = "TEST_FAILURE";
-        goto err;
-    }
-    if (!EVP_MAC_final(ctx, got, &got_len, got_len)
-        || !memory_err_compare(t, "TEST_MAC_ERR",
-                               expected->output, expected->output_len,
-                               got, got_len)) {
-        t->err = "TEST_MAC_ERR";
-        goto err;
-    }
     t->err = NULL;
  err:
-    while (params_n-- > params_n_allocstart) {
+    while (params_n-- > params_n_allocstart)
         OPENSSL_free(params[params_n].data);
-    }
     EVP_MAC_CTX_free(ctx);
     OPENSSL_free(got);
     return 1;
