@@ -203,8 +203,9 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
-    if (OSSL_HMAC(libctx, propq, mdname, basekey, bklen, msg, msglen,
-                  mac_res, EVP_MAX_MD_SIZE, &maclen) == NULL)
+    /* TODO(3.0) generalize to non-HMAC: */
+    if (EVP_mac(libctx, "HMAC", propq, mdname, NULL, basekey, bklen,
+                msg, msglen, mac_res, EVP_MAX_MD_SIZE, &maclen) == NULL)
         goto err;
 
     *outlen = (size_t)maclen;

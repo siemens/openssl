@@ -1259,27 +1259,6 @@ static int mac_test_run_mac(EVP_TEST *t)
         TEST_info("Trying the EVP_MAC %s test with %s",
                   expected->mac_name, expected->alg);
 
-    if (expected->alg != NULL) {
-        /*
-         * The underlying algorithm may be a cipher or a digest.
-         * We don't know which it is, but we can ask the MAC what it
-         * should be and bet on that.
-         */
-        if (OSSL_PARAM_locate_const(defined_params,
-                                    OSSL_MAC_PARAM_CIPHER) != NULL) {
-            params[params_n++] =
-                OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                                 expected->alg, 0);
-        } else if (OSSL_PARAM_locate_const(defined_params,
-                                           OSSL_MAC_PARAM_DIGEST) != NULL) {
-            params[params_n++] =
-                OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                 expected->alg, 0);
-        } else {
-            t->err = "MAC_BAD_PARAMS";
-            goto err;
-        }
-    }
     if (expected->custom != NULL)
         params[params_n++] =
             OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
@@ -1330,8 +1309,9 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
     params[params_n] = OSSL_PARAM_construct_end();
 
-    got = EVP_MAC_calc(expected->mac, params, expected->key, expected->key_len,
-                       expected->input, expected->input_len, NULL, 0, &got_len);
+    got = EVP_mac(libctx, expected->mac_name, NULL, expected->alg, params,
+                  expected->key, expected->key_len,
+                  expected->input, expected->input_len, NULL, 0, &got_len);
         t->err = "MAC_ERROR";
     if (got == NULL)
         goto err;

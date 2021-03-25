@@ -7,7 +7,7 @@ EVP_MAC_is_a, EVP_MAC_number, EVP_MAC_name, EVP_MAC_names_do_all,
 EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
-EVP_MAC_CTX_get_mac_size, EVP_MAC_calc, OSSL_Q_mac,
+EVP_MAC_CTX_get_mac_size, EVP_mac,
 EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
 EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
 EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params,
@@ -41,17 +41,11 @@ EVP_MAC_do_all_provided - EVP MAC routines
  int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[]);
 
  size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx);
- unsigned char *OSSL_Q_mac(OSSL_LIB_CTX *libctx, const char *mac_name,
-                           const char *propq, const OSSL_PARAM *params,
-                           const void *key, int keylen,
-                           const unsigned char *data, size_t datalen,
-                           unsigned char *out, size_t outsize,
-                           unsigned int *outlen);
- unsigned char *EVP_MAC_calc(EVP_MAC *mac, const OSSL_PARAM *params,
-                             const void *key, int keylen,
-                             const unsigned char *data, size_t datalen,
-                             unsigned char *out, size_t outsize,
-                             unsigned int *outlen);
+ unsigned char *EVP_mac(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
+                        const char *digest, const OSSL_PARAM *params,
+                        const void *key, int keylen,
+                        const unsigned char *data, size_t datalen,
+                        unsigned char *out, size_t outsize, unsigned int *outlen);
  int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
                   const OSSL_PARAM params[]);
  int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
@@ -129,12 +123,12 @@ I<ctx>.
 
 =head2 Computing functions
 
-OSSL_Q_mac() is a front-end to  EVP_MAC_calc() fetching the MAC algorithm
-I<mac_name> using any given I<libctx> and property query string I<propq>.
-
-EVP_MAC_calc() computes the message authentication code of the I<data> with
-length I<datalen> using the MAC algorithm I<mac> with its I<params>
-(which may be NULL if not needed), and the key I<key> with length I<keylen>.
+EVP_mac() computes the message authentication code
+of I<data> with length I<datalen>
+using the MAC algorithm I<name> and the key I<key> with length I<keylen>.
+The MAC algorithm is fetched using any given I<libctx> and property query
+string I<propq>. It takes parameters I<digest> and further I<params>,
+both of which may be NULL if not needed.
 If I<out> is not NULL, it places the result in the memory pointed at by I<out>,
 but only if I<outsize> is sufficient (otherwise no computation is made).
 If I<out> is NULL, it allocates and uses a buffer of suitable length,
@@ -364,8 +358,7 @@ EVP_MAC_CTX_free() returns nothing at all.
 EVP_MAC_CTX_get_params() and EVP_MAC_CTX_set_params() return 1 on
 success, 0 on error.
 
-OSSL_Q_mac() and EVP_MAC_calc() return a pointer to the computed MAC value,
-or NULL on error.
+EVP_mac() returns a pointer to the computed MAC value, or NULL on error.
 
 EVP_MAC_init(), EVP_MAC_update(), and EVP_MAC_final() return 1 on success, 0
 on error.
@@ -457,7 +450,6 @@ F<./foo>)
 
 L<property(7)>
 L<OSSL_PARAM(3)>,
-L<OSSL_HMAC(3)>,
 L<EVP_MAC-BLAKE2(7)>,
 L<EVP_MAC-CMAC(7)>,
 L<EVP_MAC-GMAC(7)>,

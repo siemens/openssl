@@ -776,9 +776,9 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     memcpy(buffer, &port, sizeof(port));
     BIO_ADDR_rawaddress(peer, buffer + sizeof(port), NULL);
 
-    if (OSSL_HMAC(NULL, NULL, "SHA1",
-                  cookie_secret, COOKIE_SECRET_LENGTH, buffer, length,
-                  cookie, DTLS1_COOKIE_LENGTH, cookie_len) == NULL) {
+    if (EVP_mac(NULL, "HMAC", NULL, "SHA1", NULL,
+                cookie_secret, COOKIE_SECRET_LENGTH, buffer, length,
+                cookie, DTLS1_COOKIE_LENGTH, cookie_len) == NULL) {
         BIO_printf(bio_err,
                    "Error calculating HMAC-SHA1 of buffer with secret\n");
         goto end;

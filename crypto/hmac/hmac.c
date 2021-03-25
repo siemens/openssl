@@ -22,21 +22,6 @@
 #include <openssl/core_names.h>
 #include "hmac_local.h"
 
-unsigned char *OSSL_HMAC(OSSL_LIB_CTX *libctx, const char *propq,
-                         const char *digest, const void *key, int keylen,
-                         const unsigned char *data, size_t datalen,
-                         unsigned char *out, size_t outsize,
-                         unsigned int *outlen)
-{
-    OSSL_PARAM params[2] =
-        { OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                           (char *)digest, 0),
-          OSSL_PARAM_END };
-
-    return OSSL_Q_mac(libctx, "HMAC", propq, params, key, keylen,
-                      data, datalen, out, outsize, outlen);
-}
-
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
                  const EVP_MD *md, ENGINE *impl)
 {
@@ -233,15 +218,16 @@ int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
 }
 
 unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
-                    const unsigned char *d, size_t n, unsigned char *md,
-                    unsigned int *md_len)
+                    const unsigned char *data, size_t data_len,
+                    unsigned char *md, unsigned int *md_len)
 {
+    static unsigned char static_md[EVP_MAX_MD_SIZE];
+#if 1
     HMAC_CTX *c = NULL;
-    static unsigned char m[EVP_MAX_MD_SIZE];
     static const unsigned char dummy_key[1] = {'\0'};
 
     if (md == NULL)
-        md = m;
+        md = static_md;
     if ((c = HMAC_CTX_new()) == NULL)
         goto err;
 
@@ -252,7 +238,7 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 
     if (!HMAC_Init_ex(c, key, key_len, evp_md, NULL))
         goto err;
-    if (!HMAC_Update(c, d, n))
+    if (!HMAC_Update(c, data, data_len))
         goto err;
     if (!HMAC_Final(c, md, md_len))
         goto err;
@@ -261,6 +247,11 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
  err:
     HMAC_CTX_free(c);
     return NULL;
+#else
+    return EVP_mac(NULL, "HMAC", NULL, EVP_MD_name(evp_md), NULL,
+                   key, key_len, data, data_len,
+                   md == NULL ? static_md : md, EVP_MD_size(evp_md), md_len);
+#endif
 }
 
 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
