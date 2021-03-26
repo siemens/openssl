@@ -35,13 +35,12 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     if (md != NULL && md != ctx->md && (key == NULL || len < 0))
         return 0;
 
-    if (md != NULL) {
+    if (md != NULL)
         ctx->md = md;
-    } else if (ctx->md) {
+    else if (ctx->md != NULL)
         md = ctx->md;
-    } else {
+    else
         return 0;
-    }
 
     /*
      * The HMAC construction is not allowed to be used with the
@@ -217,41 +216,16 @@ int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
     return 0;
 }
 
+/* Retained for backward compatibility and some internal use in providers. */
 unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
                     const unsigned char *data, size_t data_len,
                     unsigned char *md, unsigned int *md_len)
 {
     static unsigned char static_md[EVP_MAX_MD_SIZE];
-#if 1
-    HMAC_CTX *c = NULL;
-    static const unsigned char dummy_key[1] = {'\0'};
 
-    if (md == NULL)
-        md = static_md;
-    if ((c = HMAC_CTX_new()) == NULL)
-        goto err;
-
-    /* For HMAC_Init_ex, NULL key signals reuse. */
-    if (key == NULL && key_len == 0) {
-        key = dummy_key;
-    }
-
-    if (!HMAC_Init_ex(c, key, key_len, evp_md, NULL))
-        goto err;
-    if (!HMAC_Update(c, data, data_len))
-        goto err;
-    if (!HMAC_Final(c, md, md_len))
-        goto err;
-    HMAC_CTX_free(c);
-    return md;
- err:
-    HMAC_CTX_free(c);
-    return NULL;
-#else
     return EVP_mac(NULL, "HMAC", NULL, EVP_MD_name(evp_md), NULL,
                    key, key_len, data, data_len,
                    md == NULL ? static_md : md, EVP_MD_size(evp_md), md_len);
-#endif
 }
 
 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)

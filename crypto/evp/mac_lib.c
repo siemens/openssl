@@ -220,6 +220,9 @@ unsigned char *EVP_mac(OSSL_LIB_CTX *libctx, const char *name, const char *propq
         subalg_param[0] =
             OSSL_PARAM_construct_utf8_string(param_name, (char *)subalg, 0);
     }
+    /* Single-shot - on NULL key input, set dummy key value for EVP_MAC_Init. */
+    if (key == NULL && keylen == 0)
+        key = data;
     if ((ctx = EVP_MAC_CTX_new(mac)) != NULL
             && EVP_MAC_CTX_set_params(ctx, subalg_param)
             && EVP_MAC_CTX_set_params(ctx, params)
