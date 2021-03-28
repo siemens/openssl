@@ -46,13 +46,18 @@ OSSL_DEPRECATEDIN_3_0 int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data,
                                       size_t len);
 OSSL_DEPRECATEDIN_3_0 int HMAC_Final(HMAC_CTX *ctx, unsigned char *md,
                                      unsigned int *len);
+OSSL_DEPRECATEDIN_3_0 __owur int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);
+OSSL_DEPRECATEDIN_3_0 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
+OSSL_DEPRECATEDIN_3_0 const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx);
 OSSL_DEPRECATEDIN_3_0 unsigned char *HMAC(const EVP_MD *evp_md, const void *key,
                                           int key_len, const unsigned char *d,
                                           size_t n, unsigned char *md,
                                           unsigned int *md_len);
-OSSL_DEPRECATEDIN_3_0 __owur int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);
-OSSL_DEPRECATEDIN_3_0 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
-OSSL_DEPRECATEDIN_3_0 const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx);
+#  ifdef OPENSSL_COMPENSATE_DEPRECATION
+#   define HMAC(evp_md, key, keylen, data, datalen, out, outlen) \
+    EVP_mac(NULL, "HMAC", NULL, EVP_MD_name(evp_md), NULL, \
+            key, keylen, data, datalen, out, EVP_MD_size(evp_md), outlen)
+#  endif
 # endif
 
 # ifdef  __cplusplus
