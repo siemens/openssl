@@ -893,7 +893,8 @@ OpenSSL 3.0
    Use of these low level functions has been informally discouraged for a long
    time.  Instead applications should use L<EVP_MAC_CTX_new(3)>,
    L<EVP_MAC_CTX_free(3)>, L<EVP_MAC_init(3)>, L<EVP_MAC_update(3)>
-   and L<EVP_MAC_final(3)> or simply L<EVP_MAC_calc(3)> or L<OSSL_HMAC(3)>.
+   and L<EVP_MAC_final(3)> or the single-shot MAC function L<EVP_mac(3)>.
+   HMAC can continue to be used by defining `OPENSSL_COMPENSATE_DEPRECATION`.
 
    *Paul Dale*
 

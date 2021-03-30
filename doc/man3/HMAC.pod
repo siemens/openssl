@@ -56,7 +56,7 @@ L<openssl_user_macros(7)>:
 All of the functions described below are deprecated.
 Applications should instead use L<EVP_MAC_CTX_new(3)>, L<EVP_MAC_CTX_free(3)>,
 L<EVP_MAC_init(3)>, L<EVP_MAC_update(3)> and L<EVP_MAC_final(3)>
-or the more convenient function L<EVP_mac(3)>.
+or the single-shot MAC function L<EVP_mac(3)>.
 
 HMAC() can continue to be used by defining B<OPENSSL_COMPENSATE_DEPRECATION>.
 Calls to
@@ -132,8 +132,8 @@ HMAC_size() returns the length in bytes of the underlying hash function output.
 
 =head1 RETURN VALUES
 
-HMAC() returns a pointer to the message authentication code
-or NULL if an error occurred.
+HMAC() returns a pointer to the message authentication code or NULL if
+an error occurred.
 
 HMAC_CTX_new() returns a pointer to a new B<HMAC_CTX> on success or
 NULL if an error occurred.

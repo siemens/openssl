@@ -216,7 +216,7 @@ int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
     return 0;
 }
 
-/* Retained for backward compatibility and some internal use in providers. */
+/* Retained for deprecation compensation and some internal use in providers. */
 unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
                     const unsigned char *data, size_t data_len,
                     unsigned char *md, unsigned int *md_len)
