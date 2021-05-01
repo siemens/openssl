@@ -200,8 +200,10 @@ an ASN.1-encoded response is expected, which should include a total length,
 the length indications received are checked for consistency
 and for not exceeding the maximum response length.
 
-OSSL_HTTP_get() uses HTTP GET to obtain data from the given I<bio> or I<url>
-and returns it as a memory BIO.
+OSSL_HTTP_get() uses HTTP GET to obtain data from the I<bio> if non-NULL,
+else from the server contained in the I<url>, and returns it as a memory BIO.
+If I<bio> is non-NULL, any host and port components in the I<url> are not used
+for connecting but the hostname is use for the C<Host> header.
 Any userinfo and fragment components in the I<url> are ignored.
 Any query component is handled as part of the path component.
 If the scheme component of the I<url> is C<https> a TLS connection is requested
