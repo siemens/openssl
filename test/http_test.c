@@ -115,40 +115,41 @@ static int test_http_x509(int do_get)
     X509 *rcert = NULL;
     BIO *wbio = BIO_new(BIO_s_mem());
     BIO *rbio = BIO_new(BIO_s_mem());
+    BIO *req = OSSL_HTTP_i2d((ASN1_VALUE *)x509, x509_it);
     server_args mock_args = { NULL, '0', 0 };
     STACK_OF(CONF_VALUE) *headers = NULL;
     const char *const content_type = "application/x-x509-ca-cert";
     int res = 0;
 
-    if (wbio == NULL || rbio == NULL)
+    if (wbio == NULL || rbio == NULL || req == NULL)
         goto err;
     mock_args.out = rbio;
     BIO_set_callback_ex(wbio, http_bio_cb_ex);
     BIO_set_callback_arg(wbio, (char *)&mock_args);
 
     rcert = (X509 *)
-        (do_get ?
-         OSSL_HTTP_get_asn1("/will-be-redirected",
-                            NULL /* proxy */, NULL /* no_proxy */,
-                            wbio, rbio, NULL /* bio_update_fn */, NULL,
-                            headers, 0 /* maxline */,
-                            0 /* max_resp_len */, 0 /* timeout */,
-                            content_type, x509_it)
-         :
-         OSSL_HTTP_transfer_asn1(NULL, NULL /* server */, NULL /* port */,
-                                 RPATH, 0 /* use_ssl */,
-                                 NULL /* proxy */, NULL /* no_proxy */,
-                                 wbio, rbio, NULL /* bio_update_fn */, NULL,
-                                 0 /* maxline */, 0 /* max_resp_len */,
-                                 headers, content_type,
-                                 (ASN1_VALUE *)x509, x509_it,
-                                 content_type, x509_it,
-                                 0 /* timeout */, 0 /* keep_alive */)
-         );
+        OSSL_HTTP_d2i(do_get ?
+                      OSSL_HTTP_get("/will-be-redirected",
+                                    NULL /* proxy */, NULL /* no_proxy */,
+                                    wbio, rbio, NULL /* bio_update_fn */, NULL,
+                                    0 /* maxline */, 0 /* max_resp_len */,
+                                    headers, content_type, 1 /* expect_asn1 */,
+                                    0 /* timeout */)
+                      :
+                      OSSL_HTTP_transfer(NULL, NULL /* host */, NULL /* port */,
+                                         RPATH, 0 /* use_ssl */,
+                                         NULL /* proxy */, NULL /* no_proxy */,
+                                         wbio, rbio, NULL /* bio_fn */, NULL,
+                                         0 /* maxline */, 0 /* max_resp_len */,
+                                         headers, content_type, req,
+                                         content_type, 1 /* expect_asn1 */,
+                                         0 /* timeout */, 0 /* keep_alive */),
+                      x509_it);
     res = TEST_ptr(rcert) && TEST_int_eq(X509_cmp(x509, rcert), 0);
 
  err:
     X509_free(rcert);
+    BIO_free(req);
     BIO_free(wbio);
     BIO_free(rbio);
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
@@ -157,9 +158,9 @@ static int test_http_x509(int do_get)
 
 static int test_http_keep_alive(char version, int keep_alive, int kept_alive)
 {
-    X509 *rcert = NULL;
     BIO *wbio = BIO_new(BIO_s_mem());
     BIO *rbio = BIO_new(BIO_s_mem());
+    BIO *rsp;
     server_args mock_args = { NULL, '0', 0 };
     const char *const content_type = "application/x-x509-ca-cert";
     OSSL_HTTP_REQ_CTX *rctx = NULL;
@@ -174,24 +175,22 @@ static int test_http_keep_alive(char version, int keep_alive, int kept_alive)
     BIO_set_callback_arg(wbio, (char *)&mock_args);
 
     for (res = 1, i = 1; res && i <= 2; i++) {
-        rcert = (X509 *)
-            OSSL_HTTP_transfer_asn1(&rctx, NULL /* server */, NULL /* port */,
-                                    RPATH, 0 /* use_ssl */,
-                                    NULL /* proxy */, NULL /* no_proxy */,
-                                    wbio, rbio, NULL /* bio_update_fn */, NULL,
-                                    0 /* maxline */, 0 /* max_resp_len */,
-                                    NULL /* headers */, content_type,
-                                    (ASN1_VALUE *)x509, x509_it,
-                                    content_type, x509_it,
-                                    0 /* timeout */, keep_alive);
+        rsp = OSSL_HTTP_transfer(&rctx, NULL /* server */, NULL /* port */,
+                                 RPATH, 0 /* use_ssl */,
+                                 NULL /* proxy */, NULL /* no_proxy */,
+                                 wbio, rbio, NULL /* bio_update_fn */, NULL,
+                                 0 /* maxline */, 0 /* max_resp_len */,
+                                 NULL /* headers */,
+                                 NULL /* content_type */, NULL /* req => GET */,
+                                 content_type, 0 /* ASN.1 not expected */,
+                                 0 /* timeout */, keep_alive);
         if (keep_alive == 2 && kept_alive == 0)
-            res = res && TEST_ptr_null(rcert)
-                && TEST_int_eq(OSSL_HTTP_REQ_CTX_is_alive(rctx), 0);
+            res = res && TEST_ptr_null(rsp)
+                && TEST_int_eq(OSSL_HTTP_is_alive(rctx), 0);
         else
-            res = res
-                && TEST_ptr(rcert) && TEST_int_eq(X509_cmp(x509, rcert), 0)
-                && TEST_int_eq(OSSL_HTTP_REQ_CTX_is_alive(rctx), keep_alive > 0);
-        X509_free(rcert);
+            res = res && TEST_ptr(rsp)
+                && TEST_int_eq(OSSL_HTTP_is_alive(rctx), keep_alive > 0);
+        BIO_free(rsp);
         keep_alive = 0;
     }
     OSSL_HTTP_close(rctx, res);

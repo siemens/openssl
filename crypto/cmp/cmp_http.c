@@ -39,6 +39,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
     STACK_OF(CONF_VALUE) *headers = NULL;
     const char *const content_type_pkix = "application/pkixcmp";
     int tls_used, type, keep_alive;
+    BIO *req_mem, *rsp;
     OSSL_CMP_MSG *res = NULL;
 
     if (ctx == NULL || req == NULL) {
@@ -48,6 +49,10 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
 
     if (!X509V3_add_value("Pragma", "no-cache", &headers))
         return NULL;
+    if ((req_mem = OSSL_HTTP_i2d((const ASN1_VALUE *)req,
+                                 ASN1_ITEM_rptr(OSSL_CMP_MSG))) == NULL)
+        goto err;
+
     if (ctx->serverPort != 0)
         BIO_snprintf(server_port, sizeof(server_port), "%d", ctx->serverPort);
     tls_used = OSSL_CMP_CTX_get_http_cb_arg(ctx) != NULL;
@@ -66,18 +71,17 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
             && type != OSSL_CMP_PKIBODY_POLLREQ)
         keep_alive = 0;
 
-    res = (OSSL_CMP_MSG *)
-        OSSL_HTTP_transfer_asn1(&ctx->http_ctx, ctx->server, server_port,
-                                ctx->serverPath, tls_used,
-                                ctx->proxy, ctx->no_proxy,
-                                NULL /* bio */, NULL /* rbio */,
-                                ctx->http_cb, OSSL_CMP_CTX_get_http_cb_arg(ctx),
-                                0 /* max_line */, 0 /* max_resp_len */,
-                                headers, content_type_pkix,
-                                (const ASN1_VALUE *)req,
-                                ASN1_ITEM_rptr(OSSL_CMP_MSG),
-                                content_type_pkix, ASN1_ITEM_rptr(OSSL_CMP_MSG),
-                                ctx->msg_timeout, keep_alive);
+    rsp = OSSL_HTTP_transfer(&ctx->http_ctx, ctx->server, server_port,
+                             ctx->serverPath, tls_used,
+                             ctx->proxy, ctx->no_proxy,
+                             NULL /* bio */, NULL /* rbio */,
+                             ctx->http_cb, OSSL_CMP_CTX_get_http_cb_arg(ctx),
+                             0 /* max_line */, 0 /* max_resp_len */,
+                             headers, content_type_pkix, req_mem,
+                             content_type_pkix, 1 /* expect_asn1 */,
+                             ctx->msg_timeout, keep_alive);
+    BIO_free(req_mem);
+    res = (OSSL_CMP_MSG *)OSSL_HTTP_d2i(rsp, ASN1_ITEM_rptr(OSSL_CMP_MSG));
 
     if (ctx->http_ctx == NULL)
         ossl_cmp_debug(ctx, "disconnected from CMP server");
@@ -88,6 +92,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
      */
     if (res != NULL)
         ossl_cmp_debug(ctx, "finished reading response from CMP server");
+ err:
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
     return res;
 }

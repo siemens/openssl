@@ -51,8 +51,13 @@ OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
 
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OSSL_HTTP_REQ_CTX *rctx)
 {
+    /*
+     * Cannot simple use because OCSP_REQ_CTX_nbio_d2i is a deprecated macro:
+     * return OCSP_REQ_CTX_nbio_d2i(rctx, presp, ASN1_ITEM_rptr(OCSP_RESPONSE))
+     */
     *presp = (OCSP_RESPONSE *)
-        OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, ASN1_ITEM_rptr(OCSP_RESPONSE));
+        OSSL_HTTP_d2i(OSSL_HTTP_REQ_CTX_exchange(rctx),
+                      ASN1_ITEM_rptr(OCSP_RESPONSE));
     return *presp != NULL;
 }
 

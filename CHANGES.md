@@ -365,8 +365,9 @@ OpenSSL 3.0
    type is OSSL_HTTP_REQ_CTX, and the deprecated functions are replaced
    with OSSL_HTTP_REQ_CTX_new(), OSSL_HTTP_REQ_CTX_free(),
    OSSL_HTTP_REQ_CTX_set_request_line(), OSSL_HTTP_REQ_CTX_add1_header(),
-   OSSL_HTTP_REQ_CTX_i2d(), OSSL_HTTP_REQ_CTX_nbio(),
-   OSSL_HTTP_REQ_CTX_sendreq_d2i(), OSSL_HTTP_REQ_CTX_get0_mem_bio() and
+   OSSL_HTTP_REQ_CTX_set1_req(), OSSL_HTTP_REQ_CTX_nbio(),
+   OSSL_HTTP_d2i(OSSL_HTTP_REQ_CTX_exchange()),
+   OSSL_HTTP_REQ_CTX_get0_mem_bio(), and
    OSSL_HTTP_REQ_CTX_set_max_response_length().
 
    *Rich Salz and Richard Levitte*
@@ -805,8 +806,12 @@ OpenSSL 3.0
    *David von Oheimb, Martin Peylo*
 
  * Generalized the HTTP client code from `crypto/ocsp/` into `crpyto/http/`.
-   The legacy OCSP-focused and only partly documented API is retained for
-   backward compatibility. See L<OSSL_CMP_MSG_http_perform(3)> etc. for details.
+   It supports arbitrary request and response content types, GET redirection,
+   TLS, connections via HTTP(S) proxies, connections and exchange via
+   user-defined BIOs (allowing implicit connections), persistent connections,
+   and timeout checks.  See L<OSSL_HTTP_transfer(3)> etc. for details.
+   The legacy OCSP-focused (and only partly documented) API
+   is retained for backward compatibility, while most of it is deprecated.
 
    *David von Oheimb*
 
