@@ -132,7 +132,7 @@ static int test_http_x509(int do_get)
                       OSSL_HTTP_get("/will-be-redirected",
                                     NULL /* proxy */, NULL /* no_proxy */,
                                     wbio, rbio, NULL /* bio_update_fn */, NULL,
-                                    0 /* maxline */, headers, content_type,
+                                    0 /* buf_size */, headers, content_type,
                                     1 /* expect_asn1 */,
                                     HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */)
                       :
@@ -140,7 +140,7 @@ static int test_http_x509(int do_get)
                                          RPATH, 0 /* use_ssl */,
                                          NULL /* proxy */, NULL /* no_proxy */,
                                          wbio, rbio, NULL /* bio_fn */, NULL,
-                                         0 /* maxline */, headers, content_type,
+                                         0 /* bufsize */, headers, content_type,
                                          req, content_type, 1 /* expect_asn1 */,
                                          HTTP_DEFAULT_MAX_RESP_LEN,
                                          0 /* timeout */, 0 /* keep_alive */),
@@ -179,7 +179,7 @@ static int test_http_keep_alive(char version, int keep_alive, int kept_alive)
                                  RPATH, 0 /* use_ssl */,
                                  NULL /* proxy */, NULL /* no_proxy */,
                                  wbio, rbio, NULL /* bio_update_fn */, NULL,
-                                 0 /* maxline */, NULL /* headers */,
+                                 0 /* buf_size */, NULL /* headers */,
                                  NULL /* content_type */, NULL /* req => GET */,
                                  content_type, 0 /* ASN.1 not expected */,
                                  0 /* max_resp */, 0 /* timeout */, keep_alive);

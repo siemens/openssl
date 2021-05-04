@@ -172,13 +172,13 @@ DECLARE_ASN1_DUP_FUNCTION(OCSP_CERTID)
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
-                                    const OCSP_REQUEST *req, int maxline);
+                                    const OCSP_REQUEST *req, int buf_size);
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OSSL_HTTP_REQ_CTX *rctx);
 
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
-#   define OCSP_REQ_CTX_new(io, maxline) \
-        OSSL_HTTP_REQ_CTX_new(io, io, maxline)
+#   define OCSP_REQ_CTX_new(io, buf_size) \
+        OSSL_HTTP_REQ_CTX_new(io, io, buf_size)
 #   define OCSP_REQ_CTX_free(r) \
         OSSL_HTTP_REQ_CTX_free(r)
 #   define OCSP_REQ_CTX_http(rctx, op, path) \

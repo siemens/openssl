@@ -78,7 +78,7 @@ static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
     return OSSL_HTTP_d2i(OSSL_HTTP_get(url,
                                        NULL /* proxy */, NULL /* no_proxy */,
                                        bio, rbio, NULL /* cb */, NULL /* arg */,
-                                       1024 /* maxline */, NULL /* headers */,
+                                       1024 /* buf_size */, NULL /* headers */,
                                        NULL /* expected_content_type */,
                                        1 /* expect_asn1 */,
                                        HTTP_DEFAULT_MAX_RESP_LEN, timeout), it);

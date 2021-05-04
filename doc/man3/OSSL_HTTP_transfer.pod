@@ -22,7 +22,7 @@ OSSL_HTTP_close
                                    const char *proxy, const char *no_proxy,
                                    int use_ssl, BIO *bio, BIO *rbio,
                                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                                   int maxline, int overall_timeout);
+                                   int buf_size, int overall_timeout);
  int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                              const char *proxyuser, const char *proxypass,
                              int timeout, BIO *bio_err, const char *prog);
@@ -35,7 +35,7 @@ OSSL_HTTP_close
  BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                     BIO *bio, BIO *rbio,
                     OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                    int maxline, const STACK_OF(CONF_VALUE) *headers,
+                    int buf_size, const STACK_OF(CONF_VALUE) *headers,
                     const char *expected_content_type, int expect_asn1,
                     size_t max_resp_len, int timeout);
  BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
@@ -44,7 +44,7 @@ OSSL_HTTP_close
                          const char *proxy, const char *no_proxy,
                          BIO *bio, BIO *rbio,
                          OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                         int maxline, const STACK_OF(CONF_VALUE) *headers,
+                         int buf_size, const STACK_OF(CONF_VALUE) *headers,
                          const char *content_type, BIO *req,
                          const char *expected_content_type, int expect_asn1,
                          size_t max_resp_len, int timeout, int keep_alive);
@@ -122,10 +122,10 @@ Here is a simple example that supports TLS connections (but not via a proxy):
 
 After disconnect the modified BIO will be deallocated using BIO_free_all().
 
-The I<maxline> parameter specifies the response header maximum line length.
+The I<buf_size> parameter specifies the response header maximum line length.
 A value <= 0 indicates that
 the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB should be used.
-This length is also used as the number of content bytes that are read at a time.
+I<buf_size> is also used as the number of content bytes that are read at a time.
 
 If the I<overall_timeout> parameter is > 0 this indicates the maximum number of
 seconds the overall HTTP transfer (i.e., connection setup if needed,

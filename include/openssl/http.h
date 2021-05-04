@@ -37,7 +37,7 @@ extern "C" {
 #define HTTP_DEFAULT_MAX_RESP_LEN (100 * 1024)
 
 /* Low-level HTTP API */
-OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int maxline);
+OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size);
 void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx);
 int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
                                        const char *server, const char *port,
@@ -65,7 +65,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
                                   const char *proxy, const char *no_proxy,
                                   int use_ssl, BIO *bio, BIO *rbio,
                                   OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                                  int maxline, int overall_timeout);
+                                  int buf_size, int overall_timeout);
 int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                             const char *proxyuser, const char *proxypass,
                             int timeout, BIO *bio_err, const char *prog);
@@ -78,7 +78,7 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url);
 BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                    BIO *bio, BIO *rbio,
                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                   int maxline, const STACK_OF(CONF_VALUE) *headers,
+                   int buf_size, const STACK_OF(CONF_VALUE) *headers,
                    const char *expected_content_type, int expect_asn1,
                    size_t max_resp_len, int timeout);
 BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
@@ -87,7 +87,7 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
                         const char *proxy, const char *no_proxy,
                         BIO *bio, BIO *rbio,
                         OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                        int maxline,const STACK_OF(CONF_VALUE) *headers,
+                        int buf_size, const STACK_OF(CONF_VALUE) *headers,
                         const char *content_type, BIO *req,
                         const char *expected_content_type, int expect_asn1,
                         size_t max_resp_len, int timeout, int keep_alive);
