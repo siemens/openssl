@@ -76,9 +76,10 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
                              ctx->proxy, ctx->no_proxy,
                              NULL /* bio */, NULL /* rbio */,
                              ctx->http_cb, OSSL_CMP_CTX_get_http_cb_arg(ctx),
-                             0 /* max_line */, 0 /* max_resp_len */,
-                             headers, content_type_pkix, req_mem,
+                             0 /* max_line */, headers,
+                             content_type_pkix, req_mem,
                              content_type_pkix, 1 /* expect_asn1 */,
+                             HTTP_DEFAULT_MAX_RESP_LEN,
                              ctx->msg_timeout, keep_alive);
     BIO_free(req_mem);
     res = (OSSL_CMP_MSG *)OSSL_HTTP_d2i(rsp, ASN1_ITEM_rptr(OSSL_CMP_MSG));
