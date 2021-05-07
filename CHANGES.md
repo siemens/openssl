@@ -358,19 +358,20 @@ OpenSSL 3.0
  * Deprecated the type OCSP_REQ_CTX and the functions OCSP_REQ_CTX_new(),
    OCSP_REQ_CTX_free(), OCSP_REQ_CTX_http(), OCSP_REQ_CTX_add1_header(),
    OCSP_REQ_CTX_i2d() and its special form OCSP_REQ_CTX_set1_req(),
-   OCSP_REQ_CTX_nbio(), OCSP_REQ_CTX_nbio_d2i(),
+   OCSP_REQ_CTX_nbio(),
+   OCSP_REQ_CTX_nbio_d2i() and its special form OCSP_sendreq_nbio(),
    OCSP_REQ_CTX_get0_mem_bio() and OCSP_set_max_response_length().  These
    were used to collect all necessary data to form a HTTP request, and to
    perform the HTTP transfer with that request.  With OpenSSL 3.0, the
    type is OSSL_HTTP_REQ_CTX, and the deprecated functions are replaced
    with OSSL_HTTP_REQ_CTX_new(), OSSL_HTTP_REQ_CTX_free(),
    OSSL_HTTP_REQ_CTX_set_request_line(), OSSL_HTTP_REQ_CTX_add1_header(),
-   OSSL_HTTP_REQ_CTX_set1_req(), OSSL_HTTP_REQ_CTX_nbio(),
-   OSSL_HTTP_d2i(OSSL_HTTP_REQ_CTX_exchange()),
+   OSSL_HTTP_REQ_CTX_set1_req(),
+   OSSL_HTTP_REQ_CTX_nbio(), OSSL_HTTP_REQ_CTX_nbio_d2i(),
    OSSL_HTTP_REQ_CTX_get0_mem_bio(), and
    OSSL_HTTP_REQ_CTX_set_max_response_length().
 
-   *Rich Salz and Richard Levitte*
+   *Rich Salz, Richard Levitte, and David von Oheimb*
 
  * Deprecated `X509_http_nbio()` and `X509_CRL_http_nbio()`,
    which are superseded by `X509_load_http()` and `X509_CRL_load_http()`.

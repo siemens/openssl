@@ -10,12 +10,11 @@ OSSL_HTTP_REQ_CTX_add1_header,
 OSSL_HTTP_REQ_CTX_set_expected,
 OSSL_HTTP_REQ_CTX_set1_req,
 OSSL_HTTP_REQ_CTX_nbio,
+OSSL_HTTP_REQ_CTX_nbio_d2i,
 OSSL_HTTP_REQ_CTX_exchange,
 OSSL_HTTP_REQ_CTX_get0_mem_bio,
 OSSL_HTTP_REQ_CTX_get_resp_len,
 OSSL_HTTP_REQ_CTX_set_max_response_length,
-OSSL_HTTP_i2d,
-OSSL_HTTP_d2i,
 OSSL_HTTP_is_alive
 - HTTP client low-level functions
 
@@ -40,6 +39,8 @@ OSSL_HTTP_is_alive
  int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
                                 const ASN1_ITEM *it, const ASN1_VALUE *req);
  int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx);
+ int OSSL_HTTP_REQ_CTX_nbio_d2i(OSSL_HTTP_REQ_CTX *rctx,
+                                ASN1_VALUE **pval, const ASN1_ITEM *it);
  BIO *OSSL_HTTP_REQ_CTX_exchange(OSSL_HTTP_REQ_CTX *rctx);
 
  BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(const OSSL_HTTP_REQ_CTX *rctx);
@@ -47,8 +48,6 @@ OSSL_HTTP_is_alive
  void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
                                                 unsigned long len);
 
- BIO *OSSL_HTTP_i2d(const ASN1_ITEM *it, const ASN1_VALUE *val);
- ASN1_VALUE *OSSL_HTTP_d2i(BIO *res, const ASN1_ITEM *it);
  int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx);
 
 =head1 DESCRIPTION
@@ -129,6 +128,10 @@ The function may need to be called again if its result is -1, which indicates
 L<BIO_should_retry(3)>.  In such a case it is advisable to sleep a little in
 between, using L<BIO_wait(3)> on the read BIO to prevent a busy loop.
 
+OSSL_HTTP_REQ_CTX_nbio_d2i() is like OSSL_HTTP_REQ_CTX_nbio() but on successs
+in addition parses the response, which must be a DER-encoded ASN.1 structure,
+using the ASN.1 template I<it> and places the result in I<*pval>.
+
 OSSL_HTTP_REQ_CTX_exchange() calls OSSL_HTTP_REQ_CTX_nbio() as often as needed
 in order to exchange a request and response or until a timeout is reached.
 If successful and an ASN.1-encoded response was expected, the response contents
@@ -155,11 +158,6 @@ then the B<HTTP_DEFAULT_MAX_RESP_LEN> is used, which currently is 100 KiB.
 If the C<Content-Length> header is present and exceeds this value or
 the content is an ASN.1 encoded structure with a length exceeding this value
 or both length indications are present but disagree then an error occurs.
-
-OSSL_HTTP_d2i() DER decodes the response of an HTTP transfer
-using the ASN.1 template I<it>.
-It consumes and frees the response provided as the BIO pointer argument I<res>.
-If I<res> is NULL it returns NULL.
 
 OSSL_HTTP_is_alive() can be used to query if the HTTP connection
 given by I<rctx> is still alive, i.e., has not been closed.
@@ -217,17 +215,17 @@ OSSL_HTTP_REQ_CTX_free() and OSSL_HTTP_REQ_CTX_set_max_response_length()
 do not return values.
 
 OSSL_HTTP_REQ_CTX_set_request_line(), OSSL_HTTP_REQ_CTX_add1_header(),
-OSSL_HTTP_REQ_CTX_set1_req(), OSSL_HTTP_REQ_CTX_set_expected(),
-and OSSL_HTTP_REQ_CTX_nbio()
+OSSL_HTTP_REQ_CTX_set1_req(), and OSSL_HTTP_REQ_CTX_set_expected()
 return 1 for success and 0 for failure.
+
+OSSL_HTTP_REQ_CTX_nbio() and OSSL_HTTP_REQ_CTX_nbio_d2i()
+return 1 for success, 0 on error or redirection, -1 if retry is needed.
 
 OSSL_HTTP_REQ_CTX_exchange() and OSSL_HTTP_REQ_CTX_get0_mem_bio()
 returns a pointer to a B<BIO> on success and NULL on failure.
 
 OSSL_HTTP_REQ_CTX_get_resp_len() returns the size of the response contents
 or 0 if not available or an error occurred.
-
-OSSL_HTTP_d2i() returns a pointer to a B<ASN1_VALUE>, or NULL on error.
 
 OSSL_HTTP_is_alive() returns 1 if its argument is non-NULL
 and the client requested a persistent connection
@@ -237,6 +235,8 @@ and the server did not disagree on keeping the connection open, else 0.
 
 L<BIO_should_retry(3)>,
 L<BIO_wait(3)>,
+L<ASN1_item_d2i_bio(3)>,
+L<ASN1_item_i2d_mem_bio(3)>,
 L<OSSL_HTTP_open(3)>,
 L<OSSL_HTTP_get(3)>,
 L<OSSL_HTTP_transfer(3)>,
