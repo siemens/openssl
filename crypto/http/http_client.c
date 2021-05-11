@@ -56,7 +56,7 @@ struct ossl_http_req_ctx_st {
     BIO *mem;                   /* Memory BIO holding request/response header */
     BIO *req;                   /* BIO holding the request provided by caller */
     int method_POST;            /* HTTP method is POST (else GET) */
-    const char *expected_ct;    /* Optional expected Content-Type */
+    char *expected_ct;          /* Optional expected Content-Type */
     int expect_asn1;            /* Response must be ASN.1-encoded */
     unsigned char *pos;         /* Current position sending data */
     long len_to_send;           /* Number of bytes still to send */
@@ -129,7 +129,7 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     OPENSSL_free((char *)rctx->proxy);
     OPENSSL_free((char *)rctx->server);
     OPENSSL_free((char *)rctx->port);
-    OPENSSL_free((char *)rctx->expected_ct);
+    OPENSSL_free(rctx->expected_ct);
     OPENSSL_free(rctx);
 }
 
@@ -245,7 +245,7 @@ int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
         return 0;
     }
 
-    OPENSSL_free((char *)rctx->expected_ct);
+    OPENSSL_free(rctx->expected_ct);
     rctx->expected_ct = NULL;
     if (content_type != NULL
             && (rctx->expected_ct = OPENSSL_strdup(content_type)) == NULL)
