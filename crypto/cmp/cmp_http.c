@@ -79,7 +79,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
                              0 /* buf_size */, headers,
                              content_type_pkix, req_mem,
                              content_type_pkix, 1 /* expect_asn1 */,
-                             HTTP_DEFAULT_MAX_RESP_LEN,
+                             OSSL_HTTP_DEFAULT_MAX_RESP_LEN,
                              ctx->msg_timeout, keep_alive);
     BIO_free(req_mem);
     res = (OSSL_CMP_MSG *)ASN1_item_d2i_bio(it, rsp, NULL);

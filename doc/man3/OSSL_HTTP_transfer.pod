@@ -124,7 +124,7 @@ After disconnect the modified BIO will be deallocated using BIO_free_all().
 
 The I<buf_size> parameter specifies the response header maximum line length.
 A value <= 0 indicates that
-the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB should be used.
+the B<OSSL_HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB should be used.
 I<buf_size> is also used as the number of content bytes that are read at a time.
 
 If the I<overall_timeout> parameter is > 0 this indicates the maximum number of
