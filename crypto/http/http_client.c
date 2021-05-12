@@ -50,9 +50,9 @@ struct ossl_http_req_ctx_st {
     OSSL_HTTP_bio_cb_t upd_fn;  /* Optional BIO update callback used for TLS */
     void *upd_arg;              /* Optional arg for update callback function */
     int use_ssl;                /* Use HTTPS */
-    const char *proxy;          /* Optional proxy name or URI */
-    const char *server;         /* Optional server host name */
-    const char *port;           /* Optional server port */
+    char *proxy;                /* Optional proxy name or URI */
+    char *server;               /* Optional server host name */
+    char *port;                 /* Optional server port */
     BIO *mem;                   /* Memory BIO holding request/response header */
     BIO *req;                   /* BIO holding the request provided by caller */
     int method_POST;            /* HTTP method is POST (else GET) */
@@ -126,9 +126,9 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     /* do not free rctx->rbio */
     BIO_free(rctx->mem); /* this may indirectly call ERR_clear_error() */
     OPENSSL_free(rctx->buf);
-    OPENSSL_free((char *)rctx->proxy);
-    OPENSSL_free((char *)rctx->server);
-    OPENSSL_free((char *)rctx->port);
+    OPENSSL_free(rctx->proxy);
+    OPENSSL_free(rctx->server);
+    OPENSSL_free(rctx->port);
     OPENSSL_free(rctx->expected_ct);
     OPENSSL_free(rctx);
 }
