@@ -605,14 +605,17 @@ static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **r
         return 0;
     while ((len = BIO_get_line(bio, linebuf, MAX_SMLEN)) > 0) {
         state = mime_bound_check(linebuf, len, bound, blen);
+        printf("state=%d bound='%s' len=%d %c line=%.40s\n", state, bound, len, len > 1 && linebuf[len-2] == '\r' ? 'r' : '@', linebuf);     
         if (state == 1) {
             first = 1;
             part++;
         } else if (state == 2) {
             if (!sk_BIO_push(parts, bpart)) {
                 BIO_free(bpart);
+                printf("multi_split return 0\n");    
                 return 0;
             }
+            printf("multi_split return 1\n");    
             return 1;
         } else if (part != 0) {
             /* Strip (possibly CR +) LF from linebuf */
@@ -622,11 +625,13 @@ static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **r
                 if (bpart)
                     if (!sk_BIO_push(parts, bpart)) {
                         BIO_free(bpart);
+                        printf("multi_split return 00\n");     
                         return 0;
                     }
                 bpart = BIO_new(BIO_s_mem());
                 if (bpart == NULL)
-                    return 0;
+                    { printf("multi_split return 000\n");    
+                        return 0; }      
                 BIO_set_mem_eof_return(bpart, 0);
             } else if (eol) {
                 if (
@@ -646,6 +651,7 @@ static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **r
         }
     }
     BIO_free(bpart);
+    printf("multi_split return 000\n");      
     return 0;
 }
 
@@ -988,15 +994,19 @@ static int strip_eol(char *linebuf, int *plen, int flags)
 
 #ifndef OPENSSL_NO_CMS
     if ((flags & CMS_BINARY) != 0) {
-        if (len <= 0 || linebuf[len - 1] != '\n')
-            return 0;
+        /*        if (len >= 549) printf("##### len=%d 546: %02x %02x %02x %02x\n", len, (unsigned char)linebuf[546], (unsigned char)linebuf[547], (unsigned char)linebuf[548], (unsigned char)linebuf[549]);     
+                  if (len >= 601) printf("##### len=%d 598: %02x %02x %02x %02x\n", len, (unsigned char)linebuf[598], (unsigned char)linebuf[599], (unsigned char)linebuf[600], (unsigned char)linebuf[601]);*/    
+        if (len <= 0 || linebuf[len - 1] != '\n') { printf("len=%d eol=00\n", len);    
+            return 0; }
         if ((flags & SMIME_CRLFEOL) != 0) {
-            if (len <= 1 || linebuf[len - 2] != '\r')
-                return 0;
+            printf("checking r\n");     
+            if (len <= 1 || linebuf[len - 2] != '\r') {    
+                printf("len=%d eol=000 missing r in %s\n", len, linebuf); return 0; }    
             len--;
         }
         len--;
         *plen = len;
+        printf("len=%d eol=11\n", len);   
         return 1;
     }
 #endif
@@ -1013,5 +1023,6 @@ static int strip_eol(char *linebuf, int *plen, int flags)
         }
     }
     *plen = len;
+    printf("len=%d eol=%d ####\n", len, is_eol);   
     return is_eol;
 }

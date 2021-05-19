@@ -3025,6 +3025,7 @@ static BIO *bio_open_default_(const char *filename, char mode, int format,
                    "Can't open %s, %s\n",
                    mode == 'r' ? "stdin" : "stdout", strerror(errno));
     } else {
+        printf("###### bio_open_default_: %s %s\n", filename, modestr(mode, format));     
         ret = BIO_new_file(filename, modestr(mode, format));
         if (quiet) {
             ERR_clear_error();

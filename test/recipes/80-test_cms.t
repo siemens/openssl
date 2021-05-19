@@ -824,10 +824,13 @@ subtest "CMS binary input tests\n" => sub {
                 "-signer", $cert, "-inkey", $key,
                 "-binary", "-in", $input, "-out", $signed])),
        "sign binary input with -binary");
-    ok(run(app(["openssl", "cms", "-verify", "-CAfile", $cert,
+    ok(run(app(["openssl", "cms", "-verify", "-CAfile", $cert,   
                 "-binary", "-in", $signed, "-out", $verified])),
        "verify binary input with -binary");
     is(compare($input, $verified), 0, "binary input retained with -binary");
+    is(0, 1, `ls -l $input`);     
+    is(0, 1, `ls -l $signed`);     
+    is(0, 1, `ls -l $verified`);    
 
     ok(run(app(["openssl", "cms", "-sign", "-md", "sha256",
                 "-signer", $cert, "-inkey", $key,
@@ -850,6 +853,9 @@ subtest "CMS binary input tests\n" => sub {
        "verify binary input with -binary -crlfeol");
     is(compare($input, $verified.".crlf"), 0,
        "binary input retained with -binary -crlfeol");
+    is(0, 1, `ls -l $input`);     
+    is(0, 1, `ls -l $signed.crlf`);     
+    is(0, 1, `ls -l $verified.crlf`);     
     ok(!run(app(["openssl", "cms", "-verify", "-CAfile", $cert,
                 "-binary", "-in", $signed.".crlf", "-out", $verified.".crlf2"])),
        "verify binary input with -binary missing -crlfeol");
