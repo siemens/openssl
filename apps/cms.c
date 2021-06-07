@@ -138,13 +138,13 @@ const OPTIONS cms_options[] = {
 
     OPT_SECTION("Keys and passwords"),
     {"pwri_password", OPT_PWRI_PASSWORD, 's',
-     "Specific password for recipient"},
+     "Specific password for encrpytion or decryption"},
     {"secretkey", OPT_SECRETKEY, 's',
      "Use specified hex-encoded key to decrypt/encrypt recipients or content"},
     {"secretkeyid", OPT_SECRETKEYID, 's',
      "Identity of the -secretkey for CMS \"KEKRecipientInfo\" object"},
     {"inkey", OPT_INKEY, 's',
-     "Input private key (if not signer or recipient)"},
+     "Input private key, used whend signing and decrypting"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},
     {"keyform", OPT_KEYFORM, 'f',
@@ -157,7 +157,8 @@ const OPTIONS cms_options[] = {
 
     OPT_SECTION("Encryption and decryption"),
     {"originator", OPT_ORIGINATOR, 's', "Originator certificate file"},
-    {"recip", OPT_RECIP, '<', "Recipient cert file"},
+    {"recip", OPT_RECIP, '<',
+     "Recipient cert file; may contain fallback for related private key"},
     {"cert...", OPT_PARAM, '.',
      "Recipient certs (optional; used only when encrypting)"},
     {"", OPT_CIPHER, '-',
@@ -172,8 +173,9 @@ const OPTIONS cms_options[] = {
      "Disable MMA protection, return error if no recipient found (see doc)"},
 
     OPT_SECTION("Signing"),
-    {"md", OPT_MD, 's', "Digest algorithm to use"},
-    {"signer", OPT_SIGNER, 's', "Signer certificate input file"},
+    {"md", OPT_MD, 's', "Digest algorithm to use for (re-)signing"},
+    {"signer", OPT_SIGNER, 's',
+     "Signer certificate input file; also used to load key if no -inkey"},
     {"certfile", OPT_CERTFILE, '<', "Other certificates file"},
     {"cades", OPT_CADES, '-',
      "Include signingCertificate attribute (CAdES-BES)"},
@@ -790,15 +792,15 @@ int cms_main(int argc, char **argv)
         keyfile = NULL;
     } else if (operation == SMIME_DECRYPT) {
         if (recipfile == NULL && keyfile == NULL
-            && secret_key == NULL && pwri_pass == NULL) {
-            BIO_printf(bio_err,
-                       "No recipient certificate or key specified\n");
+                && secret_key == NULL && pwri_pass == NULL) {
+            BIO_printf(bio_err, "No source of decryption key/password specified\n");
             goto opthelp;
         }
     } else if (operation == SMIME_ENCRYPT) {
         if (*argv == NULL && secret_key == NULL
-            && pwri_pass == NULL && sk_X509_num(encerts) <= 0) {
-            BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
+                && pwri_pass == NULL && sk_X509_num(encerts) <= 0) {
+            BIO_printf(bio_err,
+                       "No recipient(s) certificate(s) or encryption key/password specified\n");
             goto opthelp;
         }
     } else if (!operation) {
@@ -873,7 +875,7 @@ int cms_main(int argc, char **argv)
         }
     }
 
-    if (recipfile != NULL && (operation == SMIME_DECRYPT)) {
+    if (recipfile != NULL && operation == SMIME_DECRYPT) {
         if ((recip = load_cert(recipfile, FORMAT_UNDEF,
                                "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
@@ -897,10 +899,10 @@ int cms_main(int argc, char **argv)
         }
     }
 
-    if ((operation == SMIME_DECRYPT) || (operation == SMIME_ENCRYPT)) {
+    if (operation == SMIME_DECRYPT || operation == SMIME_ENCRYPT) {
         if (keyfile == NULL)
             keyfile = recipfile;
-    } else if ((operation == SMIME_SIGN) || (operation == SMIME_SIGN_RECEIPT)) {
+    } else if (operation == SMIME_SIGN || operation == SMIME_SIGN_RECEIPT) {
         if (keyfile == NULL)
             keyfile = signerfile;
     } else {
@@ -1098,6 +1100,7 @@ int cms_main(int argc, char **argv)
             CMS_SignerInfo *si;
             cms_key_param *kparam;
             int tflags = flags;
+
             signerfile = sk_OPENSSL_STRING_value(sksigners, i);
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 
