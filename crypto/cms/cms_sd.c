@@ -316,12 +316,11 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         ERR_raise(ERR_LIB_CMS, CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         return NULL;
     }
-    sd = cms_signed_data_init(cms);
-    if (!sd)
+    if ((sd = cms_signed_data_init(cms)) == NULL)
         goto err;
-    si = M_ASN1_new_of(CMS_SignerInfo);
-    if (!si)
+    if ((si = M_ASN1_new_of(CMS_SignerInfo)) == NULL)
         goto merr;
+
     /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(signer, -1, -1);
 
@@ -354,18 +353,12 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 
     if (md == NULL) {
         int def_nid;
-        if (EVP_PKEY_get_default_digest_nid(pk, &def_nid) <= 0)
-            goto err;
-        md = EVP_get_digestbynid(def_nid);
-        if (md == NULL) {
+
+        if (EVP_PKEY_get_default_digest_nid(pk, &def_nid) <= 0
+                || (md = EVP_get_digestbynid(def_nid)) == NULL) {
             ERR_raise(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST);
             goto err;
         }
-    }
-
-    if (!md) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_NO_DIGEST_SET);
-        goto err;
     }
 
     if (md == NULL) {
@@ -667,7 +660,7 @@ ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si)
     return si->signature;
 }
 
-static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
+static int cms_SignerInfo_content_sign(const CMS_ContentInfo *cms,
                                        CMS_SignerInfo *si, BIO *chain)
 {
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
@@ -758,7 +751,9 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 
 }
 
-int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain)
+int ossl_cms_SignedData_final(const CMS_ContentInfo *cms,
+                              const ASN1_OCTET_STRING *embedded_content,
+                              BIO *chain)
 {
     STACK_OF(CMS_SignerInfo) *sinfos;
     CMS_SignerInfo *si;

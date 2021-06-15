@@ -206,19 +206,20 @@ err:
 }
 
 /* unfortunately cannot constify SMIME_write_ASN1() due to this function */
-int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
+int CMS_dataFinal(const CMS_ContentInfo *cms, BIO *cmsbio)
 {
-    ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
+    const ASN1_OCTET_STRING **const_pos = CMS_get0_const_content(cms);
+    ASN1_OCTET_STRING *embedded_content = NULL;
 
     if (pos == NULL)
         return 0;
     /* If embedded content find memory BIO and set content */
-    if (*pos && ((*pos)->flags & ASN1_STRING_FLAG_CONT)) {
-        BIO *mbio;
+    if (*const_pos != NULL && ((*const_pos)->flags & ASN1_STRING_FLAG_CONT)) {
+        BIO *mbio = BIO_find_type(cmsbio, BIO_TYPE_MEM);
         unsigned char *cont;
         long contlen;
-        mbio = BIO_find_type(cmsbio, BIO_TYPE_MEM);
-        if (!mbio) {
+
+        if (mbio == NULL) {
             ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_NOT_FOUND);
             return 0;
         }
@@ -226,8 +227,11 @@ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
         /* Set bio as read only so its content can't be clobbered */
         BIO_set_flags(mbio, BIO_FLAGS_MEM_RDONLY);
         BIO_set_mem_eof_return(mbio, 0);
-        ASN1_STRING_set0(*pos, cont, contlen);
-        (*pos)->flags &= ~ASN1_STRING_FLAG_CONT;
+
+        if ((embedded_content = ASN1_STRING_new()) == NULL
+                || !ASN1_STRING_set(embedded_content, cont, contlen))
+            return 0;
+        embedded_content->flags &= ~ASN1_STRING_FLAG_CONT;
     }
 
     switch (OBJ_obj2nid(cms->contentType)) {
@@ -239,16 +243,16 @@ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
         return 1;
 
     case NID_pkcs7_enveloped:
-        return ossl_cms_EnvelopedData_final(cms, cmsbio);
+        return ossl_cms_EnvelopedData_final(cms, embedded_content, cmsbio);
 
     case NID_id_smime_ct_authEnvelopedData:
-        return ossl_cms_AuthEnvelopedData_final(cms, cmsbio);
+        return ossl_cms_AuthEnvelopedData_final(cms, embedded_content, cmsbio);
 
     case NID_pkcs7_signed:
-        return ossl_cms_SignedData_final(cms, cmsbio);
+        return ossl_cms_SignedData_final(cms, embedded_content, cmsbio);
 
     case NID_pkcs7_digest:
-        return ossl_cms_DigestedData_do_final(cms, cmsbio, 0);
+        return ossl_cms_DigestedData_do_final(cms, embedded_content, cmsbio, 0);
 
     default:
         ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_TYPE);
@@ -257,11 +261,52 @@ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
 }
 
 /*
- * Return an OCTET STRING pointer to content. This allows it to be accessed
- * or set later.
+ * Return an ASN1_OCTET STRING pointer to content.
+ * This allows it to be accessed or set later.
  */
+ASN1_OCTET_STRING **CMS_get0_content(const CMS_ContentInfo *cms)
+{
+    switch (OBJ_obj2nid(cms->contentType)) {
 
-ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms)
+    case NID_pkcs7_data:
+        return &cms->d.data;
+
+    case NID_pkcs7_signed:
+        return &cms->d.signedData->encapContentInfo->eContent;
+
+    case NID_pkcs7_enveloped:
+        return &cms->d.envelopedData->encryptedContentInfo->encryptedContent;
+
+    case NID_pkcs7_digest:
+        return &cms->d.digestedData->encapContentInfo->eContent;
+
+    case NID_pkcs7_encrypted:
+        return &cms->d.encryptedData->encryptedContentInfo->encryptedContent;
+
+    case NID_id_smime_ct_authEnvelopedData:
+        return &cms->d.authEnvelopedData->authEncryptedContentInfo
+                                        ->encryptedContent;
+
+    case NID_id_smime_ct_authData:
+        return &cms->d.authenticatedData->encapContentInfo->eContent;
+
+    case NID_id_smime_ct_compressedData:
+        return &cms->d.compressedData->encapContentInfo->eContent;
+
+    default:
+        if (cms->d.other->type == V_ASN1_OCTET_STRING)
+            return &cms->d.other->value.octet_string;
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_TYPE);
+        return NULL;
+
+    }
+}
+
+/*
+ * Return a const ASN1_OCTET STRING pointer to content.
+ * This allows it to be accessed read-only later.
+ */
+const ASN1_OCTET_STRING **CMS_get0_const_content(const CMS_ContentInfo *cms)
 {
     switch (OBJ_obj2nid(cms->contentType)) {
 

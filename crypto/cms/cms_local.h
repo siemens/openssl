@@ -404,7 +404,7 @@ int ossl_cms_DigestedData_do_final(const CMS_ContentInfo *cms,
                                    BIO *chain, int verify);
 
 BIO *ossl_cms_SignedData_init_bio(CMS_ContentInfo *cms);
-int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain);
+int ossl_cms_SignedData_final(const CMS_ContentInfo *cms, BIO *chain);
 int ossl_cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert,
                                    int type, const CMS_CTX *ctx);
 int ossl_cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
@@ -441,10 +441,10 @@ int ossl_cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src);
 ASN1_OCTET_STRING *ossl_cms_encode_Receipt(CMS_SignerInfo *si);
 
 BIO *ossl_cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
-int ossl_cms_EnvelopedData_final(CMS_ContentInfo *cms, BIO *chain);
+int ossl_cms_EnvelopedData_final(const CMS_ContentInfo *cms, BIO *chain);
 BIO *ossl_cms_AuthEnvelopedData_init_bio(CMS_ContentInfo *cms);
-int ossl_cms_AuthEnvelopedData_final(CMS_ContentInfo *cms, BIO *cmsbio);
-CMS_EnvelopedData *ossl_cms_get0_enveloped(CMS_ContentInfo *cms);
+int ossl_cms_AuthEnvelopedData_final(const CMS_ContentInfo *cms, BIO *cmsbio);
+CMS_EnvelopedData *ossl_cms_get0_enveloped(const CMS_ContentInfo *cms);
 CMS_AuthEnvelopedData *ossl_cms_get0_auth_enveloped(CMS_ContentInfo *cms);
 CMS_EncryptedContentInfo *ossl_cms_get0_env_enc_content(const CMS_ContentInfo *cms);
 

@@ -43,7 +43,7 @@ static int cms_get_enveloped_type(const CMS_ContentInfo *cms)
     }
 }
 
-CMS_EnvelopedData *ossl_cms_get0_enveloped(CMS_ContentInfo *cms)
+CMS_EnvelopedData *ossl_cms_get0_enveloped(const CMS_ContentInfo *cms)
 {
     if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_enveloped) {
         ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA);
@@ -1207,7 +1207,7 @@ BIO *ossl_cms_AuthEnvelopedData_init_bio(CMS_ContentInfo *cms)
     return NULL;
 }
 
-int ossl_cms_EnvelopedData_final(CMS_ContentInfo *cms, BIO *chain)
+int ossl_cms_EnvelopedData_final(const CMS_ContentInfo *cms, BIO *chain)
 {
     CMS_EnvelopedData *env = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -1249,7 +1249,7 @@ int ossl_cms_EnvelopedData_final(CMS_ContentInfo *cms, BIO *chain)
     return 1;
 }
 
-int ossl_cms_AuthEnvelopedData_final(CMS_ContentInfo *cms, BIO *cmsbio)
+int ossl_cms_AuthEnvelopedData_final(const CMS_ContentInfo *cms, BIO *cmsbio)
 {
     EVP_CIPHER_CTX *ctx;
     unsigned char *tag = NULL;
