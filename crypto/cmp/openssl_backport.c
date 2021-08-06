@@ -913,3 +913,24 @@ int X509_STORE_add_cert_dups(X509_STORE *ctx, X509 *x)
     return 1;
 }
 #endif
+
+# if OPENSSL_VERSION_NUMBER < 0x30100000L
+X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval)
+{
+    ASN1_OBJECT *algo = OBJ_nid2obj(nid);
+    X509_ALGOR *alg = NULL;
+
+    if (algo == NULL)
+        return NULL;
+    if ((alg = X509_ALGOR_new()) == NULL)
+        goto err;
+    if (X509_ALGOR_set0(alg, algo, ptype, pval))
+        return alg;
+    alg->algorithm = NULL; /* precaution to prevent double free */
+
+ err:
+    X509_ALGOR_free(alg);
+    ASN1_OBJECT_free(algo);
+    return NULL;
+}
+# endif

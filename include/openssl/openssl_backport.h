@@ -23,7 +23,10 @@ _Pragma("GCC diagnostic ignored \"-Wdiscarded-qualifiers\"")
 _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
 # endif
 
+# include <openssl/x509v3.h> /* for GENERAL_NAME, X509_ALGOR, etc. */
+
 # if OPENSSL_VERSION_NUMBER < 0x30100000L
+X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 #  define OSSL_STACK_OF_X509_free(sk) sk_X509_pop_free(sk, X509_free)
 # endif
 
@@ -77,7 +80,6 @@ int ossl_err_load_CMP_strings(void);
 # if OPENSSL_VERSION_NUMBER >= 0x10101000L || defined(CMP_STANDALONE)
 #  include <openssl/crmferr.h>
 # endif
-# include <openssl/x509v3.h> /* for GENERAL_NAME etc. */
 # ifndef  DECLARE_ASN1_DUP_FUNCTION
 #  define DECLARE_ASN1_DUP_FUNCTION(type) \
     DECLARE_ASN1_DUP_FUNCTION_name(type, type)
