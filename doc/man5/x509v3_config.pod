@@ -194,8 +194,8 @@ Otherwise it may have the value B<keyid> or B<issuer>
 or both of them, separated by C<,>.
 Either or both can have the option B<always>,
 indicated by putting a colon C<:> between the value and this option.
-By default the B<x509>, B<req>, and B<ca> apps behave as if
-"none" was given for self-signed certificates and "keyid, issuer" otherwise.
+By default the B<x509>, B<req>, and B<ca> apps behave as if B<none> was given
+for self-signed certificates and B<keyid>C<,> B<issuer> otherwise.
 
 If B<keyid> is present, an attempt is made to
 copy the subject key identifier (SKID) from the issuer certificate
