@@ -114,14 +114,14 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         }
     }
 
-    if (ctx != NULL && (ctx->flags & X509V3_CTX_TEST) != 0)
-        return akeyid;
-
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
     }
-    if ((issuer_cert = ctx->issuer_cert) == NULL) {
+    if ((ctx->flags & X509V3_CTX_TEST) != 0)
+        return akeyid;
+
+    if (keyid + issuer != 0 && (issuer_cert = ctx->issuer_cert) == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_ISSUER_CERTIFICATE);
         goto err;
     }
@@ -131,17 +131,17 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         i = X509_get_ext_by_NID(issuer_cert, NID_subject_key_identifier, -1);
         if (i >= 0 && (ext = X509_get_ext(issuer_cert, i)) != NULL)
             ikeyid = X509V3_EXT_d2i(ext);
-        if (ikeyid == NULL && ctx->issuer_pkey != NULL) { /* fallback */
-            /* generate AKID from scratch, emulating s2i_skey_id(..., "hash") */
+        if (keyid == 2 && ikeyid == NULL && ctx->issuer_pkey != NULL) {
+            /* generate fallback AKID, emulating s2i_skey_id(..., "hash") */
             X509_PUBKEY *pubkey = NULL;
 
             if (X509_PUBKEY_set(&pubkey, ctx->issuer_pkey))
                 ikeyid = ossl_x509_pubkey_hash(pubkey);
             X509_PUBKEY_free(pubkey);
         }
-        if ((keyid == 2 || issuer == 0)
+        if (keyid == 2
             && (ikeyid == NULL
-                || ASN1_STRING_length(ikeyid) <= 2) /* indicating "none" */) {
+                || ASN1_STRING_length(ikeyid) == 0) /* indicating "none" */) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);
             goto err;
         }

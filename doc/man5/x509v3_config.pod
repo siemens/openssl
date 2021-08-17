@@ -197,14 +197,17 @@ indicated by putting a colon C<:> between the value and this option.
 By default the B<x509>, B<req>, and B<ca> apps behave as if
 "none" was given for self-signed certificates and "keyid, issuer" otherwise.
 
-If B<keyid> is present, an attempt is made to compute the hash of the public key
-corresponding to the signing key in case the certificate is self-signed,
-or else to copy the subject key identifier (SKID) from the issuer certificate.
+If B<keyid> is present, an attempt is made to
+copy the subject key identifier (SKID) from the issuer certificate
+(which is the same as the current certificate if it is self-issued), where
+for self-signed certificates the hash of the public key is taken as fallback
+if the option B<always> is present.
 If this fails and the option B<always> is present, an error is returned.
 
 If B<issuer> is present, and in addition it has the option B<always> specified
 or B<keyid> is not present,
 then the issuer DN and serial number are copied from the issuer certificate.
+If this fails, an error is returned.
 
 Examples:
 

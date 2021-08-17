@@ -804,6 +804,16 @@ int x509_main(int argc, char **argv)
     }
 
     X509V3_set_ctx(&ext_ctx, issuer_cert, x, req, NULL, X509V3_CTX_REPLACE);
+    /* prepare fallback for AKID, but only if self-signed */
+    if (CAfile == NULL) {
+        if (cert_matches_key(x, privkey)) {
+            if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
+                goto end;
+        } else {
+            BIO_printf(bio_err,
+                       "Warning: Signature key and public key of cert do not match\n");
+        }
+    }
     if (extconf != NULL) {
         X509V3_set_nconf(&ext_ctx, extconf);
         if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {

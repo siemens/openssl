@@ -837,14 +837,15 @@ int req_main(int argc, char **argv)
             /* Set up V3 context struct */
             X509V3_set_ctx(&ext_ctx, CAcert != NULL ? CAcert : new_x509,
                            new_x509, NULL, NULL, X509V3_CTX_REPLACE);
-            if (CAcert == NULL) { /* self-issued, possibly self-signed */
-                if (!X509V3_set_issuer_pkey(&ext_ctx, pkey)) /* prepare right AKID */
-                    goto end;
-                ERR_set_mark();
-                if (!X509_check_private_key(new_x509, pkey))
+            /* prepare fallback for AKID, but only if self-signed */
+            if (CAcert == NULL) {
+                if (cert_matches_key(new_x509, pkey)) {
+                    if (!X509V3_set_issuer_pkey(&ext_ctx, pkey))
+                        goto end;
+                } else {
                     BIO_printf(bio_err,
                                "Warning: Signature key and public key of cert do not match\n");
-                ERR_pop_to_mark();
+                }
             }
             X509V3_set_nconf(&ext_ctx, req_conf);
 
