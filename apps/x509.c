@@ -944,7 +944,9 @@ cert_loop:
         }
     }
 
-    X509V3_set_ctx(&ext_ctx, issuer_cert, x, NULL, NULL, X509V3_CTX_REPLACE);
+    if (!X509V3_set_ctx(&ext_ctx, issuer_cert, x,
+                        NULL, NULL, X509V3_CTX_REPLACE))
+        goto end;
     /* prepare fallback for AKID, but only if issuer cert equals subject cert */
     if (CAfile == NULL) {
         if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
