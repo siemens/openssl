@@ -114,7 +114,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
         ERR_raise_data(ERR_LIB_HTTP, HTTP_R_INVALID_PORT_NUMBER, "%s", port);
         goto err;
     }
-    for (port_end = port; '0' <= *port_end && *port_end <= '9'; port_end++)
+    for (port_end = port; *port_end >= '0' && *port_end <= '9'; port_end++)
         ;
     if (port == p) /* port was given explicitly */
         p += port_end - port;

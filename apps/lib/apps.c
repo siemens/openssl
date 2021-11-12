@@ -2464,9 +2464,12 @@ static const char *tls_error_hint(void)
 /* HTTP callback function that supports TLS connection also via HTTPS proxy */
 BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
 {
-    if (connect && detail) { /* connecting with TLS */
-        APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
-        SSL_CTX *ssl_ctx = info->ssl_ctx;
+    APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
+    SSL_CTX *ssl_ctx = info->ssl_ctx;
+
+    if (ssl_ctx == NULL)
+        return bio; /* not using TLS */
+    if (connect) {
         SSL *ssl;
         BIO *sbio = NULL;
 
@@ -2478,7 +2481,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
                 || (sbio = BIO_new(BIO_f_ssl())) == NULL) {
             return NULL;
         }
-        if (ssl_ctx == NULL || (ssl = SSL_new(ssl_ctx)) == NULL) {
+        if ((ssl = SSL_new(ssl_ctx)) == NULL) {
             BIO_free(sbio);
             return NULL;
         }
@@ -2490,19 +2493,17 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
         BIO_set_ssl(sbio, ssl, BIO_CLOSE);
 
         bio = BIO_push(sbio, bio);
-    }
-    if (!connect) {
+    } else { /* disconnect */
         const char *hint;
-        BIO *cbio;
+        BIO *cbio; /* connect(+HTTP write) BIO */
 
-        if (!detail) { /* disconnecting after error */
-            hint = tls_error_hint();
-            if (hint != NULL)
+        if (!detail) { /* an error has occurred */
+            if ((hint = tls_error_hint()) != NULL)
                 ERR_add_error_data(2, " : ", hint);
         }
         (void)ERR_set_mark();
         BIO_ssl_shutdown(bio);
-        cbio = BIO_pop(bio); /* connect+HTTP BIO */
+        cbio = BIO_pop(bio);
         BIO_free(bio); /* SSL BIO */
         (void)ERR_pop_to_mark(); /* hide SSL_R_READ_BIO_NOT_SET etc. */
         bio = cbio;
