@@ -590,7 +590,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         } else {
             (void)ERR_set_mark();
             n = BIO_gets(rctx->rbio, buf, rctx->buf_size);
-            if (n == -2) { /* SSL BIOs do not support the "gets" method */
+            if (n == -2) { /* some BIOs, such as SSL, do not support "gets" */
                 (void)ERR_pop_to_mark();
                 n = BIO_get_line(rctx->rbio, buf, rctx->buf_size);
             } else {
