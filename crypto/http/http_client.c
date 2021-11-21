@@ -1454,7 +1454,7 @@ int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok)
     BIO *wbio;
     int ret = 1;
 
-    /* callback can be used to clean up TLS session on disconnect */
+    /* callback can be used to finish TLS session and free its BIO */
     if (rctx != NULL && rctx->upd_fn != NULL) {
         wbio = (*rctx->upd_fn)(rctx->wbio, rctx->upd_arg,
                                0 /* disconnect */, ok);
