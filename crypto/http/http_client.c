@@ -1603,6 +1603,8 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 
         /* RFC 7231 4.3.6: any 2xx status code is valid */
         if (!HAS_PREFIX(mbufp, " 2")) {
+            if (ossl_isspace(*mbufp))
+                mbufp++;
             /* chop any trailing whitespace */
             while (read_len > 0 && ossl_isspace(mbuf[read_len - 1]))
                 read_len--;
