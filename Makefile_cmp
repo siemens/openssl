@@ -43,7 +43,7 @@ else
     OPENSSL_RPATH_LIB=$(OPENSSL_LIB)
 endif
 
-ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+ifneq ($(filter-out doc clean clean_install clean_deb,$(MAKECMDGOALS)),)
 OPENSSL_VERSION=$(shell $(MAKE) -s --no-print-directory -f OpenSSL_version.mk LIB=h OPENSSL_DIR="$(OPENSSL_DIR)")
 ifeq ($(OPENSSL_VERSION),)
     $(warning cannot determine version of OpenSSL in directory '$(OPENSSL_DIR)', assuming 1.1.1)
@@ -78,9 +78,8 @@ override LDFLAGS += -L$(OPENSSL_LIB) -L$(OPENSSL) -Wl,-rpath=$(OPENSSL_RPATH_LIB
 override LDLIBS  += -lcrypto
 
 LIBCMP_HDRS_= cmp_util.h cmp.h cmperr.h crmf.h crmferr.h http.h httperr.h \
-  safestack_backport.h openssl_backport.h cryptoerr_legacy.h \
-  types.h trace.h macros.h asn1err.h kdf.h kdferr.h
-LIBCMP_HDRS_INTERNAL_ = refcount.h sizes.h constant_time.h cryptlib.h sockets.h common.h nelem.h
+  safestack_backport.h openssl_backport.h cryptoerr_legacy.h
+LIBCMP_HDRS_INTERNAL_ = sizes.h constant_time.h cryptlib.h sockets.h common.h nelem.h
 LIBCMP_HDRS = $(patsubst %,include/openssl/%,$(LIBCMP_HDRS_))
 LIBCMP_HDRS_INTERNAL = $(patsubst %,include/internal/%,$(LIBCMP_HDRS_INTERNAL_))
 LIBCMP_INC_HDRS = $(patsubst %,$(LIBCMP_INC)/openssl/%,$(LIBCMP_HDRS_))
@@ -98,6 +97,10 @@ build: $(LIBCMP_OUT)
 $(LIBCMP_INC)/openssl:
 	@mkdir -p $(OUT_DIR)
 	@mkdir -p $(LIBCMP_INC)/openssl
+ifeq ($(shell expr $(OPENSSL_VERSION) \< 3.0),1)
+	cd $(LIBCMP_INC)/openssl; touch macros.h types.h trace.h
+endif
+
 $(LIBCMP_INC)/internal:
 	@mkdir -p $(LIBCMP_INC)/internal
 
@@ -121,7 +124,7 @@ DEST_LIB=$(DESTDIR)$(prefix)$(SYSTEM_LIB)
 DEST_INC=$(DESTDIR)$(prefix)$(SYSTEM_INCLUDE_OPENSSL)
 LIBCMP_HDRS_install = $(patsubst %,$(DEST_INC)/%,$(LIBCMP_HDRS_))
 
-.phony: install uninstall install_clean
+.phony: install uninstall clean_install
 
 install: $(LIBCMP_OUT)
 	mkdir -p $(DEST_LIB)
@@ -129,14 +132,14 @@ install: $(LIBCMP_OUT)
 	mkdir -p $(DEST_INC)
 	install -D $(LIBCMP_INC)/openssl/*.h $(DEST_INC)
 
-install_clean:
+clean_install:
 	rm -f $(DEST_LIB)/libcmp$(DLL) $(LIBCMP_HDRS_install)
 
-uninstall: install_clean
+uninstall: clean_install
 
 #SRCS=$(shell ls Makefile_cmp include/openssl/{{cmp,crmf,http}{,err}.h,safestack_backport.h} crypto/{cmp,crmf,http}/*.{c,h})
 #SRCS_TAR=cmpossl_0.1.0.orig.tar.gz
-.phony: deb deb_clean
+.phony: deb clean_deb
 deb:
 	@ #tar czf $(SRCS_TAR) $(SRCS)
 	@ #rm -f $(LIBCMP_OUT) debian/tmp/usr/lib/libcmp.so*
@@ -144,5 +147,5 @@ deb:
 	rm -r debian/tmp
 	@ #rm $(SRCS_TAR)
 
-deb_clean:
+clean_deb:
 	rm ../libcmp*.deb
