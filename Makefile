@@ -60,6 +60,14 @@ ifeq ($(shell expr "$(OPENSSL_VERSION)" \< 1.1),1) # same as comparing == 1.0
 endif
 endif
 
+.phony: default
+default: build
+
+.phony: update
+update:
+	git fetch
+	git rebase origin
+
 LIBCMP_INC ?= $(OUT_DIR)/include_cmp
 LIBCMP_OUT=$(OUT_DIR)/libcmp$(DLL)
 #VERSION=.0
