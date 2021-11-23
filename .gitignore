@@ -1,0 +1,53 @@
+# Top level excludes
+/include_cmp
+test/recipes/80-test_cmp_http_data/SimpleLra
+
+# Misc auto generated files
+*.map
+*.ld
+*.orig
+*.bak
+*.pc
+inc.*
+out.*
+tmp.*
+
+
+##### Generic patterns
+# Auto generated assembly language source files
+*.s
+*.asm
+
+# Object files
+*.o
+*.obj
+
+
+# editor artefacts
+/.dir-locals.el
+*.swp
+.#*
+\#*#
+*~
+
+# All kinds of libraries and executables
+*.a
+*.so
+*.so.*
+*.d
+*.dylib
+*.dylib.*
+*.dll
+*.dll.*
+*.exe
+*.pyc
+*.exp
+*.lib
+*.pdb
+*.ilk
+*.def
+*.rc
+*.res
+
+# Windows manifest files
+*.manifest
