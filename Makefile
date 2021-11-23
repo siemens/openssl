@@ -5,6 +5,8 @@
 # All these paths may be absolute or relative to the dir containing this Makefile.
 # Optional DEBUG_FLAGS may set to prepend to local CFLAGS and LDFLAGS (default see below).
 
+SHELL=bash # for supporting extended file name globbing
+
 ifeq ($(OS),Windows_NT)
 #   EXE=.exe
     DLL=.dll
@@ -43,7 +45,8 @@ else
     OPENSSL_RPATH_LIB=$(OPENSSL_LIB)
 endif
 
-ifneq ($(filter-out doc clean clean_install clean_deb,$(MAKECMDGOALS)),)
+MAKECMDGOALS ?= default
+ifneq ($(filter-out doc update clean clean_install clean_deb,$(MAKECMDGOALS)),)
 OPENSSL_VERSION=$(shell $(MAKE) -s --no-print-directory -f OpenSSL_version.mk LIB=h OPENSSL_DIR="$(OPENSSL_DIR)")
 ifeq ($(OPENSSL_VERSION),)
     $(warning cannot determine version of OpenSSL in directory '$(OPENSSL_DIR)', assuming 1.1.1)
@@ -51,7 +54,7 @@ ifeq ($(OPENSSL_VERSION),)
 endif
 $(info detected OpenSSL version $(OPENSSL_VERSION).x)
 OSSL_VERSION_QUIRKS=-D'DEPRECATEDIN_1_2_0(f)= ' # needed for 1.2
-ifeq ($(shell expr $(OPENSSL_VERSION) \< 1.1),1) # same as comparing == 1.0
+ifeq ($(shell expr "$(OPENSSL_VERSION)" \< 1.1),1) # same as comparing == 1.0
     $(info enabling compilation quirks for OpenSSL 1.0.2)
     OSSL_VERSION_QUIRKS+=-Wno-discarded-qualifiers -Wno-unused-parameter #-Wno-unused-function #-D'DEPRECATEDIN_1_1_0(f)=f;' -D'DEPRECATEDIN_1_0_0(f)='
 endif
@@ -97,7 +100,7 @@ build: $(LIBCMP_OUT)
 $(LIBCMP_INC)/openssl:
 	@mkdir -p $(OUT_DIR)
 	@mkdir -p $(LIBCMP_INC)/openssl
-ifeq ($(shell expr $(OPENSSL_VERSION) \< 3.0),1)
+ifeq ($(shell expr "$(OPENSSL_VERSION)" \< 3.0),1)
 	cd $(LIBCMP_INC)/openssl; touch macros.h types.h trace.h
 endif
 
