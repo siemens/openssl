@@ -365,10 +365,6 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 #  define X509_FLAG_EXTENSIONS_ONLY_KID (1L << 13)
 #  define OCSP_REVOKED_STATUS_AACOMPROMISE 10
 
-#  include <ctype.h>
-#  define ossl_isspace isspace
-#  define ossl_isprint isprint
-
 #  define X509_R_UNKNOWN_SIGID_ALGS 144
 #  define CMP_R_CONNECT_TIMEOUT CMP_R_TOTAL_TIMEOUT
 #  define CMP_R_READ_TIMEOUT CMP_R_TOTAL_TIMEOUT
@@ -390,7 +386,6 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 #  define ERR_get_error_all(file, line, func, data, flags) \
     ERR_get_error_line_data(file, line, ((*func = ""), data), flags)
 #  define OSSL_trace_set_channel(cat, bio) (BIO_free(bio), 1)
-void ossl_cmp_add_error_txt(const char *separator, const char *txt);
 void ERR_add_error_mem_bio(const char *separator, BIO *bio);
 
 ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
@@ -420,8 +415,27 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store);
 int X509_self_signed(X509 *cert, int verify_signature);
 int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags);
 int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags);
+typedef struct ossl_http_req_ctx_st OSSL_HTTP_REQ_CTX;
+#  define ASN1_OP_DUP_POST -1 /* dummy */
+#  define ASN1_OP_GET0_LIBCTX -2 /* dummy */
+#  define ASN1_OP_GET0_PROPQ -3 /* dummy */
+#  define ossl_x509_set0_libctx(crt, libctx, propq) 0 /* dummy */
+
+# else /* OPENSSL_VERSION_NUMBER >= 0x30000000L */
+
 /* from crypto/x509.h: */
-int x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+
+# endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
+
+/* OpenSSL-internal functions: */
+
+/*  from crypto/ctype.h: */
+#  include <ctype.h>
+#  define ossl_isspace isspace
+#  define ossl_isprint isprint
+void ossl_cmp_add_error_txt(const char *separator, const char *txt);
+/* from crypto/x509.h: */
 int ossl_x509v3_cache_extensions(X509 *x);
 int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
 int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
@@ -435,13 +449,5 @@ int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags);
 int BIO_get_line(BIO *bio, char *buf, int size);
 /* from internal/cryptlib.h: */
 int openssl_strerror_r(int errnum, char *buf, size_t buflen);
-
-typedef struct ossl_http_req_ctx_st OSSL_HTTP_REQ_CTX;
-# define ASN1_OP_DUP_POST -1 /* dummy */
-# define ASN1_OP_GET0_LIBCTX -2 /* dummy */
-# define ASN1_OP_GET0_PROPQ -3 /* dummy */
-# define ossl_x509_set0_libctx(crt, libctx, propq) 0 /* dummy */
-
-# endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
 
 #endif

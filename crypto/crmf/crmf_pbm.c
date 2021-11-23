@@ -119,7 +119,7 @@ static unsigned char *EVP_HMAC(const EVP_MD *evp_md,
                                unsigned char *md, unsigned int *md_len)
 {
     unsigned char *res = NULL;
-#if OPENSSL_VERSION_NUMBER >= 0x10102000L
+#if 0x10102000L <= OPENSSL_VERSION_NUMBER && OPENSSL_VERSION_NUMBER < 0x30000000L
     EVP_MAC_CTX *mctx;
     size_t res_len;
 

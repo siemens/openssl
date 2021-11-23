@@ -35,7 +35,7 @@ int ERR_load_strings_const(const ERR_STRING_DATA *str)
 /*
  * auxiliary function for incrementally reporting texts via the error queue
  */
-static void put_error(int lib, const char *func, int reason,
+static void put_error(int lib, ossl_unused const char *func, int reason,
                       const char *file, int line)
 {
 #if 0
@@ -182,12 +182,12 @@ X509_PUBKEY *X509_PUBKEY_dup(/*const */X509_PUBKEY *a)
     pubkey->pkey = a->pkey;
     return pubkey;
 }
-#endif
 
-int x509_set0_libctx(ossl_unused X509 *x, ossl_unused OSSL_LIB_CTX *libctx, ossl_unused const char *propq)
+int ossl_x509_set0_libctx(ossl_unused X509 *x, ossl_unused OSSL_LIB_CTX *libctx, ossl_unused const char *propq)
 {
     return 1;
 }
+#endif
 
 int ossl_x509v3_cache_extensions(X509 *x)
 {
@@ -272,6 +272,7 @@ int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
     return 1;
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 /* calculate cert digest using the same hash algorithm as in its signature */
 ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
                                    EVP_MD **md_used, int *md_is_fallback)
@@ -404,6 +405,7 @@ void ERR_raise_data_(ossl_unused int lib, int reason, const char *fmt, ...)
     ERR_add_error_txt("", buf);
     /* sorry, does not support any further calls to ERR_add_error_txt() */
 }
+#endif
 
 char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
                                    const char *sep,
