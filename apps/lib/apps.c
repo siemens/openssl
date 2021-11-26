@@ -2470,6 +2470,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
         SSL *ssl;
         BIO *sbio = NULL;
 
+        /* To adapt after fixing callback design flaw, see #17088 */
         if ((info->use_proxy
              && !OSSL_HTTP_proxy_connect(bio, info->server, info->port,
                                          NULL, NULL, /* no proxy credentials */
@@ -2482,7 +2483,8 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
             return NULL;
         }
 
-        SSL_set_tlsext_host_name(ssl, info->server);
+        /* To adapt after fixing callback design flaw, see #17088 */
+        SSL_set_tlsext_host_name(ssl, info->server); /* not critical to do */
 
         SSL_set_connect_state(ssl);
         BIO_set_ssl(sbio, ssl, BIO_CLOSE);
@@ -2508,6 +2510,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
     return bio;
 }
 
+/* Will no more be needed after fixing callback design flaw, see #17088 */
 void APP_HTTP_TLS_INFO_free(APP_HTTP_TLS_INFO *info)
 {
     if (info != NULL) {
@@ -2543,11 +2546,14 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
         goto end;
     }
 
+    /* Will no more be needed after fixing callback design flaw, see #17088 */
     info.server = server;
     info.port = port;
-    info.use_proxy = proxy != NULL;
+    info.use_proxy = /* workaround for callback design flaw, see #17088 */
+        OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl) != NULL;
     info.timeout = timeout;
     info.ssl_ctx = ssl_ctx;
+
     mem = OSSL_HTTP_get(url, proxy, no_proxy, NULL /* bio */, NULL /* rbio */,
                         app_http_tls_cb, &info, 0 /* buf_size */, headers,
                         expected_content_type, 1 /* expect_asn1 */,
@@ -2571,6 +2577,7 @@ ASN1_VALUE *app_http_post_asn1(const char *server, const char *port,
                                const char *expected_content_type,
                                long timeout, const ASN1_ITEM *rsp_it)
 {
+    int use_ssl = ssl_ctx != NULL;
     APP_HTTP_TLS_INFO info;
     BIO *rsp, *req_mem = ASN1_item_i2d_mem_bio(req_it, req);
     ASN1_VALUE *res;
@@ -2578,12 +2585,15 @@ ASN1_VALUE *app_http_post_asn1(const char *server, const char *port,
     if (req_mem == NULL)
         return NULL;
 
+    /* Will no more be needed after fixing callback design flaw, see #17088 */
     info.server = server;
     info.port = port;
-    info.use_proxy = proxy != NULL;
+    info.use_proxy = /* workaround for callback design flaw, see #17088 */
+        OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl) != NULL;
     info.timeout = timeout;
     info.ssl_ctx = ssl_ctx;
-    rsp = OSSL_HTTP_transfer(NULL, server, port, path, ssl_ctx != NULL,
+
+    rsp = OSSL_HTTP_transfer(NULL, server, port, path, use_ssl,
                              proxy, no_proxy, NULL /* bio */, NULL /* rbio */,
                              app_http_tls_cb, &info,
                              0 /* buf_size */, headers, content_type, req_mem,
