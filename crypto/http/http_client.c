@@ -542,6 +542,21 @@ static int sleep_retry(OSSL_HTTP_REQ_CTX *rctx, time_t max_time,
     return 1;
 }
 
+static int may_still_retry(time_t max_time, int *ptimeout)
+{
+    time_t time_diff, now = time(NULL);
+
+    if (max_time != 0) {
+        if (max_time < now) {
+            ERR_raise(ERR_LIB_HTTP, HTTP_R_RETRY_TIMEOUT);
+            return 0;
+        }
+        time_diff = max_time - now;
+        *ptimeout = time_diff > INT_MAX ? INT_MAX : (int)time_diff;
+    }
+    return 1;
+}
+
 /*
  * Try exchanging request and response via HTTP on (non-)blocking BIO in rctx.
  * Returns 1 on success, 0 on error or redirection, -1 on BIO_should_retry.
@@ -1279,6 +1294,7 @@ BIO *OSSL_HTTP_get_ex(const char *url, const char *proxy, const char *no_proxy,
         if (resp == NULL && redirection_url != NULL) {
             if ((flags & OSSL_HTTP_FLAG_ENABLE_REDIRECT) != 0
                     && redirection_ok(++n_redirs, current_url, redirection_url)
+                 /* && may_still_retry(max_time, &timeout) */
                     && sleep_retry(rctx, max_time, 0 /* default_retry_after */,
                                    &timeout, HTTP_R_REDIRECT_TIMEOUT)) {
                 (void)BIO_reset(bio);
