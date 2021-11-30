@@ -1118,6 +1118,10 @@ int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
         return 0;
     }
     use_http_proxy = rctx->proxy != NULL && !rctx->use_ssl;
+    if (use_http_proxy && rctx->server == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
     rctx->max_resp_len = max_resp_len; /* allows for 0: indefinite */
 
     return OSSL_HTTP_REQ_CTX_set_request_line(rctx, req != NULL,
