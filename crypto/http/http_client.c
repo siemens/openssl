@@ -785,7 +785,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         if (*p != '\0') /* not end of headers */
             goto next_line;
 
-        if ((/* avoid server initiating keep-alive while disabled at client: */
+        if ((/* do not let server initiate keep_alive: */
              rctx->flags & OSSL_HTTP_FLAG_ENABLE_KEEP_ALIVE) != 0
                 && !found_keep_alive /* otherwise there is no change */) {
             if ((rctx->flags & OSSL_HTTP_FLAG_REQUIRE_KEEP_ALIVE) != 0) {
