@@ -2562,7 +2562,7 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
 
 }
 
-ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
+ASN1_VALUE *app_http_post_asn1(const char *server, const char *port,
                                const char *path, const char *proxy,
                                const char *no_proxy, SSL_CTX *ssl_ctx,
                                const STACK_OF(CONF_VALUE) *headers,
@@ -2577,12 +2577,13 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
 
     if (req_mem == NULL)
         return NULL;
-    info.server = host;
+
+    info.server = server;
     info.port = port;
     info.use_proxy = proxy != NULL;
     info.timeout = timeout;
     info.ssl_ctx = ssl_ctx;
-    rsp = OSSL_HTTP_transfer(NULL, host, port, path, ssl_ctx != NULL,
+    rsp = OSSL_HTTP_transfer(NULL, server, port, path, ssl_ctx != NULL,
                              proxy, no_proxy, NULL /* bio */, NULL /* rbio */,
                              app_http_tls_cb, &info,
                              0 /* buf_size */, headers, content_type, req_mem,

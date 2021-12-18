@@ -286,7 +286,7 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
                               const STACK_OF(CONF_VALUE) *headers,
                               long timeout, const char *expected_content_type,
                               const ASN1_ITEM *it);
-ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
+ASN1_VALUE *app_http_post_asn1(const char *server, const char *port,
                                const char *path, const char *proxy,
                                const char *no_proxy, SSL_CTX *ctx,
                                const STACK_OF(CONF_VALUE) *headers,
