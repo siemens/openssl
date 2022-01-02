@@ -605,7 +605,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
                 break;
             }
             ossl_cmp_debug(ctx,
-                           "sucessfully validated PBM-based CMP message protection");
+                           "successfully validated PBM-based CMP message protection");
             return 1;
         }
         ossl_cmp_warn(ctx, "verifying PBM-based CMP message protection failed");
@@ -677,7 +677,7 @@ static int check_transactionID_or_nonce(ASN1_OCTET_STRING *expected,
  * Any msg->extraCerts are prepended to ctx->untrusted.
  *
  * Ensures that:
- * its sender is of appropriate type (curently only X509_NAME) and
+ * its sender is of appropriate type (currently only X509_NAME) and
  *     matches any expected sender or srvCert subject given in the ctx
  * it has a valid body type
  * its protection is valid (or invalid/absent, but only if a callback function
