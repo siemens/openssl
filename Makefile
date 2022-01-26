@@ -115,12 +115,15 @@ endif
 $(LIBCMP_INC)/internal:
 	@mkdir -p $(LIBCMP_INC)/internal
 
-$(LIBCMP_INC_HDRS): $(LIBCMP_HDRS) $(LIBCMP_HDRS_INTERNAL) | $(LIBCMP_INC)/openssl $(LIBCMP_INC)/internal
+# not using $(LIBCMP_INC_HDRS) directly in order to avoid parallel execution with -jN, see
+# https://stackoverflow.com/questions/7081284/gnu-make-multiple-targets-in-a-single-rule
+.phony: libcmp_inc_hdrs
+libcmp_inc_hdrs: $(LIBCMP_HDRS) $(LIBCMP_HDRS_INTERNAL) | $(LIBCMP_INC)/openssl $(LIBCMP_INC)/internal
 	cp $(LIBCMP_HDRS) $(LIBCMP_INC)/openssl # --preserve=timestamps has no effect on WSL
 	@ # cd $(LIBCMP_INC)/openssl && ((mv crmf.h tmp2.h && /bin/echo -e "#undef CMP_STANDALONE\n#define CMP_STANDALONE\n" >tmp1.h && cat tmp1.h tmp2.h >crmf.h && touch -r tmp2.h crmf.h); rm -f tmp1.h tmp2.h)
 	cp $(LIBCMP_HDRS_INTERNAL) $(LIBCMP_INC)/internal # --preserve=timestamps has no effect on WSL
 
-$(LIBCMP_OUT): $(LIBCMP_INC_HDRS) $(LIBCMP_HDRS) $(LIBCMP_SRCS)
+$(LIBCMP_OUT): libcmp_inc_hdrs $(LIBCMP_SRCS)
 	$(CC) -DCMP_STANDALONE $(CFLAGS) $(LIBCMP_HDRS_INC) $(LIBCMP_SRCS) $(LDFLAGS) $(LDLIBS) -shared -o $@
 	@ # -Wl,-soname,libcmp$(DLL)$(VERSION)
 	@ #ln -sr $(LIBCMP_OUT) $(LIBCMP_OUT)$(VERSION)
