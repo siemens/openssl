@@ -143,6 +143,24 @@ Also make sure that the OpenSSL libraries (typically referred to via `-lssl -lcr
 (the version) of the libraries found there by the linker match the header files found by the compiler.
 
 
+## Building Debian packages
+
+This repository can build two Debian packages.
+
+1. `libcmp` - the shared library
+2. `libcmp-dev` - development headers
+
+To build the Debian packages, the following dependencies have to be installed:
+1. `libssl-dev`
+2. `pkg-config`
+3. `debhelper`
+
+Then the packages can be built by
+```
+dpkg-buildpackage -uc -us
+```
+On success, they are placed in the parent directory (`../`).
+
 ## Disclaimer
 
 This software including associated documentation is provided ‘as is’.

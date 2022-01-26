@@ -19,6 +19,8 @@ else
     LIB=lib
 endif
 
+ROOTFS ?= $(DESTDIR)$(prefix)
+
 ifeq ($(OUT_DIR),)
      OUT_DIR=.
 endif
@@ -46,7 +48,7 @@ else
 endif
 
 MAKECMDGOALS ?= default
-ifneq ($(filter-out doc update clean clean_install clean_deb,$(MAKECMDGOALS)),)
+ifneq ($(filter-out doc update install uninstall clean clean_install clean_deb,$(MAKECMDGOALS)),)
 OPENSSL_VERSION=$(shell $(MAKE) -s --no-print-directory -f OpenSSL_version.mk LIB=h OPENSSL_DIR="$(OPENSSL_DIR)")
 ifeq ($(OPENSSL_VERSION),)
     $(warning cannot determine version of OpenSSL in directory '$(OPENSSL_DIR)', assuming 1.1.1)
@@ -69,7 +71,7 @@ update:
 	git rebase origin
 
 LIBCMP_INC ?= $(OUT_DIR)/include_cmp
-LIBCMP_OUT=$(OUT_DIR)/libcmp$(DLL)
+LIBCMP_OUT=libcmp$(DLL)
 #VERSION=.0
 
 CC ?= gcc
@@ -103,7 +105,7 @@ LIBCMP_SRCS = $(patsubst %,crypto/crmf/%,$(CRMF_SRCS_)) \
 
 .phony: build clean
 
-build: $(LIBCMP_OUT)
+build: $(OUT_DIR)/$(LIBCMP_OUT)
 
 $(LIBCMP_INC)/openssl:
 	@mkdir -p $(OUT_DIR)
@@ -123,31 +125,31 @@ libcmp_inc_hdrs: $(LIBCMP_HDRS) $(LIBCMP_HDRS_INTERNAL) | $(LIBCMP_INC)/openssl 
 	@ # cd $(LIBCMP_INC)/openssl && ((mv crmf.h tmp2.h && /bin/echo -e "#undef CMP_STANDALONE\n#define CMP_STANDALONE\n" >tmp1.h && cat tmp1.h tmp2.h >crmf.h && touch -r tmp2.h crmf.h); rm -f tmp1.h tmp2.h)
 	cp $(LIBCMP_HDRS_INTERNAL) $(LIBCMP_INC)/internal # --preserve=timestamps has no effect on WSL
 
-$(LIBCMP_OUT): libcmp_inc_hdrs $(LIBCMP_SRCS)
+$(OUT_DIR)/$(LIBCMP_OUT): libcmp_inc_hdrs $(LIBCMP_SRCS)
 	$(CC) -DCMP_STANDALONE $(CFLAGS) $(LIBCMP_HDRS_INC) $(LIBCMP_SRCS) $(LDFLAGS) $(LDLIBS) -shared -o $@
 	@ # -Wl,-soname,libcmp$(DLL)$(VERSION)
-	@ #ln -sr $(LIBCMP_OUT) $(LIBCMP_OUT)$(VERSION)
+	@ #ln -sr $(OUT_DIR)/$(LIBCMP_OUT) $(OUT_DIR)/$(LIBCMP_OUT)$(VERSION)
 
 clean:
 	rm -f $(LIBCMP_INC)/openssl/* $(LIBCMP_INC)/internal/*
-	rm -f $(LIBCMP_OUT) # $(LIBCMP_OUT)$(VERSION)
+	rm -f $(OUT_DIR)/$(LIBCMP_OUT) # $(OUT_DIR)/$(LIBCMP_OUT)$(VERSION)
 	rmdir $(LIBCMP_INC)/openssl $(LIBCMP_INC)/internal $(LIBCMP_INC) 2>/dev/null || true
 
 SYSTEM_LIB=/usr/lib
-DEST_LIB=$(DESTDIR)$(prefix)$(SYSTEM_LIB)
-DEST_INC=$(DESTDIR)$(prefix)$(SYSTEM_INCLUDE_OPENSSL)
+DEST_LIB=$(ROOTFS)$(SYSTEM_LIB)
+DEST_INC=$(ROOTFS)$(SYSTEM_INCLUDE_OPENSSL)
 LIBCMP_HDRS_install = $(patsubst %,$(DEST_INC)/%,$(LIBCMP_HDRS_))
 
 .phony: install uninstall clean_install
 
-install: $(LIBCMP_OUT)
+install: # $(OUT_DIR)/$(LIBCMP_OUT)
 	mkdir -p $(DEST_LIB)
-	install -D $(LIBCMP_OUT) $(DEST_LIB)
+	install -D $(OUT_DIR)/$(LIBCMP_OUT) $(DEST_LIB)
 	mkdir -p $(DEST_INC)
 	install -D $(LIBCMP_INC)/openssl/*.h $(DEST_INC)
 
 clean_install:
-	rm -f $(DEST_LIB)/libcmp$(DLL) $(LIBCMP_HDRS_install)
+	rm -f $(DEST_LIB)/$(LIBCMP_OUT) $(LIBCMP_HDRS_install)
 
 uninstall: clean_install
 
