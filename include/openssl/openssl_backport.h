@@ -82,6 +82,8 @@ int ossl_err_load_CMP_strings(void);
 # endif
 # if OPENSSL_VERSION_NUMBER < 0x10100000L
 typedef unsigned char uint8_t;
+typedef u_int32_t uint32_t;
+typedef u_int64_t uint64_t;
 #  define ERR_R_PASSED_INVALID_ARGUMENT CRMF_R_NULL_ARGUMENT
 #  define int64_t long
 #  define ASN1_INTEGER_get_int64(var, a) ((*(var) = ASN1_INTEGER_get(a)) != -1)
@@ -93,6 +95,7 @@ typedef unsigned char uint8_t;
                                 OBJ_cmp((a)->algorithm, (b)->algorithm) :\
                                 (!(a)->parameter && !(b)->parameter) ? 0 : \
                                 ASN1_TYPE_cmp(a->parameter, b->parameter))
+#  define X509_V_FLAG_NO_CHECK_TIME 0x200000
 # endif
 # if OPENSSL_VERSION_NUMBER < 0x10100002L
 #  define EVP_MD_CTX_new()      EVP_MD_CTX_create()
@@ -103,8 +106,6 @@ size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 #  ifndef CMP_STANDALONE
 #   define DEFINE_STACK_OF DECLARE_STACK_OF
 #  endif
-typedef u_int32_t uint32_t;
-typedef u_int64_t uint64_t;
 # endif
 
 # if OPENSSL_VERSION_NUMBER < 0x10100005L
@@ -247,7 +248,6 @@ typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
 #  endif
 #  define X509_STORE_set_lookup_crls X509_STORE_set_lookup_crls_cb
 #  define X509_VERIFY_PARAM_get_time(param) ((param)->check_time)
-#  define X509_V_FLAG_NO_CHECK_TIME 0x200000
 #  define X509_set_proxy_flag(x) { (x)->ex_flags |= EXFLAG_PROXY; }
 #  define X509_CRL_get0_lastUpdate X509_CRL_get_lastUpdate
 #  define X509_CRL_get0_nextUpdate X509_CRL_get_nextUpdate
