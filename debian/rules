@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-# rules for Debian packaging of cmpossl
+# rules for Debian packaging of libcmp (cmpossl)
 
 CC=$(DEB_HOST_GNU_TYPE)-gcc
 CXX=$(DEB_HOST_GNU_TYPE)-g++
@@ -13,20 +13,12 @@ override_dh_auto_configure:
 	touch Makefile # trigger use of 'make' in dh_auto_build and dh_auto_install
 
 override_dh_auto_build:
+#	CFLAGS="-O2 -DNDEBUG" CXXFLAGS="-O2 -DNDEBUG" DEBUG_FLAGS="" LDFLAGS=""  # can be used to avoid dependency on libasan and libubsan
 	OPENSSL_DIR=/usr CC=$(CC) CXX=$(CXX) AR=$(AR) \
-	  CFLAGS="-O2 -DNDEBUG" CXXFLAGS="-O2 -DNDEBUG" DEBUG_FLAGS="" LDFLAGS="" \
 	  dh_auto_build -- # may add 'make' options here
-#       DEBUG_FLAGS="" prevents dependency on libasan
 
 override_dh_auto_test:
 # do not run any tests
-
-LIBDIR=debian/tmp/usr/lib
-override_dh_auto_install:
-	dh_auto_install
-	@# prevent some confusing lintian errors and warnings:
-	@#mv $(LIBDIR)/libcmp.so $(LIBDIR)/libcmp.so.0
-	@#ln -sr $(LIBDIR)/libcmp.so.0 $(LIBDIR)/libcmp.so
 
 #override_dh_builddeb:
 #	dh_builddeb --destdir . --

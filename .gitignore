@@ -1,10 +1,13 @@
 # Top level excludes
 /include_cmp
+apps
+attic
 test/recipes/80-test_cmp_http_data/SimpleLra
 
 # Misc auto generated files
 *.map
 *.ld
+*.log
 *.orig
 *.bak
 *.pc
@@ -39,6 +42,7 @@ tmp.*
 *.dylib.*
 *.dll
 *.dll.*
+*.diff
 *.exe
 *.pyc
 *.exp
@@ -51,3 +55,11 @@ tmp.*
 
 # Windows manifest files
 *.manifest
+
+debian/.debhelper
+debian/debhelper-build-stamp
+debian/files
+debian/tmp
+debian/libcmp
+debian/libcmp-dev
+debian/*.substvars

@@ -1,1 +1,3 @@
+usr/lib/lib*.so
 usr/include/openssl/*.h
+usr/share/doc/libcmp-dev/*.pod

@@ -110,7 +110,7 @@ You may point the environment variable `OPENSSL_DIR` to an alternative OpenSSL i
 export OPENSSL_DIR=/usr/local
 ```
 You may also specify using the environment variable `OUT_DIR`
-where the produced library (e.g., `libcmp`) shall be placed.
+where the produced library (e.g., `libcmp.so.1`) shall be placed.
 By default, the current directory (`.`) is used.
 For further details on optional environment variables,
 see the [`Makefile`](Makefile).
@@ -124,7 +124,7 @@ where the CC environment variable may be set as needed; it defaults to %'gcc'.
 Also the ROOTFS environment variable may be set, e.g., for cross compilation.
 -->
 
-The result is in, for instance, `./libcmp.so`.
+The result is in, for instance, `./libcmp.so.1`.
 
 
 ## Using the library in own applications
@@ -147,17 +147,16 @@ Also make sure that the OpenSSL libraries (typically referred to via `-lssl -lcr
 
 This repository can build two Debian packages.
 
-1. `libcmp` - the shared library
-2. `libcmp-dev` - development headers
+* `libcmp` - the shared library
+* `libcmp-dev` - development headers
 
-To build the Debian packages, the following dependencies have to be installed:
-1. `libssl-dev`
-2. `pkg-config`
-3. `debhelper`
+To build the Debian packages, the following dependencies need to be installed:
+* `debhelper`
+* `libssl-dev`
 
 Then the packages can be built by
 ```
-dpkg-buildpackage -uc -us
+make deb
 ```
 On success, they are placed in the parent directory (`../`).
 

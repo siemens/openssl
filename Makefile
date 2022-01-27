@@ -5,7 +5,7 @@
 # All these paths may be absolute or relative to the dir containing this Makefile.
 # Optional DEBUG_FLAGS may set to prepend to local CFLAGS and LDFLAGS (default see below).
 
-SHELL=bash # for supporting extended file name globbing
+SHELL=bash # This is needed for supporting extended file name globbing
 
 ifeq ($(OS),Windows_NT)
 #   EXE=.exe
@@ -20,6 +20,11 @@ else
 endif
 
 ROOTFS ?= $(DESTDIR)$(prefix)
+
+VERSION=1.0
+# must be kept in sync with latest version in debian/changelog
+# PACKAGENAME=libcmp
+# DIRNAME=$(PACKAGENAME)-$(VERSION)
 
 ifeq ($(OUT_DIR),)
      OUT_DIR=.
@@ -71,8 +76,7 @@ update:
 	git rebase origin
 
 LIBCMP_INC ?= $(OUT_DIR)/include_cmp
-LIBCMP_OUT=libcmp$(DLL)
-#VERSION=.0
+OUTLIB=libcmp$(DLL)
 
 CC ?= gcc
 ifdef NDEBUG
@@ -87,7 +91,10 @@ override CFLAGS += -I$(LIBCMP_INC)
 #LIBCMP_HDRS_INC = -include $(LIBCMP_INC)/openssl/crmf.h # used to force inclusion of standalone version, needed also for cmp_err.c
 LIBCMP_HDRS_INC = -include $(LIBCMP_INC)/openssl/openssl_backport.h # used to force inclusion of standalone version
 
-override LDFLAGS += -L$(OPENSSL_LIB) -L$(OPENSSL) -Wl,-rpath=$(OPENSSL_RPATH_LIB) -Wl,-rpath=$(OPENSSL_RPATH)
+override LDFLAGS += -L$(OPENSSL_LIB) -L$(OPENSSL)
+ifeq ($(DEB_TARGET_ARCH),) # not during Debian packaging
+    override LDFLAGS += -Wl,-rpath=$(OPENSSL_RPATH_LIB) -Wl,-rpath=$(OPENSSL_RPATH)
+endif
 override LDLIBS  += -lcrypto
 
 LIBCMP_HDRS_= cmp_util.h cmp.h cmperr.h crmf.h crmferr.h http.h httperr.h \
@@ -105,7 +112,7 @@ LIBCMP_SRCS = $(patsubst %,crypto/crmf/%,$(CRMF_SRCS_)) \
 
 .phony: build clean
 
-build: $(OUT_DIR)/$(LIBCMP_OUT)
+build: $(OUT_DIR)/$(OUTLIB)
 
 $(LIBCMP_INC)/openssl:
 	@mkdir -p $(OUT_DIR)
@@ -125,31 +132,41 @@ libcmp_inc_hdrs: $(LIBCMP_HDRS) $(LIBCMP_HDRS_INTERNAL) | $(LIBCMP_INC)/openssl 
 	@ # cd $(LIBCMP_INC)/openssl && ((mv crmf.h tmp2.h && /bin/echo -e "#undef CMP_STANDALONE\n#define CMP_STANDALONE\n" >tmp1.h && cat tmp1.h tmp2.h >crmf.h && touch -r tmp2.h crmf.h); rm -f tmp1.h tmp2.h)
 	cp $(LIBCMP_HDRS_INTERNAL) $(LIBCMP_INC)/internal # --preserve=timestamps has no effect on WSL
 
-$(OUT_DIR)/$(LIBCMP_OUT): libcmp_inc_hdrs $(LIBCMP_SRCS)
-	$(CC) -DCMP_STANDALONE $(CFLAGS) $(LIBCMP_HDRS_INC) $(LIBCMP_SRCS) $(LDFLAGS) $(LDLIBS) -shared -o $@
-	@ # -Wl,-soname,libcmp$(DLL)$(VERSION)
-	@ #ln -sr $(OUT_DIR)/$(LIBCMP_OUT) $(OUT_DIR)/$(LIBCMP_OUT)$(VERSION)
+$(OUT_DIR)/$(OUTLIB).$(VERSION): libcmp_inc_hdrs $(LIBCMP_SRCS)
+	$(CC) -DCMP_STANDALONE $(CFLAGS) $(LIBCMP_HDRS_INC) $(LIBCMP_SRCS) $(LDFLAGS) $(LDLIBS) -shared -o $@ -Wl,-soname,$(OUTLIB).$(VERSION)
+
+$(OUT_DIR)/$(OUTLIB): $(OUT_DIR)/$(OUTLIB).$(VERSION)
+	ln -sf $(OUTLIB).$(VERSION) $(OUT_DIR)/$(OUTLIB)
 
 clean:
 	rm -f $(LIBCMP_INC)/openssl/* $(LIBCMP_INC)/internal/*
-	rm -f $(OUT_DIR)/$(LIBCMP_OUT) # $(OUT_DIR)/$(LIBCMP_OUT)$(VERSION)
+	rm -f $(OUT_DIR)/$(OUTLIB)*
 	rmdir $(LIBCMP_INC)/openssl $(LIBCMP_INC)/internal $(LIBCMP_INC) 2>/dev/null || true
 
 SYSTEM_LIB=/usr/lib
 DEST_LIB=$(ROOTFS)$(SYSTEM_LIB)
 DEST_INC=$(ROOTFS)$(SYSTEM_INCLUDE_OPENSSL)
+DEST_DOC=$(ROOTFS)/usr/share/doc/libcmp-dev# TODO improve
 LIBCMP_HDRS_install = $(patsubst %,$(DEST_INC)/%,$(LIBCMP_HDRS_))
+LIBCMP_DOCS_ = $(wildcard doc/man3/*.pod)
+LIBCMP_DOCS_install = $(patsubst doc/man3/%,$(DEST_DOC)/%,$(LIBCMP_DOCS_))
 
 .phony: install uninstall clean_install
 
-install: # $(OUT_DIR)/$(LIBCMP_OUT)
-	mkdir -p $(DEST_LIB)
-	install -D $(OUT_DIR)/$(LIBCMP_OUT) $(DEST_LIB)
+install: # $(OUT_DIR)/$(OUTLIB).$(VERSION)
+	install -D $(OUT_DIR)/$(OUTLIB).$(VERSION) $(DEST_LIB)/$(OUTLIB).$(VERSION)
+	ln -sf $(OUTLIB).$(VERSION) $(DEST_LIB)/$(OUTLIB)
+#install_headers:
 	mkdir -p $(DEST_INC)
 	install -D $(LIBCMP_INC)/openssl/*.h $(DEST_INC)
+#install_doc:
+	mkdir -p $(DEST_DOC)
+	install -D $(LIBCMP_DOCS_) $(DEST_DOC)
 
 clean_install:
-	rm -f $(DEST_LIB)/$(LIBCMP_OUT) $(LIBCMP_HDRS_install)
+	rm -f $(DEST_LIB)/$(OUTLIB)*
+	rm -f $(LIBCMP_HDRS_install)
+	rm -f $(LIBCMP_DOCS_install)
 
 uninstall: clean_install
 
@@ -158,10 +175,13 @@ uninstall: clean_install
 .phony: deb clean_deb
 deb:
 	@ #tar czf $(SRCS_TAR) $(SRCS)
-	@ #rm -f $(LIBCMP_OUT) debian/tmp/usr/lib/libcmp.so*
-	debuild -uc -us -I* --lintian-opts --profile debian
-	rm -r debian/tmp
+	@ #rm -f $(OUTLIB).$(VERSION) debian/tmp/usr/lib/libcmp.so*
+	debuild -uc -us --lintian-opts --profile debian # --fail-on none
 	@ #rm $(SRCS_TAR)
+# alternative:
+#	LD_LIBRARY_PATH= dpkg-buildpackage -uc -us # may prepend DH_VERBOSE=1
 
 clean_deb:
-	rm ../libcmp*.deb
+	rm -rf debian/tmp debian/libcmp{,-dev}
+	rm -f debian/{files,debhelper-build-stamp} debian/*.{log,substvars}
+	rm -f ../libcmp{_,-}*
