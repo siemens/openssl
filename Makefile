@@ -138,7 +138,7 @@ $(OUT_DIR)/$(OUTLIB).$(VERSION): libcmp_inc_hdrs $(LIBCMP_SRCS)
 $(OUT_DIR)/$(OUTLIB): $(OUT_DIR)/$(OUTLIB).$(VERSION)
 	ln -sf $(OUTLIB).$(VERSION) $(OUT_DIR)/$(OUTLIB)
 
-clean:
+clean: clean_deb
 	rm -f $(LIBCMP_INC)/openssl/* $(LIBCMP_INC)/internal/*
 	rm -f $(OUT_DIR)/$(OUTLIB)*
 	rmdir $(LIBCMP_INC)/openssl $(LIBCMP_INC)/internal $(LIBCMP_INC) 2>/dev/null || true
