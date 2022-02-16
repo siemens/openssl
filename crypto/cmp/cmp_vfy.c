@@ -463,9 +463,9 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 {
     X509 *scrt = ctx->validatedSrvCert; /* previous successful sender cert */
     GENERAL_NAME *sender = msg->header->sender;
-    char *sname = NULL;
-    char *skid_str = NULL;
+    char *sender_str = NULL;
     const ASN1_OCTET_STRING *skid = msg->header->senderKID;
+    char *skid_str = NULL;
     OSSL_CMP_log_cb_t backup_log_cb = ctx->log_cb;
     int res = 0;
 
@@ -513,13 +513,13 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     /* failed finding a sender cert that verifies the message signature */
     (void)ERR_clear_last_mark();
 
-    sname = X509_NAME_oneline(sender->d.directoryName, NULL, 0);
+    sender_str = X509_NAME_oneline(sender->d.directoryName, NULL, 0);
     skid_str = skid == NULL ? NULL
                             : OPENSSL_buf2hexstr(skid->data, skid->length);
     if (ctx->log_cb != NULL) {
         ossl_cmp_info(ctx, "trying to verify msg signature with a valid cert that..");
-        if (sname != NULL)
-            ossl_cmp_log1(INFO, ctx, "matches msg sender    = %s", sname);
+        if (sender_str != NULL)
+            ossl_cmp_log1(INFO, ctx, "matches msg sender    = %s", sender_str);
         if (skid_str != NULL)
             ossl_cmp_log1(INFO, ctx, "matches msg senderKID = %s", skid_str);
         else
@@ -529,18 +529,13 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         (void)check_msg_all_certs(ctx, msg, 1 /* 3gpp */);
     }
 
-    ERR_raise(ERR_LIB_CMP, CMP_R_NO_SUITABLE_SENDER_CERT);
-    if (sname != NULL) {
-        ERR_add_error_txt(NULL, "for msg sender name = ");
-        ERR_add_error_txt(NULL, sname);
-    }
-    if (skid_str != NULL) {
-        ERR_add_error_txt(" and ", "for msg senderKID = ");
-        ERR_add_error_txt(NULL, skid_str);
-    }
+    ERR_raise_data(ERR_LIB_CMP, CMP_R_NO_SUITABLE_SENDER_CERT,
+                   "for msg sender name = %s, senderKID = %s",
+                   sender_str != NULL ? sender_str : "<none>",
+                   skid_str != NULL ? skid_str : "<none>");
 
  end:
-    OPENSSL_free(sname);
+    OPENSSL_free(sender_str);
     OPENSSL_free(skid_str);
     return res;
 }
