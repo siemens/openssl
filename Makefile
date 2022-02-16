@@ -100,9 +100,8 @@ override LDLIBS  += -lcrypto
 LIBCMP_HDRS_= cmp_util.h cmp.h cmperr.h crmf.h crmferr.h http.h httperr.h \
   safestack_backport.h openssl_backport.h cryptoerr_legacy.h
 LIBCMP_HDRS_INTERNAL_ = sizes.h constant_time.h cryptlib.h sockets.h common.h nelem.h
-LIBCMP_HDRS = $(patsubst %,include/openssl/%,$(LIBCMP_HDRS_))
-LIBCMP_HDRS_INTERNAL = $(patsubst %,include/internal/%,$(LIBCMP_HDRS_INTERNAL_))
-LIBCMP_INC_HDRS = $(patsubst %,$(LIBCMP_INC)/openssl/%,$(LIBCMP_HDRS_))
+LIBCMP_INC_HDRS          = $(patsubst %,$(LIBCMP_INC)/openssl/%,$(LIBCMP_HDRS_))
+LIBCMP_INC_HDRS_INTERNAL = $(patsubst %,$(LIBCMP_INC)/internal/%,$(LIBCMP_HDRS_INTERNAL_))
 CMP_SRCS_ = cmp_asn.c cmp_ctx.c cmp_err.c cmp_http.c cmp_hdr.c cmp_msg.c cmp_protect.c cmp_client.c cmp_server.c cmp_status.c cmp_vfy.c cmp_util.c openssl_backport.c
 CRMF_SRCS_ = crmf_asn.c crmf_err.c crmf_lib.c crmf_pbm.c
 HTTP_SRCS_ = http_client.c http_err.c http_lib.c
@@ -118,21 +117,20 @@ $(LIBCMP_INC)/openssl:
 	@mkdir -p $(OUT_DIR)
 	@mkdir -p $(LIBCMP_INC)/openssl
 ifeq ($(shell expr "$(OPENSSL_VERSION)" \< 3.0),1)
-	cd $(LIBCMP_INC)/openssl; touch macros.h types.h trace.h
+	@cd $(LIBCMP_INC)/openssl; touch macros.h types.h trace.h
 endif
 
 $(LIBCMP_INC)/internal:
 	@mkdir -p $(LIBCMP_INC)/internal
 
-# not using $(LIBCMP_INC_HDRS) directly in order to avoid parallel execution with -jN, see
-# https://stackoverflow.com/questions/7081284/gnu-make-multiple-targets-in-a-single-rule
-.phony: libcmp_inc_hdrs
-libcmp_inc_hdrs: $(LIBCMP_HDRS) $(LIBCMP_HDRS_INTERNAL) | $(LIBCMP_INC)/openssl $(LIBCMP_INC)/internal
-	cp $(LIBCMP_HDRS) $(LIBCMP_INC)/openssl # --preserve=timestamps has no effect on WSL
-	@ # cd $(LIBCMP_INC)/openssl && ((mv crmf.h tmp2.h && /bin/echo -e "#undef CMP_STANDALONE\n#define CMP_STANDALONE\n" >tmp1.h && cat tmp1.h tmp2.h >crmf.h && touch -r tmp2.h crmf.h); rm -f tmp1.h tmp2.h)
-	cp $(LIBCMP_HDRS_INTERNAL) $(LIBCMP_INC)/internal # --preserve=timestamps has no effect on WSL
+$(LIBCMP_INC)/openssl/%.h: include/openssl/%.h | $(LIBCMP_INC)/openssl
+	@cp $< $@ # --preserve=timestamps has no effect on WSL   
 
-$(OUT_DIR)/$(OUTLIB).$(VERSION): libcmp_inc_hdrs $(LIBCMP_SRCS)
+$(LIBCMP_INC)/internal/%.h: include/internal/%.h | $(LIBCMP_INC)/internal
+	@cp $< $@ # --preserve=timestamps has no effect on WSL   
+
+$(OUT_DIR)/$(OUTLIB).$(VERSION): $(LIBCMP_INC_HDRS) $(LIBCMP_INC_HDRS_INTERNAL) $(LIBCMP_SRCS)
+	@ # cd $(LIBCMP_INC)/openssl && ((mv crmf.h tmp2.h && /bin/echo -e "#undef CMP_STANDALONE\n#define CMP_STANDALONE\n" >tmp1.h && cat tmp1.h tmp2.h >crmf.h && touch -r tmp2.h crmf.h); rm -f tmp1.h tmp2.h)
 	$(CC) -DCMP_STANDALONE $(CFLAGS) $(LIBCMP_HDRS_INC) $(LIBCMP_SRCS) $(LDFLAGS) $(LDLIBS) -shared -o $@ -Wl,-soname,$(OUTLIB).$(VERSION)
 
 $(OUT_DIR)/$(OUTLIB): $(OUT_DIR)/$(OUTLIB).$(VERSION)
