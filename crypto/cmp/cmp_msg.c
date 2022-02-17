@@ -266,7 +266,7 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx,
     if (ctx->subjectName != NULL)
         return IS_NULL_DN(ctx->subjectName) ? NULL : ctx->subjectName;
 
-    if (ref_subj != NULL && (for_KUR || !HAS_SAN(ctx)))
+    if (ref_subj != NULL && (ctx->p10CSR != NULL || for_KUR || !HAS_SAN(ctx)))
         /*
          * For KUR, copy subject from the reference.
          * For IR or CR, do the same only if there is no subjectAltName.
@@ -278,7 +278,8 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx,
 OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
 {
     OSSL_CRMF_MSG *crm = NULL;
-    X509 *refcert = ctx->oldCert;
+    X509 *refcert = ctx->oldCert != NULL ? ctx->oldCert : ctx->cert;
+    /* refcert defaults to current client cert */
     EVP_PKEY *rkey = OSSL_CMP_CTX_get0_newPkey(ctx, 0);
     STACK_OF(GENERAL_NAME) *default_sans = NULL;
     const X509_NAME *ref_subj =
@@ -294,6 +295,10 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
 
     if (rkey == NULL && ctx->p10CSR != NULL)
         rkey = X509_REQ_get0_pubkey(ctx->p10CSR);
+    if (rkey == NULL && refcert != NULL)
+        rkey = X509_get0_pubkey(refcert);
+    if (rkey == NULL)
+        rkey = ctx->pkey; /* default is independent of ctx->oldCert */
     if (rkey == NULL) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -330,20 +335,21 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
     }
 
     /* extensions */
-    if (refcert != NULL && !ctx->SubjectAltName_nodefault)
-        default_sans = X509V3_get_d2i(X509_get0_extensions(refcert),
-                                      NID_subject_alt_name, NULL, NULL);
-    if (ctx->p10CSR != NULL)
-        exts = X509_REQ_get_extensions(ctx->p10CSR);
+    if (ctx->p10CSR != NULL
+            && (exts = X509_REQ_get_extensions(ctx->p10CSR)) == NULL)
+        goto err;
+    if (!ctx->SubjectAltName_nodefault && !HAS_SAN(ctx) && refcert != NULL
+            && (default_sans = X509V3_get_d2i(X509_get0_extensions(refcert),
+                                              NID_subject_alt_name, NULL, NULL))
+            != NULL
+            && !add1_extension(&exts, NID_subject_alt_name, crit, default_sans))
+        goto err;
     if (ctx->reqExtensions != NULL /* augment/override existing ones */
             && !add_extensions(&exts, ctx->reqExtensions))
         goto err;
     if (sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0
             && !add1_extension(&exts, NID_subject_alt_name,
                                crit, ctx->subjectAltNames))
-        goto err;
-    if (!HAS_SAN(ctx) && default_sans != NULL
-            && !add1_extension(&exts, NID_subject_alt_name, crit, default_sans))
         goto err;
     if (ctx->policies != NULL
             && !add1_extension(&exts, NID_certificate_policies,
