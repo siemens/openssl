@@ -12,6 +12,8 @@
 #ifndef OPENSSL_BACKPORT_H
 # define OPENSSL_BACKPORT_H
 
+# include <stddef.h> /* size_t */
+
 # include <openssl/opensslv.h>
 # if OPENSSL_VERSION_NUMBER < 0x30000000L && !defined(CMP_STANDALONE)
 #  define CMP_STANDALONE
@@ -28,6 +30,8 @@ _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
 # if OPENSSL_VERSION_NUMBER < 0x30100000L
 X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 #  define OSSL_STACK_OF_X509_free(sk) sk_X509_pop_free(sk, X509_free)
+#  define OPENSSL_strcasecmp  strcasecmp
+#  define OPENSSL_strncasecmp strncasecmp
 # endif
 
 # if OPENSSL_VERSION_NUMBER < 0x30000000L

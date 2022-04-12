@@ -345,7 +345,7 @@ static int add1_headers(OSSL_HTTP_REQ_CTX *rctx,
 
     for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
         hdr = sk_CONF_VALUE_value(headers, i);
-        if (add_host && strcasecmp("host", hdr->name) == 0)
+        if (add_host && OPENSSL_strcasecmp("host", hdr->name) == 0)
             add_host = 0;
         if (!OSSL_HTTP_REQ_CTX_add1_header(rctx, hdr->name, hdr->value))
             return 0;
@@ -752,14 +752,14 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
         if (value != NULL && line_end != NULL) {
             if (rctx->state == OHS_REDIRECT
-                    && strcasecmp(key, "Location") == 0) {
+                    && OPENSSL_strcasecmp(key, "Location") == 0) {
                 rctx->redirection_url = value;
                 return 0;
             }
-            if (strcasecmp(key, "Content-Type") == 0) {
+            if (OPENSSL_strcasecmp(key, "Content-Type") == 0) {
                 if (rctx->status == HTTP_STATUS_CODE_OK
                     && rctx->expected_ct != NULL) {
-                    if (strcasecmp(rctx->expected_ct, value) != 0) {
+                    if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0) {
                         ERR_raise_data(ERR_LIB_HTTP,
                                        HTTP_R_UNEXPECTED_CONTENT_TYPE,
                                        "expected=%s, actual=%s",
@@ -768,22 +768,22 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                     }
                     found_expected_ct = 1;
                 }
-                if (strncasecmp(value, "text/", 5) == 0)
+                if (OPENSSL_strncasecmp(value, "text/", 5) == 0)
                     found_text_ct = 1;
             }
 
             /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
-            if (strcasecmp(key, "Connection") == 0) {
-                if (strcasecmp(value, "keep-alive") == 0)
+            if (OPENSSL_strcasecmp(key, "Connection") == 0) {
+                if (OPENSSL_strcasecmp(value, "keep-alive") == 0)
                     found_keep_alive = 1;
-                else if (strcasecmp(value, "close") == 0)
+                else if (OPENSSL_strcasecmp(value, "close") == 0)
                     found_keep_alive = 0;
-            } else if (strcasecmp(key, "Content-Length") == 0) {
+            } else if (OPENSSL_strcasecmp(key, "Content-Length") == 0) {
                 if (!parse_ulong(key, value, &line_end, &ulong_value))
                     return 0;
                 if (!check_set_resp_len(rctx, ulong_value))
                     return 0;
-            } else if (strcasecmp(key, "Retry-After") == 0) {
+            } else if (OPENSSL_strcasecmp(key, "Retry-After") == 0) {
                 if (!parse_ulong(key, value, &line_end, &ulong_value))
                     return 0;
                 if (!check_retry_after(ulong_value))
