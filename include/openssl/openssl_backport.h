@@ -270,7 +270,6 @@ typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
 # endif
 
 # if OPENSSL_VERSION_NUMBER < 0x30000000L
-
 #  define SKM_DEFINE_STACK_OF_INTERNAL(t1, t2, t3) \
     STACK_OF(t1); \
     typedef int (*sk_##t1##_compfunc)(const t3 * const *a, const t3 *const *b); \
@@ -333,6 +332,8 @@ DECLARE_ASN1_DUP_FUNCTION(X509_PUBKEY)
                                 ((a) != NULL && (b) != NULL &&  \
                                  EVP_PKEY_cmp(X509_PUBKEY_get0(a), \
                                               X509_PUBKEY_get0(b)) == 0))
+int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
+                                     char *mdname, size_t mdname_sz);
 #  define EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq) \
     EVP_PKEY_CTX_new(((void)(libctx), (void)(propq), pkey), NULL)
 #  define EVP_PKEY_get_id EVP_PKEY_id

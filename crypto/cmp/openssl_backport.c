@@ -575,6 +575,25 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
 }
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
+int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
+                                     char *mdname, size_t mdname_sz)
+{
+# if 0
+    if (pkey->ameth == NULL) {
+        return 0; /* sorry, no OSSL_PARAM */
+    }
+# endif
+     {
+        int nid = NID_undef;
+        int rv = EVP_PKEY_get_default_digest_nid(pkey, &nid);
+        const char *name = rv > 0 ? OBJ_nid2sn(nid) : NULL;
+
+        if (rv > 0)
+            OPENSSL_strlcpy(mdname, name, mdname_sz);
+        return rv;
+    }
+}
+
 #if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
 
 /* from apps.h */
