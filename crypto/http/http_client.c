@@ -733,7 +733,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 rctx->redirection_url = value;
                 return 0;
             }
-            if (rctx->expected_ct != NULL
+            if (rctx->status == HTTP_STATUS_CODE_OK && rctx->expected_ct != NULL
                     && strcasecmp(key, "Content-Type") == 0) {
                 if (strcasecmp(rctx->expected_ct, value) != 0) {
                     ERR_raise_data(ERR_LIB_HTTP, HTTP_R_UNEXPECTED_CONTENT_TYPE,
