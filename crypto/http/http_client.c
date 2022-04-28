@@ -756,17 +756,13 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 rctx->redirection_url = value;
                 return 0;
             }
-            if (OPENSSL_strcasecmp(key, "Content-Type") == 0) {
-                if (rctx->status == HTTP_STATUS_CODE_OK
-                    && rctx->expected_ct != NULL) {
-                    if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0) {
-                        ERR_raise_data(ERR_LIB_HTTP,
-                                       HTTP_R_UNEXPECTED_CONTENT_TYPE,
-                                       "expected=%s, actual=%s",
-                                       rctx->expected_ct, value);
-                        return 0;
-                    }
-                    found_expected_ct = 1;
+            if (rctx->status == HTTP_STATUS_CODE_OK && rctx->expected_ct != NULL
+                    && OPENSSL_strcasecmp(key, "Content-Type") == 0) {
+                if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0) {
+                    ERR_raise_data(ERR_LIB_HTTP, HTTP_R_UNEXPECTED_CONTENT_TYPE,
+                                   "expected=%s, actual=%s",
+                                   rctx->expected_ct, value);
+                    return 0;
                 }
                 if (OPENSSL_strncasecmp(value, "text/", 5) == 0)
                     found_text_ct = 1;
