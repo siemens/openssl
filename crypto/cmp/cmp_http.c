@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
-#include <openssl/cmp.h>
 #include <openssl/err.h>
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L

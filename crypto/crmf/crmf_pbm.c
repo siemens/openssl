@@ -22,7 +22,6 @@
 #include <openssl/asn1t.h>
 #include <openssl/crmf.h>
 #include <openssl/err.h>
-#include <openssl/evp.h>
 
 #include "internal/sizes.h"
 
