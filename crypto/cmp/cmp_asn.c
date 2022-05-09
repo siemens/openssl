@@ -106,7 +106,7 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
                        X509_ALGOR)),
     ADB_ENTRY(NID_id_it_revPassphrase,
               ASN1_OPT(OSSL_CMP_ITAV, infoValue.revPassphrase,
-                       OSSL_CRMF_ENCRYPTEDVALUE)),
+                       OSSL_CRMF_ENCRYPTEDKEY)),
     ADB_ENTRY(NID_id_it_implicitConfirm,
               ASN1_OPT(OSSL_CMP_ITAV, infoValue.implicitConfirm,
                        ASN1_NULL)),
@@ -251,7 +251,7 @@ ASN1_CHOICE(OSSL_CMP_CERTORENCCERT) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_EXP(OSSL_CMP_CERTORENCCERT, value.certificate, X509, 0),
     ASN1_EXP(OSSL_CMP_CERTORENCCERT, value.encryptedCert,
-             OSSL_CRMF_ENCRYPTEDVALUE, 1),
+             OSSL_CRMF_ENCRYPTEDKEY, 1),
 } ASN1_CHOICE_END(OSSL_CMP_CERTORENCCERT)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_CERTORENCCERT)
 
@@ -260,7 +260,7 @@ ASN1_SEQUENCE(OSSL_CMP_CERTIFIEDKEYPAIR) = {
     ASN1_SIMPLE(OSSL_CMP_CERTIFIEDKEYPAIR, certOrEncCert,
                 OSSL_CMP_CERTORENCCERT),
     ASN1_EXP_OPT(OSSL_CMP_CERTIFIEDKEYPAIR, privateKey,
-                 OSSL_CRMF_ENCRYPTEDVALUE, 0),
+                 OSSL_CRMF_ENCRYPTEDKEY, 0),
     ASN1_EXP_OPT(OSSL_CMP_CERTIFIEDKEYPAIR, publicationInfo,
                  OSSL_CRMF_PKIPUBLICATIONINFO, 1)
 } ASN1_SEQUENCE_END(OSSL_CMP_CERTIFIEDKEYPAIR)

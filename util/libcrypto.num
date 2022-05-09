@@ -5434,6 +5434,13 @@ BN_signed_lebin2bn                      ?	3_1_0	EXIST::FUNCTION:
 BN_signed_bn2lebin                      ?	3_1_0	EXIST::FUNCTION:
 BN_signed_native2bn                     ?	3_1_0	EXIST::FUNCTION:
 BN_signed_bn2native                     ?	3_1_0	EXIST::FUNCTION:
+OSSL_CRMF_ENCRYPTEDKEY_free             ?	3_1_0	EXIST::FUNCTION:CRMF
+OSSL_CRMF_ENCRYPTEDKEY_new              ?	3_1_0	EXIST::FUNCTION:CRMF
+OSSL_CRMF_ENCRYPTEDKEY_it               ?	3_1_0	EXIST::FUNCTION:CRMF
+OSSL_CRMF_ENCRYPTEDKEY_get1_encCert     ?	3_1_0	EXIST::FUNCTION:CRMF
+OSSL_CRMF_ENCRYPTEDVALUE_decrypt        ?	3_1_0	EXIST::FUNCTION:CRMF
+d2i_OSSL_CRMF_ENCRYPTEDKEY              ?	3_1_0	EXIST::FUNCTION:CRMF
+i2d_OSSL_CRMF_ENCRYPTEDKEY              ?	3_1_0	EXIST::FUNCTION:CRMF
 ASYNC_set_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 ASYNC_get_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 BIO_ADDR_dup                            ?	3_1_0	EXIST::FUNCTION:SOCK

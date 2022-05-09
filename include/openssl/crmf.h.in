@@ -46,7 +46,9 @@ extern "C" {
 #  define OSSL_CRMF_SUBSEQUENTMESSAGE_CHALLENGERESP  1
 
 typedef struct ossl_crmf_encryptedvalue_st OSSL_CRMF_ENCRYPTEDVALUE;
+typedef struct ossl_crmf_encryptedkey_st OSSL_CRMF_ENCRYPTEDKEY;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDVALUE)
+DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDKEY)
 typedef struct ossl_crmf_msg_st OSSL_CRMF_MSG;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSG)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_MSG)
@@ -168,10 +170,18 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
                                 const X509_NAME *subject,
                                 const X509_NAME *issuer,
                                 const ASN1_INTEGER *serial);
+unsigned char *
+OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *enc,
+                                 OSSL_LIB_CTX *libctx, const char *propq,
+                                 EVP_PKEY *pkey, int *outlen);
 X509
 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
                                        OSSL_LIB_CTX *libctx, const char *propq,
                                        EVP_PKEY *pkey);
+X509
+*OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
+                                     OSSL_LIB_CTX *libctx, const char *propq,
+                                     EVP_PKEY *pkey, unsigned int flags);
 
 #  ifdef __cplusplus
 }

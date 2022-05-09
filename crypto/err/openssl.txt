@@ -413,6 +413,7 @@ CRMF_R_CRMFERROR:102:crmferror
 CRMF_R_ERROR:103:error
 CRMF_R_ERROR_DECODING_CERTIFICATE:104:error decoding certificate
 CRMF_R_ERROR_DECRYPTING_CERTIFICATE:105:error decrypting certificate
+CRMF_R_ERROR_DECRYPTING_ENCRYPTEDVALUE:122:error decrypting encryptedvalue
 CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:106:error decrypting symmetric key
 CRMF_R_FAILURE_OBTAINING_RANDOM:107:failure obtaining random
 CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100

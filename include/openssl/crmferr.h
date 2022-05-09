@@ -28,6 +28,7 @@
 #  define CRMF_R_ERROR                                     103
 #  define CRMF_R_ERROR_DECODING_CERTIFICATE                104
 #  define CRMF_R_ERROR_DECRYPTING_CERTIFICATE              105
+#  define CRMF_R_ERROR_DECRYPTING_ENCRYPTEDVALUE           122
 #  define CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY            106
 #  define CRMF_R_FAILURE_OBTAINING_RANDOM                  107
 #  define CRMF_R_ITERATIONCOUNT_BELOW_100                  108

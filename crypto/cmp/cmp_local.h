@@ -238,7 +238,7 @@ struct ossl_cmp_itav_st {
         /* NID_id_it_keyPairParamRep - Key Pair Parameters Response */
         X509_ALGOR *keyPairParamRep;
         /* NID_id_it_revPassphrase - Revocation Passphrase */
-        OSSL_CRMF_ENCRYPTEDVALUE *revPassphrase;
+        OSSL_CRMF_ENCRYPTEDKEY *revPassphrase;
         /* NID_id_it_implicitConfirm - ImplicitConfirm */
         ASN1_NULL *implicitConfirm;
         /* NID_id_it_confirmWaitTime - ConfirmWaitTime */
@@ -257,7 +257,7 @@ typedef struct ossl_cmp_certorenccert_st {
     int type;
     union {
         X509 *certificate;
-        OSSL_CRMF_ENCRYPTEDVALUE *encryptedCert;
+        OSSL_CRMF_ENCRYPTEDKEY *encryptedCert;
     } value;
 } OSSL_CMP_CERTORENCCERT;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTORENCCERT)
@@ -272,7 +272,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTORENCCERT)
  */
 typedef struct ossl_cmp_certifiedkeypair_st {
     OSSL_CMP_CERTORENCCERT *certOrEncCert;
-    OSSL_CRMF_ENCRYPTEDVALUE *privateKey;
+    OSSL_CRMF_ENCRYPTEDKEY *privateKey;
     OSSL_CRMF_PKIPUBLICATIONINFO *publicationInfo;
 } OSSL_CMP_CERTIFIEDKEYPAIR;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTIFIEDKEYPAIR)
