@@ -54,6 +54,7 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(CMS_ContentInfo),
     ASN1_ITEM_ref(CMS_EnvelopedData),
     ASN1_ITEM_ref(CMS_ReceiptRequest),
+    ASN1_ITEM_ref(CMS_SignedData),
 #endif
     ASN1_ITEM_ref(CRL_DIST_POINTS),
 #ifndef OPENSSL_NO_DH

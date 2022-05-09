@@ -535,10 +535,8 @@ int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
     for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
         cch = sk_CMS_CertificateChoices_value(*pcerts, i);
         if (cch->type == CMS_CERTCHOICE_CERT) {
-            if (!X509_cmp(cch->d.certificate, cert)) {
-                ERR_raise(ERR_LIB_CMS, CMS_R_CERTIFICATE_ALREADY_PRESENT);
-                return 0;
-            }
+            if (X509_cmp(cch->d.certificate, cert) == 0)
+                return 1;
         }
     }
     cch = CMS_add0_CertificateChoices(cms);

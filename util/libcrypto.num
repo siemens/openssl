@@ -5428,6 +5428,8 @@ EVP_PKEY_CTX_get0_provider              5555	3_0_0	EXIST::FUNCTION:
 OSSL_STACK_OF_X509_free                 ?	3_1_0	EXIST::FUNCTION:
 EVP_MD_CTX_dup                          ?	3_1_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_dup                      ?	3_1_0	EXIST::FUNCTION:
+CMS_SignedData_it                       ?	3_1_0	EXIST::FUNCTION:CMS
+CMS_SignedData_unwrap_verify            ?	3_1_0	EXIST::FUNCTION:CMS
 BN_signed_bin2bn                        ?	3_1_0	EXIST::FUNCTION:
 BN_signed_bn2bin                        ?	3_1_0	EXIST::FUNCTION:
 BN_signed_lebin2bn                      ?	3_1_0	EXIST::FUNCTION:

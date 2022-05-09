@@ -32,6 +32,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 extern "C" {
 # endif
 
+typedef struct CMS_SignedData_st CMS_SignedData;
 typedef struct CMS_EnvelopedData_st CMS_EnvelopedData;
 typedef struct CMS_ContentInfo_st CMS_ContentInfo;
 typedef struct CMS_SignerInfo_st CMS_SignerInfo;
@@ -50,6 +51,7 @@ typedef struct CMS_OtherKeyAttribute_st CMS_OtherKeyAttribute;
     .generate_stack_macros("CMS_RevocationInfoChoice");
 -}
 
+DECLARE_ASN1_ITEM(CMS_SignedData)
 DECLARE_ASN1_ITEM(CMS_EnvelopedData)
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
@@ -166,7 +168,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt_ex(BIO *in, const EVP_CIPHER *cipher,
 int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
                                const unsigned char *key, size_t keylen);
 
-int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
+int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *scerts,
                X509_STORE *store, BIO *dcont, BIO *out, unsigned int flags);
 
 int CMS_verify_receipt(CMS_ContentInfo *rcms, CMS_ContentInfo *ocms,
@@ -274,6 +276,10 @@ int CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl);
 STACK_OF(X509_CRL) *CMS_get1_crls(CMS_ContentInfo *cms);
 
 int CMS_SignedData_init(CMS_ContentInfo *cms);
+BIO *CMS_SignedData_unwrap_verify(CMS_SignedData *sd, BIO *detached_data,
+                                  STACK_OF(X509) *scerts,
+                                  STACK_OF(X509) *extra, X509_STORE *store,
+                                  unsigned int flags);
 CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                                 X509 *signer, EVP_PKEY *pk, const EVP_MD *md,
                                 unsigned int flags);
@@ -286,7 +292,7 @@ int CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si,
                                   ASN1_OCTET_STRING **keyid,
                                   X509_NAME **issuer, ASN1_INTEGER **sno);
 int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, X509 *cert);
-int CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
+int CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *scerts,
                            unsigned int flags);
 void CMS_SignerInfo_get0_algs(CMS_SignerInfo *si, EVP_PKEY **pk,
                               X509 **signer, X509_ALGOR **pdig,

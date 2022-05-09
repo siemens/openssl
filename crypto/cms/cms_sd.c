@@ -62,6 +62,39 @@ int CMS_SignedData_init(CMS_ContentInfo *cms)
         return 0;
 }
 
+BIO *CMS_SignedData_unwrap_verify(CMS_SignedData *sd, BIO *detached_data,
+                                  STACK_OF(X509) *scerts,
+                                  STACK_OF(X509) *extra, X509_STORE *store,
+                                  unsigned int flags)
+{
+    CMS_ContentInfo *ci;
+    BIO *bio = NULL;
+    int i, res = 0;
+
+    if (sd == NULL) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if ((ci = CMS_ContentInfo_new()) == NULL)
+        return NULL;
+    ci->contentType = OBJ_nid2obj(NID_pkcs7_signed);
+    ci->d.signedData = sd;
+    for (i = 0; i < sk_X509_num(extra); i++)
+        if (!CMS_add1_cert(ci, sk_X509_value(extra, i)))
+            goto end;
+    if ((bio = BIO_new(BIO_s_mem())) == NULL)
+        goto end;
+    res = CMS_verify(ci, scerts, store, detached_data, bio, flags);
+
+ end:
+    CMS_ContentInfo_free(ci);
+    if (!res) {
+        BIO_free(bio);
+        bio = NULL;
+    }
+    return bio;
+}
 
 /* Check structures and fixup version numbers (if necessary) */
 
