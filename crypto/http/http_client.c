@@ -547,6 +547,7 @@ static int sleep_retry(OSSL_HTTP_REQ_CTX *rctx, time_t max_time,
 int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 {
     int i, found_expected_ct = 0, found_keep_alive = 0;
+    int found_text_ct = 0;
     long n;
     size_t resp_len;
     unsigned long ulong_value;
@@ -694,6 +695,11 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
+#ifndef NDEBUG
+        if ((rctx->state == OHS_FIRSTLINE && strstr(buf, " 200") == NULL)
+                || rctx->state == OHS_ERROR)
+            printf("%s", buf); /* dump header lines */
+#endif
         /* First line */
         if (rctx->state == OHS_FIRSTLINE) {
             rctx->status = parse_http_line1(buf, &found_keep_alive);
@@ -733,15 +739,20 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 rctx->redirection_url = value;
                 return 0;
             }
-            if (rctx->status == HTTP_STATUS_CODE_OK && rctx->expected_ct != NULL
-                    && strcasecmp(key, "Content-Type") == 0) {
-                if (strcasecmp(rctx->expected_ct, value) != 0) {
-                    ERR_raise_data(ERR_LIB_HTTP, HTTP_R_UNEXPECTED_CONTENT_TYPE,
-                                   "expected=%s, actual=%s",
-                                   rctx->expected_ct, value);
-                    return 0;
+            if (strcasecmp(key, "Content-Type") == 0) {
+                if (rctx->status == HTTP_STATUS_CODE_OK
+                    && rctx->expected_ct != NULL) {
+                    if (strcasecmp(rctx->expected_ct, value) != 0) {
+                        ERR_raise_data(ERR_LIB_HTTP,
+                                       HTTP_R_UNEXPECTED_CONTENT_TYPE,
+                                       "expected=%s, actual=%s",
+                                       rctx->expected_ct, value);
+                        return 0;
+                    }
+                    found_expected_ct = 1;
                 }
-                found_expected_ct = 1;
+                if (strncasecmp(value, "text/", 5) == 0)
+                    found_text_ct = 1;
             }
 
             /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
@@ -783,8 +794,15 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             rctx->flags &= ~OSSL_HTTP_FLAG_ENABLE_KEEP_ALIVE;
         }
 
-        if (rctx->state == OHS_ERROR)
+        if (rctx->state == OHS_ERROR) {
+            if (found_text_ct) {
+#ifndef NDEBUG
+                if (BIO_get_mem_data(rctx->mem, &p) > 0)
+                    printf("%s", p);
+#endif
+            }
             return 0;
+        }
 
         if (rctx->expected_ct != NULL && !found_expected_ct) {
             ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MISSING_CONTENT_TYPE,
