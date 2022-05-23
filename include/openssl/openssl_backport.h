@@ -354,6 +354,10 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 #  define X509_ADD_FLAG_NO_DUP   0x4
 #  define X509_ADD_FLAG_NO_SS    0x8
 #  define OPENSSL_NO_TRACE
+#  define OSSL_TRACE_ENABLED(cat) 0
+#  define OSSL_TRACE(cat, msg)          ((void)1)
+#  define OSSL_TRACE1(cat, msg, a1)     ((void)1)
+#  define OSSL_TRACE2(cat, msg, a1, a2) ((void)1)
 #  define EVP_MD_fetch(ctx, alg, prop) \
     ((EVP_MD *)EVP_get_digestbynid(((void)ctx, (void)(prop), OBJ_sn2nid(alg))))
 #  define EVP_MD_free(md) OPENSSL_free(((void)(md), NULL))

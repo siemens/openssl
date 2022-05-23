@@ -19,6 +19,7 @@
 #include <openssl/cmperr.h>
 #include <openssl/buffer.h>
 #include <openssl/http.h>
+#include <openssl/trace.h>
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
 
@@ -622,6 +623,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     case OHS_WRITE_INIT:
         rctx->len_to_send = BIO_get_mem_data(rctx->mem, &rctx->pos);
         rctx->state = OHS_WRITE_HDR;
+        if (OSSL_TRACE_ENABLED(HTTP))
+            OSSL_TRACE(HTTP, "Sending request header:\n");
 
         /* fall thru */
     case OHS_WRITE_HDR:
@@ -630,6 +633,10 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         /* Copy some chunk of data from rctx->req to rctx->wbio */
 
         if (rctx->len_to_send > 0) {
+            if (OSSL_TRACE_ENABLED(HTTP)
+                && rctx->state == OHS_WRITE_HDR && rctx->len_to_send <= INT_MAX)
+                OSSL_TRACE2(HTTP, "%.*s", (int)rctx->len_to_send, rctx->pos);
+
             i = BIO_write(rctx->wbio, rctx->pos, rctx->len_to_send);
             if (i <= 0) {
                 if (BIO_should_retry(rctx->wbio))
@@ -712,11 +719,14 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
-#ifndef NDEBUG
-        if ((rctx->state == OHS_FIRSTLINE && strstr(buf, " 200") == NULL)
-                || rctx->state == OHS_ERROR)
-            printf("%s", buf); /* dump header lines */
-#endif
+        /* dump all response header lines */
+        if (OSSL_TRACE_ENABLED(HTTP)) {
+            if ((rctx->state == OHS_FIRSTLINE && strstr(buf, " 200") == NULL)
+                    || rctx->state == OHS_ERROR)
+                OSSL_TRACE(HTTP, "Received response header:\n");
+            OSSL_TRACE1(HTTP, "%s", buf);
+        }
+
         /* First line */
         if (rctx->state == OHS_FIRSTLINE) {
             rctx->status = parse_http_line1(buf, &found_keep_alive);
@@ -756,13 +766,17 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 rctx->redirection_url = value;
                 return 0;
             }
-            if (rctx->status == HTTP_STATUS_CODE_OK && rctx->expected_ct != NULL
-                    && OPENSSL_strcasecmp(key, "Content-Type") == 0) {
-                if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0) {
-                    ERR_raise_data(ERR_LIB_HTTP, HTTP_R_UNEXPECTED_CONTENT_TYPE,
-                                   "expected=%s, actual=%s",
-                                   rctx->expected_ct, value);
-                    return 0;
+            if (OPENSSL_strcasecmp(key, "Content-Type") == 0) {
+                if (rctx->status == HTTP_STATUS_CODE_OK
+                    && rctx->expected_ct != NULL) {
+                    if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0) {
+                        ERR_raise_data(ERR_LIB_HTTP,
+                                       HTTP_R_UNEXPECTED_CONTENT_TYPE,
+                                       "expected=%s, actual=%s",
+                                       rctx->expected_ct, value);
+                        return 0;
+                    }
+                    found_expected_ct = 1;
                 }
                 if (OPENSSL_strncasecmp(value, "text/", 5) == 0)
                     found_text_ct = 1;
@@ -808,12 +822,9 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
 
         if (rctx->state == OHS_ERROR) {
-            if (found_text_ct) {
-#ifndef NDEBUG
-                if (BIO_get_mem_data(rctx->mem, &p) > 0)
-                    printf("%s", p);
-#endif
-            }
+            if (OSSL_TRACE_ENABLED(HTTP)
+                    && found_text_ct && BIO_get_mem_data(rctx->mem, &p) > 0)
+                OSSL_TRACE1(HTTP, "%s", p);
             return 0;
         }
 
