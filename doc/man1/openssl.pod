@@ -768,7 +768,7 @@ BIGNUM context.
 
 =item B<HTTP>
 
-HTTP client diagnostics
+HTTP client and server diagnostics
 
 =back
 
