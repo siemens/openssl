@@ -333,6 +333,12 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 1;
         break;
 
+    case BIO_CTRL_SET_PREFIX:
+    case BIO_CTRL_SET_INDENT:
+    case BIO_CTRL_GET_INDENT:
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+        return -2;
+
     case BIO_CTRL_WPENDING:
     case BIO_CTRL_PENDING:
     case BIO_CTRL_PUSH:

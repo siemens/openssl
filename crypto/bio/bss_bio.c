@@ -592,6 +592,12 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
         }
         break;
 
+    case BIO_CTRL_SET_PREFIX:
+    case BIO_CTRL_SET_INDENT:
+    case BIO_CTRL_GET_INDENT:
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+        return -2;
+
     default:
         ret = 0;
     }

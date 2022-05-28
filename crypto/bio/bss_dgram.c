@@ -792,6 +792,13 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_SET_PEEK_MODE:
         data->peekmode = (unsigned int)num;
         break;
+
+    case BIO_CTRL_SET_PREFIX:
+    case BIO_CTRL_SET_INDENT:
+    case BIO_CTRL_GET_INDENT:
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+        return -2;
+
     default:
         ret = 0;
         break;

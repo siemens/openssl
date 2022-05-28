@@ -60,6 +60,13 @@ static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DUP:
         ret = 1;
         break;
+
+    case BIO_CTRL_SET_PREFIX:
+    case BIO_CTRL_SET_INDENT:
+    case BIO_CTRL_GET_INDENT:
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+        return -2;
+
     case BIO_CTRL_GET_CLOSE:
     case BIO_CTRL_INFO:
     case BIO_CTRL_GET:
