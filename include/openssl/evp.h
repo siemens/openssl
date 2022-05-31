@@ -1151,7 +1151,7 @@ const EVP_CIPHER *EVP_sm4_ofb(void);
 const EVP_CIPHER *EVP_sm4_ctr(void);
 # endif
 
-# ifndef OPENSSL_NO_MACCIPHER
+# ifndef OPENSSL_NO_MACCIPHERS
 const EVP_CIPHER *EVP_maccipher_sha256(void);
 const EVP_CIPHER *EVP_maccipher_sha384(void);
 # endif
