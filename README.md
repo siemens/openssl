@@ -70,7 +70,7 @@ export OPENSSL_DIR=/usr/local
 This should output on the console something like
 ```
 cc [...] OpenSSL_version.c -lcrypto -o OpenSSL_version
-OpenSSL 1.1.1k  25 Mar 2021 (0x101010bf)
+OpenSSL 1.1.1n  15 Mar 2022 (0x101010ef) == runtime version 0x101010ef
 rm -f OpenSSL_version
 ```
 

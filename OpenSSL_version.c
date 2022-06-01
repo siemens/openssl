@@ -30,6 +30,9 @@ int main(int argc, char *argv[])
                 runtime_version, (unsigned long)OPENSSL_VERSION_NUMBER);
         return EXIT_FAILURE;
     }
-    fprintf(stdout, "%s (0x%lx)\n", OPENSSL_VERSION_TEXT, runtime_version);
+    fprintf(stdout, "%s (0x%lx) %s runtime version 0x%lx\n",
+            OPENSSL_VERSION_TEXT, OPENSSL_VERSION_NUMBER,
+            OPENSSL_VERSION_NUMBER == runtime_version ? "==" : "!=",
+            runtime_version);
     return EXIT_SUCCESS;
 }
