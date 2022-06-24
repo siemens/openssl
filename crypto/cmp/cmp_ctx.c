@@ -20,6 +20,18 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 
+#define DEFINE_OSSL_CMP_CTX_get0(FIELD, TYPE) \
+    DEFINE_OSSL_CMP_CTX_get0_NAME(FIELD, FIELD, TYPE)
+#define DEFINE_OSSL_CMP_CTX_get0_NAME(NAME, FIELD, TYPE) \
+TYPE *OSSL_CMP_CTX_get0_##NAME(const OSSL_CMP_CTX *ctx) \
+{ \
+    if (ctx == NULL) { \
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT); \
+        return NULL; \
+    } \
+    return ctx->FIELD; \
+}
+
 /*
  * Get current certificate store containing trusted root CA certs
  */
@@ -163,7 +175,7 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         && ossl_cmp_ctx_set1_newChain(ctx, NULL)
         && ossl_cmp_ctx_set1_caPubs(ctx, NULL)
         && ossl_cmp_ctx_set1_extraCertsIn(ctx, NULL)
-        && ossl_cmp_ctx_set0_validatedSrvCert(ctx, NULL)
+        && ossl_cmp_ctx_set1_validatedSrvCert(ctx, NULL)
         && OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
         && OSSL_CMP_CTX_set1_senderNonce(ctx, NULL)
         && ossl_cmp_ctx_set1_recipNonce(ctx, NULL);
@@ -269,15 +281,6 @@ int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
         return 0;
     sk_ASN1_UTF8STRING_pop_free(ctx->statusString, ASN1_UTF8STRING_free);
     ctx->statusString = text;
-    return 1;
-}
-
-int ossl_cmp_ctx_set0_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert)
-{
-    if (!ossl_assert(ctx != NULL))
-        return 0;
-    X509_free(ctx->validatedSrvCert);
-    ctx->validatedSrvCert = cert;
     return 1;
 }
 
@@ -641,6 +644,48 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
     return 1; \
 }
 
+#define DEFINE_OSSL_set1_up_ref(PREFIX, FIELD, TYPE) \
+int PREFIX##_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
+{ \
+    if (ctx == NULL) { \
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT); \
+        return 0; \
+    } \
+    \
+    /* prevent misleading error later on malformed cert or provider issue */ \
+    if (val != NULL && TYPE##_invalid(val)) { \
+        ERR_raise(ERR_LIB_CMP, CMP_R_POTENTIALLY_INVALID_CERTIFICATE); \
+        return 0; \
+    } \
+    if (val != NULL && !TYPE##_up_ref(val)) \
+        return 0; \
+    TYPE##_free(ctx->FIELD); \
+    ctx->FIELD = val; \
+    return 1; \
+}
+
+#define DEFINE_OSSL_set1_up_ref(PREFIX, FIELD, TYPE) \
+int PREFIX##_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
+{ \
+    if (ctx == NULL) { \
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT); \
+        return 0; \
+    } \
+    \
+    /* prevent misleading error later on malformed cert or provider issue */ \
+    if (val != NULL && TYPE##_invalid(val)) { \
+        ERR_raise(ERR_LIB_CMP, CMP_R_POTENTIALLY_INVALID_CERTIFICATE); \
+        return 0; \
+    } \
+    if (val != NULL && !TYPE##_up_ref(val)) \
+        return 0; \
+    TYPE##_free(ctx->FIELD); \
+    ctx->FIELD = val; \
+    return 1; \
+}
+
+DEFINE_OSSL_set1_up_ref(ossl_cmp_ctx, validatedSrvCert, X509)
+
 /*
  * Pins the server certificate to be directly trusted (even if it is expired)
  * for verifying response messages.
@@ -767,6 +812,9 @@ DEFINE_OSSL_CMP_CTX_set1_up_ref(oldCert, X509)
 
 /* Set the PKCS#10 CSR to be sent in P10CR */
 DEFINE_OSSL_CMP_CTX_set1(p10CSR, X509_REQ)
+
+/* Get successfully validated server cert, if any, of current transaction */
+DEFINE_OSSL_CMP_CTX_get0(validatedSrvCert, X509)
 
 /*
  * Set the (newly received in IP/KUP/CP) certificate in the context.
