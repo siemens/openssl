@@ -1,6 +1,7 @@
 # CMPforOpenSSL (cmpossl)
 
 This is a CMP and HTTP abstraction layer library based on OpenSSL.
+As opposed to the [Generic CMP Client](https://github.com/siemens/gencmpclient), this does not provide a CLI.
 
 
 ## Purpose
