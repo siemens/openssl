@@ -182,12 +182,62 @@ X509_PUBKEY *X509_PUBKEY_dup(/*const */X509_PUBKEY *a)
     pubkey->pkey = a->pkey;
     return pubkey;
 }
+#endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
 int ossl_x509_set0_libctx(ossl_unused X509 *x, ossl_unused OSSL_LIB_CTX *libctx, ossl_unused const char *propq)
 {
-    return 1;
+    return 1; /* sorry, dummy */
 }
 #endif
+
+int openssl_strerror_r(int errnum, char *buf, size_t buflen)
+{
+#if defined(_MSC_VER) && _MSC_VER>=1400 && !defined(_WIN32_WCE)
+    return !strerror_s(buf, buflen, errnum);
+#elif defined(_GNU_SOURCE)
+    char *err;
+
+    /*
+     * GNU strerror_r may not actually set buf.
+     * It can return a pointer to some (immutable) static string in which case
+     * buf is left unused.
+     */
+    err = strerror_r(errnum, buf, buflen);
+    if (err == NULL || buflen == 0)
+        return 0;
+    /*
+     * If err is statically allocated, err != buf and we need to copy the data.
+     * If err points somewhere inside buf, OPENSSL_strlcpy can handle this,
+     * since src and dest are not annotated with __restrict and the function
+     * reads src byte for byte and writes to dest.
+     * If err == buf we do not have to copy anything.
+     */
+    if (err != buf)
+        OPENSSL_strlcpy(buf, err, buflen);
+    return 1;
+#elif (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
+      (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+    /*
+     * We can use "real" strerror_r. The OpenSSL version differs in that it
+     * gives 1 on success and 0 on failure for consistency with other OpenSSL
+     * functions. Real strerror_r does it the other way around
+     */
+    return !strerror_r(errnum, buf, buflen);
+#else
+    char *err;
+
+    /* Fall back to non-thread safe strerror()...its all we can do */
+    if (buflen < 2)
+        return 0;
+    err = strerror(errnum);
+    /* Can this ever happen? */
+    if (err == NULL)
+        return 0;
+    OPENSSL_strlcpy(buf, err, buflen);
+    return 1;
+#endif
+}
 
 int ossl_x509v3_cache_extensions(X509 *x)
 {
