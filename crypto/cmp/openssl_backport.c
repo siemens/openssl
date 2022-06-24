@@ -32,6 +32,8 @@ int ERR_load_strings_const(const ERR_STRING_DATA *str)
 }
 # endif
 
+ossl_unused static char osslv[] = OPENSSL_VERSION_TEXT; /* used for grepping */
+
 /*
  * auxiliary function for incrementally reporting texts via the error queue
  */
