@@ -24,6 +24,7 @@ static ossl_inline void ossl_sleep(unsigned long millis)
 }
 #  else
 /* Fallback to a busy wait */
+#   include <sys/time.h>
 static ossl_inline void ossl_sleep(unsigned long millis)
 {
     struct timeval start, now;

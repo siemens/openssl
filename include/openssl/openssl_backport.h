@@ -185,6 +185,7 @@ int OSSL_CMP_load_cert_crl_http_timeout(const char *url, int req_timeout,
 char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len);
 # endif
 # if OPENSSL_VERSION_NUMBER < 0x10100006L
+#  define X509_get0_pubkey(x) X509_PUBKEY_get0((x)->cert_info->key)
 #  ifndef X509_STORE_CTX_get1_crls
 #   define X509_STORE_CTX_get1_crls X509_STORE_get1_crls
 #  endif
@@ -197,6 +198,7 @@ DECLARE_STACK_OF(ASN1_UTF8STRING)
 #  endif
 # endif
 # if OPENSSL_VERSION_NUMBER < 0x10100007L
+# include <limits.h>
 #  define X509_ALGOR_get0(paobj, pptype, ppval, algor) \
     X509_ALGOR_get0((ASN1_OBJECT **)paobj, pptype, (void **)ppval, algor)
 #  define X509_get0_notBefore X509_get_notBefore
