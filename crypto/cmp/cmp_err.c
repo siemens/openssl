@@ -14,6 +14,8 @@
 
 #ifndef OPENSSL_NO_CMP
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+
 # ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA CMP_str_reasons[] = {
@@ -170,6 +172,9 @@ int ossl_err_load_CMP_strings(void)
 # endif
     return 1;
 }
+
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
+
 #else
 NON_EMPTY_TRANSLATION_UNIT
 #endif

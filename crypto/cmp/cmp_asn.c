@@ -17,6 +17,8 @@
 #include <openssl/cmp.h>
 #include <openssl/crmf.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+
 /* ASN.1 declarations from RFC4210 */
 ASN1_SEQUENCE(OSSL_CMP_REVANNCONTENT) = {
     /* OSSL_CMP_PKISTATUS is effectively ASN1_INTEGER so it is used directly */
@@ -457,3 +459,5 @@ ASN1_ITEM_TEMPLATE(OSSL_CMP_MSGS) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_CMP_MSGS,
                           OSSL_CMP_MSG)
 ASN1_ITEM_TEMPLATE_END(OSSL_CMP_MSGS)
+
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */

@@ -11,6 +11,8 @@
 #include <openssl/err.h>
 #include <openssl/httperr.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA HTTP_str_reasons[] = {
@@ -82,3 +84,5 @@ int ossl_err_load_HTTP_strings(void)
 #endif
     return 1;
 }
+
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */

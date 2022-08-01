@@ -23,9 +23,11 @@
 # include <openssl/safestack.h>
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
-#ifndef CMP_STANDALONE
+# ifndef CMP_STANDALONE
 # include "crypto/x509.h"
-#endif
+# endif
+
+# if OPENSSL_VERSION_NUMBER < 0x30000000L
 
 #define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 
@@ -929,5 +931,7 @@ int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int fail_info,
                                const char *txt);
 int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
                             const char *txt, int errorCode, const char *detail);
+
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
 
 #endif /* !defined(OSSL_CRYPTO_CMP_LOCAL_H) */

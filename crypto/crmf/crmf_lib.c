@@ -39,7 +39,10 @@
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_PUBKEY)
- #endif
+#endif
+
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+
 /*-
  * atyp = Attribute Type
  * valt = Value Type
@@ -715,3 +718,5 @@ X509
     OPENSSL_free(iv);
     return cert;
 }
+
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */

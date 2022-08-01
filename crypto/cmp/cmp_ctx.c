@@ -20,6 +20,8 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+
 #define DEFINE_OSSL_CMP_CTX_get0(FIELD, TYPE) \
     DEFINE_OSSL_CMP_CTX_get0_NAME(FIELD, FIELD, TYPE)
 #define DEFINE_OSSL_CMP_CTX_get0_NAME(NAME, FIELD, TYPE) \
@@ -1182,3 +1184,5 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return -1;
     }
 }
+
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */

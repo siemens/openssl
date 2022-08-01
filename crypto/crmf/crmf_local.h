@@ -23,6 +23,8 @@
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+
 /*-
  * EncryptedValue ::= SEQUENCE {
  * intendedAlg   [0] AlgorithmIdentifier  OPTIONAL,
@@ -384,4 +386,7 @@ struct ossl_crmf_msg_st {
     /* 1 */
     STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) *regInfo;
 } /* OSSL_CRMF_MSG */;
-#endif
+
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
+
+#endif /* !defined(OSSL_CRYPTO_CRMF_LOCAL_H) */

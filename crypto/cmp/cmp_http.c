@@ -27,6 +27,8 @@
 #include <openssl/cmp.h>
 #include <openssl/err.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+
 #define DEFAULT_RETRY_AFTER 60 /* one minute */
 
 static int keep_alive(int keep_alive, int body_type, BIO *bio)
@@ -116,3 +118,5 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
     return res;
 }
+
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
