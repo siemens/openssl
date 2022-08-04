@@ -25,6 +25,7 @@ _Pragma("GCC diagnostic ignored \"-Wdiscarded-qualifiers\"")
 _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
 # endif
 
+# include <openssl/e_os2.h> /* for ossl_inline etc. */
 # include <openssl/x509v3.h> /* for GENERAL_NAME, X509_ALGOR, etc. */
 
 # if OPENSSL_VERSION_NUMBER < 0x30100000L
@@ -35,7 +36,6 @@ X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 # endif
 
 # if OPENSSL_VERSION_NUMBER < 0x30000000L
-#  define ossl_inline inline
 #  define ossl_unused __attribute__((unused))
 # endif
 # if OPENSSL_VERSION_NUMBER < 0x10100002L

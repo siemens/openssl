@@ -17,7 +17,7 @@
 #include <openssl/err.h> /* should be implied by cmperr.h */
 #include <openssl/x509v3.h>
 
-#include "e_os.h" /* ossl_sleep() */
+#include "internal/e_os.h" /* ossl_sleep() */
 
 #if OPENSSL_VERSION_NUMBER < 0x10101000L
 /* used below and needed also by crmf_err.c and cmp_err.c */

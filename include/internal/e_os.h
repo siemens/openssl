@@ -1,3 +1,6 @@
+#ifndef OSSL_E_OS_H
+# define OSSL_E_OS_H
+
 /* system-specific variants defining ossl_sleep() */
 #  ifdef OPENSSL_SYS_UNIX
 #   include <unistd.h>
@@ -38,3 +41,5 @@ static ossl_inline void ossl_sleep(unsigned long millis)
     } while (elapsedms < millis);
 }
 #  endif /* defined OPENSSL_SYS_UNIX */
+
+#endif
