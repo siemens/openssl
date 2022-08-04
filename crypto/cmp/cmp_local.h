@@ -31,6 +31,7 @@
 
 #define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
 /*
  * this structure is used to store the context for CMP sessions
  */
@@ -135,6 +136,7 @@ struct ossl_cmp_ctx_st {
     OSSL_CMP_certConf_cb_t certConf_cb; /* callback for app checking new cert */
     void *certConf_cb_arg; /* allows to store an argument individual to cb */
 } /* OSSL_CMP_CTX */;
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 
 /*
  * ##########################################################################
@@ -784,7 +786,10 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
 # define ossl_cmp_info(ctx, msg)  ossl_cmp_log(INFO,  ctx, msg)
 # define ossl_cmp_debug(ctx, msg) ossl_cmp_log(DEBUG, ctx, msg)
 # define ossl_cmp_trace(ctx, msg) ossl_cmp_log(TRACE, ctx, msg)
+
+#endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
 int ossl_cmp_ctx_set1_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert);
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status);
 int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
                                    OSSL_CMP_PKIFREETEXT *text);
