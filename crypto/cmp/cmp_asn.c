@@ -165,11 +165,34 @@ ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav)
     return itav->infoValue.other;
 }
 
-STACK_OF(X509) *OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav)
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new0_caCerts(STACK_OF(X509) *caCerts)
 {
-    if (itav == NULL)
+    OSSL_CMP_ITAV *itav;
+
+    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
         return NULL;
-    return itav->infoValue.caCerts;
+    itav->infoType = OBJ_nid2obj(NID_id_it_caCerts);
+    if (sk_X509_num(caCerts) == 0) {
+        sk_X509_free(caCerts);
+        caCerts = NULL;
+    }
+    itav->infoValue.caCerts = caCerts;
+    return itav;
+}
+
+int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out)
+{
+    if (itav == NULL || out == NULL) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (OBJ_obj2nid(itav->infoType) != NID_id_it_caCerts) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    *out = sk_X509_num(itav->infoValue.caCerts) > 0
+        ? itav->infoValue.caCerts : NULL;
+    return 1;
 }
 
 int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
