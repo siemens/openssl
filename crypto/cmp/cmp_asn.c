@@ -121,8 +121,10 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
     ADB_ENTRY(NID_id_it_suppLangTags,
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.suppLangTagsValue,
                                    ASN1_UTF8STRING)),
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
     ADB_ENTRY(NID_id_it_caCerts,
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.caCerts, X509)),
+#endif
 } ASN1_ADB_END(OSSL_CMP_ITAV, 0, infoType, 0,
                &infotypeandvalue_default_tt, NULL);
 
@@ -165,6 +167,7 @@ ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav)
     return itav->infoValue.other;
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new0_caCerts(STACK_OF(X509) *caCerts)
 {
     OSSL_CMP_ITAV *itav;
@@ -194,6 +197,7 @@ int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out)
         ? itav->infoValue.caCerts : NULL;
     return 1;
 }
+#endif
 
 int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
                                    OSSL_CMP_ITAV *itav)
