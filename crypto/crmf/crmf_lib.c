@@ -984,7 +984,8 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                                      ASN1_STRING_get0_data(secret),
                                      ASN1_STRING_length(secret)) != 1)
         goto end;
-    res = CMS_decrypt(ci, pkey, cert, detached_data, bio, flags);
+    res = CMS_decrypt(ci, secret == NULL ? pkey : NULL,
+                      secret == NULL ? cert : NULL, detached_data, bio, flags);
 
  end:
     if (ci != NULL)
