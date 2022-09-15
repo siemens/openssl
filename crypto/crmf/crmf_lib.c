@@ -664,6 +664,7 @@ static int check_cmKGA(ossl_unused const X509_PURPOSE *purpose,
 
 DECLARE_ASN1_ITEM(CMS_SignedData) /* copied from cms_local.h */
 
+#if OPENSSL_VERSION_NUMBER < 0x30100000L
 /* added to OpenSSL 3.1 in #18301 */
 BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                                EVP_PKEY *pkey, X509 *cert,
@@ -677,6 +678,7 @@ BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
                            unsigned int flags,
                            OSSL_LIB_CTX *libctx, const char *propq);
 #endif /* OPENSSL_NO_CMS */
+#endif
 
 EVP_PKEY
 *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(OSSL_CRMF_ENCRYPTEDKEY *encryptedKey,

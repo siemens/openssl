@@ -17,7 +17,7 @@
 
 #ifndef OPENSSL_NO_CMS
 /* TODO remove when CMS API has been extended by CMS_EnvelopedData and CMS_SignedData fns */  
-# include "/home/david/openssl/prepare-1.1.1/crypto/cms/cms_asn1.c"
+# include <openssl/../../crypto/cms/cms_asn1.c>
 #else
 struct CMS_EnvelopedData_st {
     int32_t version;
