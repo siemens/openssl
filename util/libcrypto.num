@@ -5438,7 +5438,7 @@ BN_signed_bn2native                     ?	3_1_0	EXIST::FUNCTION:
 ASYNC_set_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 ASYNC_get_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 BIO_ADDR_dup                            ?	3_1_0	EXIST::FUNCTION:SOCK
-OSSL_CMP_ITAV_new0_caCerts              ?	3_1_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_new_caCerts               ?	3_1_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_caCerts              ?	3_1_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ATAV_dup                       ?	3_1_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ATAV_create                    ?	3_1_0	EXIST::FUNCTION:CMP

@@ -128,7 +128,6 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
 } ASN1_ADB_END(OSSL_CMP_ITAV, 0, infoType, 0,
                &infotypeandvalue_default_tt, NULL);
 
-
 ASN1_SEQUENCE(OSSL_CMP_ITAV) = {
     ASN1_SIMPLE(OSSL_CMP_ITAV, infoType, ASN1_OBJECT),
     ASN1_ADB_OBJECT(OSSL_CMP_ITAV)
@@ -167,38 +166,6 @@ ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav)
     return itav->infoValue.other;
 }
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-OSSL_CMP_ITAV *OSSL_CMP_ITAV_new0_caCerts(STACK_OF(X509) *caCerts)
-{
-    OSSL_CMP_ITAV *itav;
-
-    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
-        return NULL;
-    itav->infoType = OBJ_nid2obj(NID_id_it_caCerts);
-    if (sk_X509_num(caCerts) == 0) {
-        sk_X509_free(caCerts);
-        caCerts = NULL;
-    }
-    itav->infoValue.caCerts = caCerts;
-    return itav;
-}
-
-int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out)
-{
-    if (itav == NULL || out == NULL) {
-        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    if (OBJ_obj2nid(itav->infoType) != NID_id_it_caCerts) {
-        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-    *out = sk_X509_num(itav->infoValue.caCerts) > 0
-        ? itav->infoValue.caCerts : NULL;
-    return 1;
-}
-#endif
-
 int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
                                    OSSL_CMP_ITAV *itav)
 {
@@ -225,6 +192,39 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
     }
     return 0;
 }
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts)
+{
+    OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new();
+
+    if (itav == NULL)
+        return NULL;
+    if (sk_X509_num(caCerts) > 0
+        && (itav->infoValue.caCerts =
+            sk_X509_deep_copy(caCerts, X509_dup, X509_free)) == NULL) {
+        OSSL_CMP_ITAV_free(itav);
+        return NULL;
+    }
+    itav->infoType = OBJ_nid2obj(NID_id_it_caCerts);
+    return itav;
+}
+
+int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out)
+{
+    if (itav == NULL || out == NULL) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (OBJ_obj2nid(itav->infoType) != NID_id_it_caCerts) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    *out = sk_X509_num(itav->infoValue.caCerts) > 0
+        ? itav->infoValue.caCerts : NULL;
+    return 1;
+}
+#endif
 
 /* get ASN.1 encoded integer, return -1 on error */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
