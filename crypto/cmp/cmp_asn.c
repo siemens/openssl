@@ -121,17 +121,17 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
     ADB_ENTRY(NID_id_it_suppLangTags,
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.suppLangTagsValue,
                                    ASN1_UTF8STRING)),
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+# if OPENSSL_VERSION_NUMBER >= 0x30000000L
     ADB_ENTRY(NID_id_it_caCerts,
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.caCerts, X509)),
-#endif
-#if OPENSSL_VERSION_NUMBER >= 0x30100000L
+# endif
+# if OPENSSL_VERSION_NUMBER >= 0x30100000L
     ADB_ENTRY(NID_id_it_rootCaCert,
               ASN1_OPT(OSSL_CMP_ITAV, infoValue.rootCaCert, X509)),
     ADB_ENTRY(NID_id_it_rootCaKeyUpdate,
               ASN1_OPT(OSSL_CMP_ITAV, infoValue.rootCaKeyUpdate,
                        OSSL_CMP_ROOTCAKEYUPDATE)),
-#endif
+# endif
 } ASN1_ADB_END(OSSL_CMP_ITAV, 0, infoType, 0,
                &infotypeandvalue_default_tt, NULL);
 
@@ -142,7 +142,7 @@ ASN1_SEQUENCE(OSSL_CMP_ITAV) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ITAV)
 IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
 
-#if OPENSSL_VERSION_NUMBER >= 0x30100000L
+# if OPENSSL_VERSION_NUMBER >= 0x30100000L
 ASN1_SEQUENCE(OSSL_CMP_ROOTCAKEYUPDATE) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_SIMPLE(OSSL_CMP_ROOTCAKEYUPDATE, newWithNew, X509),
@@ -150,7 +150,7 @@ ASN1_SEQUENCE(OSSL_CMP_ROOTCAKEYUPDATE) = {
     ASN1_EXP_OPT(OSSL_CMP_ROOTCAKEYUPDATE, oldWithNew, X509, 1)
 } ASN1_SEQUENCE_END(OSSL_CMP_ROOTCAKEYUPDATE)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
-#endif
+# endif
 
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value)
 {
@@ -210,7 +210,7 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
     return 0;
 }
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+# if OPENSSL_VERSION_NUMBER >= 0x30000000L
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts)
 {
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new();
@@ -241,9 +241,9 @@ int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out)
         ? itav->infoValue.caCerts : NULL;
     return 1;
 }
-#endif
+# endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x30100000L
+# if OPENSSL_VERSION_NUMBER >= 0x30100000L
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaCert(const X509 *rootCaCert)
 {
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new();
@@ -293,7 +293,7 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaKeyUpdate(const X509 *newWithNew,
     itav->infoValue.rootCaKeyUpdate = upd;
     return itav;
 
-    err:
+ err:
     OSSL_CMP_ROOTCAKEYUPDATE_free(upd);
     return NULL;
 }
@@ -321,7 +321,7 @@ int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
         *oldWithNew = upd->oldWithNew;
     return 1;
 }
-#endif
+# endif
 
 /* get ASN.1 encoded integer, return -1 on error */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
