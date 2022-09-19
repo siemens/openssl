@@ -7,7 +7,9 @@ OSSL_CMP_ITAV_get0_caCerts,
 OSSL_CMP_ITAV_new_rootCaCert,
 OSSL_CMP_ITAV_get0_rootCaCert,
 OSSL_CMP_ITAV_new_rootCaKeyUpdate,
-OSSL_CMP_ITAV_get0_rootCaKeyUpdate
+OSSL_CMP_ITAV_get0_rootCaKeyUpdate,
+OSSL_CMP_ITAV_new0_certProfile,
+OSSL_CMP_ITAV_get0_certProfile,
 - CMP utility functions for handling specific genm and genp messages
 
 =head1 SYNOPSIS
@@ -26,6 +28,10 @@ OSSL_CMP_ITAV_get0_rootCaKeyUpdate
                                         X509 **newWithNew,
                                         X509 **newWithOld,
                                         X509 **oldWithNew);
+ OSSL_CMP_ITAV
+ *OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile);
+ int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
+                                    STACK_OF(ASN1_UTF8STRING) **out);
 
 =head1 DESCRIPTION
 
@@ -61,6 +67,16 @@ If I<oldWithNew> is not NULL, it assigns to I<*oldWithNew> the internal pointer
 to the certificate contained in the oldWithNew infoValue sub-field of I<itav>.
 Each of these pointers will be NULL if the respective sub-field is not set.
 
+OSSL_CMP_ITAV_new0_certProfile() creates a new B<OSSL_CMP_ITAV> structure
+of type B<certProfile> that includes the optionally given list of profile names.
+On success, ownership of list is with the new B<OSSL_CMP_ITAV> structure.
+
+OSSL_CMP_ITAV_get0_certProfile() on success assigns to I<*out>
+an internal pointer to the
+list of certificate profile names contained in the infoValue field of I<itav>.
+The pointer may be NULL if no profile name is included.
+It is an error if the infoType of I<itav> is not B<certProfile>.
+
 =head1 NOTES
 
 CMP is defined in RFC 4210.
@@ -68,11 +84,13 @@ CMP is defined in RFC 4210.
 =head1 RETURN VALUES
 
 OSSL_CMP_ITAV_new_caCerts(),
-OSSL_CMP_ITAV_new_rootCaCert(), and OSSL_CMP_ITAV_new_rootCaKeyUpdate()
+OSSL_CMP_ITAV_new_rootCaCert(), OSSL_CMP_ITAV_new_rootCaKeyUpdate(),
+and OSSL_CMP_ITAV_new0_certProfile()
 return a pointer to the new ITAV structure on success, or NULL on error.
 
 OSSL_CMP_ITAV_get0_caCerts(),
-OSSL_CMP_ITAV_get0_rootCaCert(), and OSSL_CMP_ITAV_get0_rootCaKeyUpdate()
+OSSL_CMP_ITAV_get0_rootCaCert(), OSSL_CMP_ITAV_get0_rootCaKeyUpdate(),
+and OSSL_CMP_ITAV_get0_certProfile()
 return 1 on success, 0 on error.
 
 =head1 SEE ALSO
@@ -83,7 +101,8 @@ L<OSSL_CMP_ITAV_create(3)> and L<OSSL_CMP_ITAV_get0_type(3)>
 
 OSSL_CMP_ITAV_new_caCerts(), OSSL_CMP_ITAV_get0_caCerts(),
 OSSL_CMP_ITAV_new_rootCaCert(), OSSL_CMP_ITAV_get0_rootCaCert(),
-OSSL_CMP_ITAV_new_rootCaKeyUpdate(), and OSSL_CMP_ITAV_get0_rootCaKeyUpdate()
+OSSL_CMP_ITAV_new_rootCaKeyUpdate(), OSSL_CMP_ITAV_get0_rootCaKeyUpdate(),
+OSSL_CMP_ITAV_new0_certProfile(), and OSSL_CMP_ITAV_get0_certProfile()
 were added in OpenSSL 3.1.
 
 =head1 COPYRIGHT

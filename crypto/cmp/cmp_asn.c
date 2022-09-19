@@ -131,6 +131,9 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
     ADB_ENTRY(NID_id_it_rootCaKeyUpdate,
               ASN1_OPT(OSSL_CMP_ITAV, infoValue.rootCaKeyUpdate,
                        OSSL_CMP_ROOTCAKEYUPDATE)),
+    ADB_ENTRY(NID_id_it_certProfile,
+              ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.certProfile,
+                                   ASN1_UTF8STRING)),
 # endif
 } ASN1_ADB_END(OSSL_CMP_ITAV, 0, infoType, 0,
                &infotypeandvalue_default_tt, NULL);
@@ -319,6 +322,33 @@ int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
         *newWithOld = upd->newWithOld;
     if (oldWithNew != NULL)
         *oldWithNew = upd->oldWithNew;
+    return 1;
+}
+
+OSSL_CMP_ITAV
+*OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile)
+{
+    OSSL_CMP_ITAV *itav;
+
+    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
+        return NULL;
+    itav->infoType = OBJ_nid2obj(NID_id_it_certProfile);
+    itav->infoValue.certProfile = certProfile;
+    return itav;
+}
+
+int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
+                                   STACK_OF(ASN1_UTF8STRING) **out)
+{
+    if (itav == NULL || out == NULL) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (OBJ_obj2nid(itav->infoType) != NID_id_it_certProfile) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    *out = itav->infoValue.certProfile;
     return 1;
 }
 # endif

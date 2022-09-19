@@ -5444,6 +5444,8 @@ OSSL_CMP_ITAV_new_rootCaCert            ?	3_1_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_rootCaCert           ?	3_1_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_new_rootCaKeyUpdate       ?	3_1_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_rootCaKeyUpdate      ?	3_1_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_new0_certProfile           ?	3_1_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_get0_certProfile          ?	3_1_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ATAV_dup                       ?	3_1_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ATAV_create                    ?	3_1_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ATAV_set0                      ?	3_1_0	EXIST::FUNCTION:CMP

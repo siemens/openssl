@@ -399,6 +399,10 @@ int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
                                        X509 **newWithNew,
                                        X509 **newWithOld,
                                        X509 **oldWithNew);
+OSSL_CMP_ITAV
+*OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile);
+int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
+                                   STACK_OF(ASN1_UTF8STRING) **out);
 #endif
 
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);

@@ -265,6 +265,8 @@ struct ossl_cmp_itav_st {
         X509 *rootCaCert;
         /* NID_id_it_rootCaKeyUpdate - Root CA Certificate Update */
         OSSL_CMP_ROOTCAKEYUPDATE *rootCaKeyUpdate;
+        /* NID_id_it_certProfile - Certificate Profile */
+        STACK_OF(ASN1_UTF8STRING) *certProfile;
 #endif
         /* this is to be used for so far undeclared objects */
         ASN1_TYPE *other;
