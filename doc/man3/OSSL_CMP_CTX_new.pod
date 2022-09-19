@@ -185,6 +185,7 @@ OSSL_CMP_CTX_reinit() prepares the given I<ctx> for a further transaction by
 clearing the internal CMP transaction (aka session) status, PKIStatusInfo,
 and any previous results (newCert, newChain, caPubs, and extraCertsIn)
 from the last executed transaction.
+It also clears any ITAVs added by calling OSSL_CMP_CTX_push0_genm_ITAV().
 All other field values (i.e., CMP options) are retained for potential re-use.
 
 OSSL_CMP_CTX_set_option() sets the given value for the given option
