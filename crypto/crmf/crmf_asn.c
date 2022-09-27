@@ -17,7 +17,13 @@
 
 #ifndef OPENSSL_NO_CMS
 /* TODO remove when CMS API has been extended by CMS_EnvelopedData and CMS_SignedData fns */  
-# include <openssl/../../crypto/cms/cms_asn1.c>
+# if OPENSSL_VERSION_NUMBER < 0x30000000L
+#  include "cms_asn1.v11.c"
+# elif OPENSSL_VERSION_NUMBER < 0x30100000L
+#  include "cms_asn1.v30.c"
+# else
+#  include "cms_asn1.v31.c"
+# endif
 #else
 struct CMS_EnvelopedData_st {
     int32_t version;
