@@ -127,6 +127,9 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     int is_enrollment = IS_CREP(expected_type)
         || expected_type == OSSL_CMP_PKIBODY_POLLREP
         || expected_type == OSSL_CMP_PKIBODY_PKICONF;
+    int begin_transaction =
+        expected_type != OSSL_CMP_PKIBODY_POLLREP
+        && expected_type != OSSL_CMP_PKIBODY_PKICONF;
     const char *req_type_str =
         ossl_cmp_bodytype_to_string(OSSL_CMP_MSG_get_bodytype(req));
     const char *expected_type_str = ossl_cmp_bodytype_to_string(expected_type);
@@ -138,6 +141,9 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     if (transfer_cb == NULL)
         transfer_cb = OSSL_CMP_MSG_http_perform;
+
+    if (ctx->total_timeout > 0 && begin_transaction)
+        ctx->end_time = time(NULL) + ctx->total_timeout;
 
     *rep = NULL;
     msg_timeout = ctx->msg_timeout; /* backup original value */
@@ -651,8 +657,6 @@ static int initial_certreq(OSSL_CMP_CTX *ctx,
         return 0;
 
     ctx->status = OSSL_CMP_PKISTATUS_request;
-    if (ctx->total_timeout > 0) /* else ctx->end_time is not used */
-        ctx->end_time = time(NULL) + ctx->total_timeout;
 
     /* also checks if all necessary options are set */
     if ((req = ossl_cmp_certreq_new(ctx, req_type, crm)) == NULL)
