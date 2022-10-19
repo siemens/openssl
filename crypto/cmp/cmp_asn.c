@@ -317,11 +317,11 @@ int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
         return 0;
     }
     upd = itav->infoValue.rootCaKeyUpdate;
-    *newWithNew = upd->newWithNew;
+    *newWithNew = upd == NULL ? NULL : upd->newWithNew;
     if (newWithOld != NULL)
-        *newWithOld = upd->newWithOld;
+        *newWithOld = upd == NULL ? NULL : upd->newWithOld;
     if (oldWithNew != NULL)
-        *oldWithNew = upd->oldWithNew;
+        *oldWithNew = upd == NULL ? NULL : upd->oldWithNew;
     return 1;
 }
 
