@@ -17,7 +17,9 @@
 
 #ifndef OPENSSL_NO_CMS
 /* TODO remove when CMS API has been extended by CMS_EnvelopedData and CMS_SignedData fns */  
-# if OPENSSL_VERSION_NUMBER < 0x30000000L
+# if OPENSSL_VERSION_NUMBER < 0x10101000L
+#  include "cms_asn1.v10.c"
+# elif OPENSSL_VERSION_NUMBER < 0x30000000L
 #  include "cms_asn1.v11.c"
 # elif OPENSSL_VERSION_NUMBER < 0x30100000L
 #  include "cms_asn1.v30.c"

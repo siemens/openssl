@@ -20,6 +20,7 @@
 # endif
 
 # if OPENSSL_VERSION_NUMBER < 0x10100000L
+# define ossl_inline inline
 /* compilation quirks for OpenSSL <= 1.0.2 */
 _Pragma("GCC diagnostic ignored \"-Wdiscarded-qualifiers\"")
 _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
@@ -223,7 +224,7 @@ DECLARE_STACK_OF(ASN1_UTF8STRING)
 # if OPENSSL_VERSION_NUMBER < 0x1010001fL && !defined(OPENSSL_zalloc)
 #  define OPENSSL_zalloc(num) CRYPTO_zalloc(num, __FILE__, __LINE__)
 #  include <string.h>
-static inline void *CRYPTO_zalloc(size_t num, const char *file, int line)
+static ossl_inline void *CRYPTO_zalloc(size_t num, const char *file, int line)
 {
     void *ret = CRYPTO_malloc((int)num, file, line);
     if (ret)
