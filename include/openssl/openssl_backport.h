@@ -26,6 +26,8 @@ _Pragma("GCC diagnostic ignored \"-Wdiscarded-qualifiers\"")
 _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
 # endif
 
+# define OSSL_DEPRECATEDIN_3_1
+
 # include <openssl/e_os2.h> /* for ossl_inline etc. */
 # include <openssl/x509v3.h> /* for GENERAL_NAME, X509_ALGOR, etc. */
 
@@ -274,6 +276,7 @@ typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
 # endif
 
 # if OPENSSL_VERSION_NUMBER < 0x30000000L
+#  define OSSL_DEPRECATEDIN_3_0
 #  define SKM_DEFINE_STACK_OF_INTERNAL(t1, t2, t3) \
     STACK_OF(t1); \
     typedef int (*sk_##t1##_compfunc)(const t3 * const *a, const t3 *const *b); \
@@ -311,7 +314,6 @@ typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
 
 typedef void OSSL_LIB_CTX;
 DECLARE_ASN1_DUP_FUNCTION(X509_PUBKEY)
-#  define OSSL_DEPRECATEDIN_3_0
 
     BIO *ASN1_item_i2d_mem_bio(const ASN1_ITEM *it, const ASN1_VALUE *val);
 #  define X509_new_ex(libctx, propq) ((void)(libctx), (void)(propq), X509_new())
