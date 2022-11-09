@@ -111,10 +111,11 @@ LIBCMP_SRCS = $(patsubst %,crypto/crmf/%,$(CRMF_SRCS_)) \
 
 .phony: build clean
 
-build: $(OUT_DIR)/$(OUTLIB)
+$(OUT_DIR):
+	@mkdir -p $(OUT_DIR)
+build: $(OUT_DIR) $(OUT_DIR)/$(OUTLIB)
 
 $(LIBCMP_INC)/openssl:
-	@mkdir -p $(OUT_DIR)
 	@mkdir -p $(LIBCMP_INC)/openssl
 ifeq ($(shell expr "$(OPENSSL_VERSION)" \< 3.0),1)
 	@cd $(LIBCMP_INC)/openssl; touch macros.h types.h trace.h
@@ -138,6 +139,7 @@ $(OUT_DIR)/$(OUTLIB): $(OUT_DIR)/$(OUTLIB).$(VERSION)
 
 clean: clean_deb
 	rm -f $(LIBCMP_INC)/openssl/* $(LIBCMP_INC)/internal/*
+	rmdir $(LIBCMP_INC)/openssl $(LIBCMP_INC)/internal || true
 	rm -f $(OUT_DIR)/$(OUTLIB)*
 	rmdir $(LIBCMP_INC)/openssl $(LIBCMP_INC)/internal $(LIBCMP_INC) 2>/dev/null || true
 
