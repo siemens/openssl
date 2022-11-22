@@ -31,7 +31,36 @@ _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
 # include <openssl/e_os2.h> /* for ossl_inline etc. */
 # include <openssl/x509v3.h> /* for GENERAL_NAME, X509_ALGOR, etc. */
 
-# if OPENSSL_VERSION_NUMBER <= 0x30100000L
+# if OPENSSL_VERSION_NUMBER <= 0x30200000L
+#  define SN_id_mod_cmp2000_02            "id-mod-cmp2000-02"
+#  define NID_id_mod_cmp2000_02           1251
+#  define OBJ_id_mod_cmp2000_02           OBJ_id_pkix_mod,50L
+#  define SN_id_mod_cmp2021_88            "id-mod-cmp2021-88"
+#  define NID_id_mod_cmp2021_88           1252
+#  define OBJ_id_mod_cmp2021_88           OBJ_id_pkix_mod,99L
+#  define SN_id_mod_cmp2021_02            "id-mod-cmp2021-02"
+#  define NID_id_mod_cmp2021_02           1253
+#  define OBJ_id_mod_cmp2021_02           OBJ_id_pkix_mod,100L
+#  define NID_id_it_rootCaCert            1254
+#  define OBJ_id_it_rootCaCert            OBJ_id_it,20L
+#  define SN_id_it_certProfile            "id-it-certProfile"
+#  define NID_id_it_certProfile           1255
+#  define OBJ_id_it_certProfile           OBJ_id_it,21L
+#  define SN_id_it_crlStatusList          "id-it-crlStatusList"
+#  define NID_id_it_crlStatusList         1256
+#  define OBJ_id_it_crlStatusList         OBJ_id_it,22L
+#  define SN_id_it_crls           "id-it-crls"
+#  define NID_id_it_crls          1257
+#  define OBJ_id_it_crls          OBJ_id_it,23L
+#  define SN_id_regCtrl_altCertTemplate           "id-regCtrl-altCertTemplate"
+#  define NID_id_regCtrl_altCertTemplate          1258
+#  define OBJ_id_regCtrl_altCertTemplate          OBJ_id_regCtrl,7L
+#  define SN_id_regCtrl_algId             "id-regCtrl-algId"
+#  define NID_id_regCtrl_algId            1259
+#  define OBJ_id_regCtrl_algId            OBJ_id_regCtrl,11L
+#  define SN_id_regCtrl_rsaKeyLen         "id-regCtrl-rsaKeyLen"
+#  define NID_id_regCtrl_rsaKeyLen                1260
+#  define OBJ_id_regCtrl_rsaKeyLen                OBJ_id_regCtrl,12L
 X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 #  define OSSL_STACK_OF_X509_free(sk) sk_X509_pop_free(sk, X509_free)
 #  define OPENSSL_strcasecmp  strcasecmp
@@ -431,6 +460,7 @@ STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
 #  define ASN1_item_i2d_bio(it, res, val) \
     ASN1_item_i2d_bio(it, res, (ASN1_VALUE *)(val)) /* hack */
 #  define ASN1_VALUE_dup(a) ASN1_VALUE_dup((ASN1_VALUE *)(a)) /* hack */
+#  define X509_dup(x) X509_dup((X509 *)(x)) /* hack */
 #  define X509_REQ_dup(r) X509_REQ_dup((X509_REQ *)(r)) /* hack */
 #  define X509_NAME_dup(n) X509_NAME_dup((X509_NAME *)(n)) /* hack */
 #  define GENERAL_NAME_dup(n) GENERAL_NAME_dup((GENERAL_NAME *)(n)) /* hack */
@@ -445,9 +475,22 @@ int X509_self_signed(X509 *cert, int verify_signature);
 int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags);
 int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags);
 typedef struct ossl_http_req_ctx_st OSSL_HTTP_REQ_CTX;
-#  define ASN1_OP_DUP_POST -1 /* dummy */
-#  define ASN1_OP_GET0_LIBCTX -2 /* dummy */
-#  define ASN1_OP_GET0_PROPQ -3 /* dummy */
+#  define ASN1_OP_DUP_POST        15
+#  define ASN1_OP_GET0_LIBCTX     16
+#  define ASN1_OP_GET0_PROPQ      17
+#  define SN_cmKGA   "cmKGA"
+#  define LN_cmKGA   "Certificate Management Key Generation Authority"
+#  define NID_cmKGA  1222
+#  define OBJ_cmKGA  OBJ_id_kp,32L
+#  define SN_id_it_caCerts           "id-it-caCerts"
+#  define NID_id_it_caCerts          1223
+#  define OBJ_id_it_caCerts          OBJ_id_it,17L
+#  define SN_id_it_rootCaKeyUpdate   "id-it-rootCaKeyUpdate"
+#  define NID_id_it_rootCaKeyUpdate  1224
+#  define OBJ_id_it_rootCaKeyUpdate  OBJ_id_it,18L
+#  define SN_id_it_certReqTemplate   "id-it-certReqTemplate"
+#  define NID_id_it_certReqTemplate  1225
+#  define OBJ_id_it_certReqTemplate  OBJ_id_it,19L
 # endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
 
 /* OpenSSL-internal functions: */

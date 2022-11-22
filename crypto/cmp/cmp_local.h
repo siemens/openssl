@@ -27,11 +27,8 @@
 # include "crypto/x509.h"
 # endif
 
-# if OPENSSL_VERSION_NUMBER <= 0x30100000L
-
 # define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 
-# endif
 /*
  * this structure is used to store the context for CMP sessions
  */
@@ -83,7 +80,7 @@ struct ossl_cmp_ctx_st {
     X509 *cert; /* protection cert used to identify and sign for MSG_SIG_ALG */
     STACK_OF(X509) *chain; /* (cached) chain of protection cert including it */
     EVP_PKEY *pkey; /* the key pair corresponding to cert */
-    ASN1_OCTET_STRING *referenceValue; /* optional user name for MSG_MAC_ALG */
+    ASN1_OCTET_STRING *referenceValue; /* optional username for MSG_MAC_ALG */
     ASN1_OCTET_STRING *secretValue; /* password/shared secret for MSG_MAC_ALG */
     /* PBMParameters for MSG_MAC_ALG */
     size_t pbm_slen; /* salt length, currently fixed to 16 */
@@ -136,7 +133,6 @@ struct ossl_cmp_ctx_st {
     OSSL_CMP_certConf_cb_t certConf_cb; /* callback for app checking new cert */
     void *certConf_cb_arg; /* allows to store an argument individual to cb */
 } /* OSSL_CMP_CTX */;
-# if OPENSSL_VERSION_NUMBER <= 0x30100000L
 
 /*
  * ##########################################################################
@@ -256,18 +252,16 @@ struct ossl_cmp_itav_st {
         OSSL_CMP_MSGS *origPKIMessage;
         /* NID_id_it_suppLangTags - Supported Language Tags */
         STACK_OF(ASN1_UTF8STRING) *suppLangTagsValue;
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+
+        /* CMPv3: */
+        /* NID_id_it_certProfile - Certificate Profile */
+        STACK_OF(ASN1_UTF8STRING) *certProfile;
         /* NID_id_it_caCerts - CA Certificates */
         STACK_OF(X509) *caCerts;
-#endif
-#if OPENSSL_VERSION_NUMBER >= 0x30100000L
         /* NID_id_it_rootCaCert - Root CA Certificate */
         X509 *rootCaCert;
         /* NID_id_it_rootCaKeyUpdate - Root CA Certificate Update */
         OSSL_CMP_ROOTCAKEYUPDATE *rootCaKeyUpdate;
-        /* NID_id_it_certProfile - Certificate Profile */
-        STACK_OF(ASN1_UTF8STRING) *certProfile;
-#endif
         /* this is to be used for so far undeclared objects */
         ASN1_TYPE *other;
     } infoValue;
@@ -817,9 +811,7 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
 # define ossl_cmp_debug(ctx, msg) ossl_cmp_log(DEBUG, ctx, msg)
 # define ossl_cmp_trace(ctx, msg) ossl_cmp_log(TRACE, ctx, msg)
 
-# endif /* OPENSSL_VERSION_NUMBER <= 0x30100000L */
 int ossl_cmp_ctx_set1_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert);
-#if OPENSSL_VERSION_NUMBER <= 0x30100000L
 int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status);
 int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
                                    OSSL_CMP_PKIFREETEXT *text);
@@ -967,7 +959,5 @@ int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int fail_info,
                                const char *txt);
 int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
                             const char *txt, int errorCode, const char *detail);
-
-# endif /* OPENSSL_VERSION_NUMBER <= 0x30100000L */
 
 #endif /* !defined(OSSL_CRYPTO_CMP_LOCAL_H) */

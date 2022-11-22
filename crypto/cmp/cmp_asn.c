@@ -17,8 +17,6 @@
 #include <openssl/cmp.h>
 #include <openssl/crmf.h>
 
-#if OPENSSL_VERSION_NUMBER <= 0x30100000L
-
 /* ASN.1 declarations from RFC4210 */
 ASN1_SEQUENCE(OSSL_CMP_REVANNCONTENT) = {
     /* OSSL_CMP_PKISTATUS is effectively ASN1_INTEGER so it is used directly */
@@ -54,9 +52,7 @@ ASN1_ITEM_TEMPLATE_END(OSSL_CMP_POPODECKEYRESPCONTENT)
 ASN1_SEQUENCE(OSSL_CMP_CAKEYUPDANNCONTENT) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_SIMPLE(OSSL_CMP_CAKEYUPDANNCONTENT, oldWithNew, X509),
-    /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_SIMPLE(OSSL_CMP_CAKEYUPDANNCONTENT, newWithOld, X509),
-    /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_SIMPLE(OSSL_CMP_CAKEYUPDANNCONTENT, newWithNew, X509)
 } ASN1_SEQUENCE_END(OSSL_CMP_CAKEYUPDANNCONTENT)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_CAKEYUPDANNCONTENT)
@@ -65,11 +61,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_CAKEYUPDANNCONTENT)
 ASN1_SEQUENCE(OSSL_CMP_ERRORMSGCONTENT) = {
     ASN1_SIMPLE(OSSL_CMP_ERRORMSGCONTENT, pKIStatusInfo, OSSL_CMP_PKISI),
     ASN1_OPT(OSSL_CMP_ERRORMSGCONTENT, errorCode, ASN1_INTEGER),
-    /*
-     * OSSL_CMP_PKIFREETEXT is effectively a sequence of ASN1_UTF8STRING
-     * so it is used directly
-     *
-     */
+    /* OSSL_CMP_PKIFREETEXT is a ASN1_UTF8STRING sequence, so used directly */
     ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ERRORMSGCONTENT, errorDetails,
                          ASN1_UTF8STRING)
 } ASN1_SEQUENCE_END(OSSL_CMP_ERRORMSGCONTENT)
@@ -80,7 +72,6 @@ ASN1_ADB_TEMPLATE(infotypeandvalue_default) = ASN1_OPT(OSSL_CMP_ITAV,
                                                        ASN1_ANY);
 /* ITAV means InfoTypeAndValue */
 ASN1_ADB(OSSL_CMP_ITAV) = {
-    /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ADB_ENTRY(NID_id_it_caProtEncCert, ASN1_OPT(OSSL_CMP_ITAV,
                                                 infoValue.caProtEncCert, X509)),
     ADB_ENTRY(NID_id_it_signKeyPairTypes,
@@ -124,13 +115,13 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
 # if OPENSSL_VERSION_NUMBER >= 0x30000000L
     ADB_ENTRY(NID_id_it_caCerts,
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.caCerts, X509)),
-# endif
-# if OPENSSL_VERSION_NUMBER >= 0x30100000L
-    ADB_ENTRY(NID_id_it_rootCaCert,
-              ASN1_OPT(OSSL_CMP_ITAV, infoValue.rootCaCert, X509)),
     ADB_ENTRY(NID_id_it_rootCaKeyUpdate,
               ASN1_OPT(OSSL_CMP_ITAV, infoValue.rootCaKeyUpdate,
                        OSSL_CMP_ROOTCAKEYUPDATE)),
+# endif
+# if OPENSSL_VERSION_NUMBER >= 0x30200000L || OPENSSL_VERSION_NUMBER >= 0x30000000L
+    ADB_ENTRY(NID_id_it_rootCaCert,
+              ASN1_OPT(OSSL_CMP_ITAV, infoValue.rootCaCert, X509)),
     ADB_ENTRY(NID_id_it_certProfile,
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.certProfile,
                                    ASN1_UTF8STRING)),
@@ -145,7 +136,6 @@ ASN1_SEQUENCE(OSSL_CMP_ITAV) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ITAV)
 IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
 
-# if OPENSSL_VERSION_NUMBER >= 0x30100000L
 ASN1_SEQUENCE(OSSL_CMP_ROOTCAKEYUPDATE) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_SIMPLE(OSSL_CMP_ROOTCAKEYUPDATE, newWithNew, X509),
@@ -153,7 +143,6 @@ ASN1_SEQUENCE(OSSL_CMP_ROOTCAKEYUPDATE) = {
     ASN1_EXP_OPT(OSSL_CMP_ROOTCAKEYUPDATE, oldWithNew, X509, 1)
 } ASN1_SEQUENCE_END(OSSL_CMP_ROOTCAKEYUPDATE)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
-# endif
 
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value)
 {
@@ -206,14 +195,40 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
     return 1;
 
  err:
-    if (created != 0) {
+    if (created) {
         sk_OSSL_CMP_ITAV_free(*itav_sk_p);
         *itav_sk_p = NULL;
     }
     return 0;
 }
 
-# if OPENSSL_VERSION_NUMBER >= 0x30000000L
+OSSL_CMP_ITAV
+*OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile)
+{
+    OSSL_CMP_ITAV *itav;
+
+    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
+        return NULL;
+    itav->infoType = OBJ_nid2obj(NID_id_it_certProfile);
+    itav->infoValue.certProfile = certProfile;
+    return itav;
+}
+
+int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
+                                   STACK_OF(ASN1_UTF8STRING) **out)
+{
+    if (itav == NULL || out == NULL) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (OBJ_obj2nid(itav->infoType) != NID_id_it_certProfile) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    *out = itav->infoValue.certProfile;
+    return 1;
+}
+
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts)
 {
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new();
@@ -222,7 +237,7 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts)
         return NULL;
     if (sk_X509_num(caCerts) > 0
         && (itav->infoValue.caCerts =
-            sk_X509_deep_copy(caCerts, X509_dup, X509_free)) == NULL) {
+            sk_X509_deep_copy(caCerts, (sk_X509_copyfunc)X509_dup, X509_free)) == NULL) {
         OSSL_CMP_ITAV_free(itav);
         return NULL;
     }
@@ -244,9 +259,7 @@ int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out)
         ? itav->infoValue.caCerts : NULL;
     return 1;
 }
-# endif
 
-# if OPENSSL_VERSION_NUMBER >= 0x30100000L
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaCert(const X509 *rootCaCert)
 {
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new();
@@ -275,21 +288,26 @@ int OSSL_CMP_ITAV_get0_rootCaCert(const OSSL_CMP_ITAV *itav, X509 **out)
     *out = itav->infoValue.rootCaCert;
     return 1;
 }
+
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaKeyUpdate(const X509 *newWithNew,
                                                  const X509 *newWithOld,
                                                  const X509 *oldWithNew)
 {
     OSSL_CMP_ITAV *itav;
-    OSSL_CMP_ROOTCAKEYUPDATE *upd = OSSL_CMP_ROOTCAKEYUPDATE_new();
+    OSSL_CMP_ROOTCAKEYUPDATE *upd = NULL;
 
-    if (upd == NULL)
-        return NULL;
-    if (newWithNew != NULL && (upd->newWithNew = X509_dup(newWithNew)) == NULL)
-        goto err;
-    if (newWithOld != NULL && (upd->newWithOld = X509_dup(newWithOld)) == NULL)
-        goto err;
-    if (oldWithNew != NULL && (upd->oldWithNew = X509_dup(oldWithNew)) == NULL)
-        goto err;
+    if (newWithNew != NULL) {
+        if ((upd = OSSL_CMP_ROOTCAKEYUPDATE_new()) == NULL)
+            return NULL;
+        if ((upd->newWithNew = X509_dup(newWithNew)) == NULL)
+            goto err;
+        if (newWithOld != NULL
+                && (upd->newWithOld = X509_dup(newWithOld)) == NULL)
+            goto err;
+        if (oldWithNew != NULL
+                && (upd->oldWithNew = X509_dup(oldWithNew)) == NULL)
+            goto err;
+    }
     if ((itav = OSSL_CMP_ITAV_new()) == NULL)
         goto err;
     itav->infoType = OBJ_nid2obj(NID_id_it_rootCaKeyUpdate);
@@ -324,34 +342,6 @@ int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
         *oldWithNew = upd == NULL ? NULL : upd->oldWithNew;
     return 1;
 }
-
-OSSL_CMP_ITAV
-*OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile)
-{
-    OSSL_CMP_ITAV *itav;
-
-    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
-        return NULL;
-    itav->infoType = OBJ_nid2obj(NID_id_it_certProfile);
-    itav->infoValue.certProfile = certProfile;
-    return itav;
-}
-
-int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
-                                   STACK_OF(ASN1_UTF8STRING) **out)
-{
-    if (itav == NULL || out == NULL) {
-        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    if (OBJ_obj2nid(itav->infoType) != NID_id_it_certProfile) {
-        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-    *out = itav->infoValue.certProfile;
-    return 1;
-}
-# endif
 
 /* get ASN.1 encoded integer, return -1 on error */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
@@ -470,14 +460,9 @@ ASN1_ITEM_TEMPLATE_END(OSSL_CMP_PKISTATUS)
 
 ASN1_SEQUENCE(OSSL_CMP_PKISI) = {
     ASN1_SIMPLE(OSSL_CMP_PKISI, status, OSSL_CMP_PKISTATUS),
-    /*
-     * CMP_PKIFREETEXT is effectively a sequence of ASN1_UTF8STRING
-     * so it is used directly
-     */
+    /* OSSL_CMP_PKIFREETEXT is a ASN1_UTF8STRING sequence, so used directly */
     ASN1_SEQUENCE_OF_OPT(OSSL_CMP_PKISI, statusString, ASN1_UTF8STRING),
-    /*
-     * OSSL_CMP_PKIFAILUREINFO is effectively ASN1_BIT_STRING so used directly
-     */
+    /* OSSL_CMP_PKIFAILUREINFO is effectively ASN1_BIT_STRING, used directly */
     ASN1_OPT(OSSL_CMP_PKISI, failInfo, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END(OSSL_CMP_PKISI)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_PKISI)
@@ -529,7 +514,6 @@ ASN1_ITEM_TEMPLATE(OSSL_CMP_POLLREPCONTENT) =
 ASN1_ITEM_TEMPLATE_END(OSSL_CMP_POLLREPCONTENT)
 
 ASN1_SEQUENCE(OSSL_CMP_CERTREPMESSAGE) = {
-    /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_EXP_SEQUENCE_OF_OPT(OSSL_CMP_CERTREPMESSAGE, caPubs, X509, 1),
     ASN1_SEQUENCE_OF(OSSL_CMP_CERTREPMESSAGE, response, OSSL_CMP_CERTRESPONSE)
 } ASN1_SEQUENCE_END(OSSL_CMP_CERTREPMESSAGE)
@@ -594,10 +578,7 @@ ASN1_SEQUENCE(OSSL_CMP_PKIHEADER) = {
     ASN1_EXP_OPT(OSSL_CMP_PKIHEADER, transactionID, ASN1_OCTET_STRING, 4),
     ASN1_EXP_OPT(OSSL_CMP_PKIHEADER, senderNonce, ASN1_OCTET_STRING, 5),
     ASN1_EXP_OPT(OSSL_CMP_PKIHEADER, recipNonce, ASN1_OCTET_STRING, 6),
-    /*
-     * OSSL_CMP_PKIFREETEXT is effectively a sequence of ASN1_UTF8STRING
-     * so it is used directly
-     */
+    /* OSSL_CMP_PKIFREETEXT is a ASN1_UTF8STRING sequence, so used directly */
     ASN1_EXP_SEQUENCE_OF_OPT(OSSL_CMP_PKIHEADER, freeText, ASN1_UTF8STRING, 7),
     ASN1_EXP_SEQUENCE_OF_OPT(OSSL_CMP_PKIHEADER, generalInfo,
                              OSSL_CMP_ITAV, 8)
@@ -623,5 +604,3 @@ ASN1_ITEM_TEMPLATE(OSSL_CMP_MSGS) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_CMP_MSGS,
                           OSSL_CMP_MSG)
 ASN1_ITEM_TEMPLATE_END(OSSL_CMP_MSGS)
-
-#endif /* OPENSSL_VERSION_NUMBER <= 0x30100000L */

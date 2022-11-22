@@ -21,7 +21,7 @@
 #  include "cms_asn1.v10.c"
 # elif OPENSSL_VERSION_NUMBER < 0x30000000L
 #  include "cms_asn1.v11.c"
-# elif OPENSSL_VERSION_NUMBER < 0x30100000L
+# elif OPENSSL_VERSION_NUMBER < 0x30200000L
 #  include "cms_asn1.v30.c"
 # else
 #  include "cms_asn1.v31.c"
@@ -43,7 +43,7 @@ ASN1_NDEF_SEQUENCE(CMS_EnvelopedData) = {
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>
 
-#if OPENSSL_VERSION_NUMBER <= 0x30100000L
+#if OPENSSL_VERSION_NUMBER <= 0x30200000L
 
 ASN1_SEQUENCE(OSSL_CRMF_PRIVATEKEYINFO) = {
     ASN1_SIMPLE(OSSL_CRMF_PRIVATEKEYINFO, version, ASN1_INTEGER),
@@ -274,4 +274,4 @@ ASN1_ITEM_TEMPLATE(OSSL_CRMF_MSGS) =
 ASN1_ITEM_TEMPLATE_END(OSSL_CRMF_MSGS)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_MSGS)
 
-#endif /* OPENSSL_VERSION_NUMBER <= 0x30100000L */
+#endif /* OPENSSL_VERSION_NUMBER <= 0x30200000L */

@@ -24,7 +24,7 @@
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 
-# if OPENSSL_VERSION_NUMBER <= 0x30100000L
+# if OPENSSL_VERSION_NUMBER <= 0x30200000L
 
 /*-
  * EncryptedValue ::= SEQUENCE {
@@ -404,6 +404,6 @@ struct ossl_crmf_msg_st {
     STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) *regInfo;
 } /* OSSL_CRMF_MSG */;
 
-# endif /* OPENSSL_VERSION_NUMBER <= 0x30100000L */
+# endif /* OPENSSL_VERSION_NUMBER <= 0x30200000L */
 
 #endif /* !defined(OSSL_CRYPTO_CRMF_LOCAL_H) */

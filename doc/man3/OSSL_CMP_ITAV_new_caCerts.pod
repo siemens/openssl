@@ -7,9 +7,7 @@ OSSL_CMP_ITAV_get0_caCerts,
 OSSL_CMP_ITAV_new_rootCaCert,
 OSSL_CMP_ITAV_get0_rootCaCert,
 OSSL_CMP_ITAV_new_rootCaKeyUpdate,
-OSSL_CMP_ITAV_get0_rootCaKeyUpdate,
-OSSL_CMP_ITAV_new0_certProfile,
-OSSL_CMP_ITAV_get0_certProfile,
+OSSL_CMP_ITAV_get0_rootCaKeyUpdate
 - CMP utility functions for handling specific genm and genp messages
 
 =head1 SYNOPSIS
@@ -28,55 +26,44 @@ OSSL_CMP_ITAV_get0_certProfile,
                                         X509 **newWithNew,
                                         X509 **newWithOld,
                                         X509 **oldWithNew);
- OSSL_CMP_ITAV
- *OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile);
- int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
-                                    STACK_OF(ASN1_UTF8STRING) **out);
 
 =head1 DESCRIPTION
 
 ITAV is short for InfoTypeAndValue.
 
-OSSL_CMP_ITAV_new_caCerts() creates an B<OSSL_CMP_ITAV> structure with
-infoType B<NID_id_it_caCerts> and fills in the provided list of certificates.
+OSSL_CMP_ITAV_new_caCerts() creates an B<OSSL_CMP_ITAV> structure of type
+B<caCerts> and fills it with a copy of the provided list of certificates.
 The I<caCerts> argument may be NULL or contain any number of certificates.
 
-OSSL_CMP_ITAV_get0_caCerts() requires that I<itav> has infoType B<it_caCerts>.
+OSSL_CMP_ITAV_get0_caCerts() requires that I<itav> has type B<caCerts>.
 It assigns NULL to I<*out> if there are no CA certificates in I<itav>, otherwise
 the internal pointer of type B<STACK_OF(X509)> with the certificates present.
 
-OSSL_CMP_ITAV_new_rootCaCert() creates a new B<OSSL_CMP_ITAV> structure
-of type B<rootCaCert> that includes the optionally given certificate.
+OSSL_CMP_ITAV_new_rootCaCert() creates an B<OSSL_CMP_ITAV> structure of type
+B<rootCaCert> that includes a copy of the given certificate
+if I<rootCaCert> is not NULL.
 
 OSSL_CMP_ITAV_get0_rootCaCert() requires that I<itav> has type B<rootCaCert>.
-It assigns NULL to I<*out> if no certificate is included in I<itav>, otherwise
+It assigns NULL to I<*out> if there is no certificate in I<itav>, otherwise
 the internal pointer to the certificate contained in the infoValue field.
 
-OSSL_CMP_ITAV_new_rootCaKeyUpdate() creates a new B<OSSL_CMP_ITAV> structure
-of type B<rootCaKeyUpdate> that includes an RootCaKeyUpdateContent structure
-with the optional I<newWithNew>, I<newWithOld>, and I<oldWithNew> certificates.
+OSSL_CMP_ITAV_new_rootCaKeyUpdate() creates an B<OSSL_CMP_ITAV> structure
+of type B<rootCaKeyUpdate> that has no RootCaKeyUpdateContent structure if
+I<newWithNew> is NULL and otherwise includes a RootCaKeyUpdateContent structure
+with copies of the I<newWithNew> certificate
+and of the optionally given certificates I<newWithOld> and I<oldWithNew>.
 
-OSSL_CMP_ITAV_get0_rootCaKeyUpdate() requires that I<itav> has infoType
-B<rootCaKeyUpdate>.
-If an update of a root CA certificate is included,
-it assigns to I<*newWithNew> the internal pointer
-to the certificate contained in the newWithNew infoValue sub-field of I<itav>.
-If I<newWithOld> is not NULL, it assigns to I<*newWithOld> the internal pointer
-to the certificate contained in the newWithOld infoValue sub-field of I<itav>.
-If I<oldWithNew> is not NULL, it assigns to I<*oldWithNew> the internal pointer
-to the certificate contained in the oldWithNew infoValue sub-field of I<itav>.
-Each of these pointers will be NULL if no root CA key update value is available
-or the respective sub-field is not set.
-
-OSSL_CMP_ITAV_new0_certProfile() creates a new B<OSSL_CMP_ITAV> structure
-of type B<certProfile> that includes the optionally given list of profile names.
-On success, ownership of list is with the new B<OSSL_CMP_ITAV> structure.
-
-OSSL_CMP_ITAV_get0_certProfile() on success assigns to I<*out>
-an internal pointer to the
-list of certificate profile names contained in the infoValue field of I<itav>.
-The pointer may be NULL if no profile name is included.
-It is an error if the infoType of I<itav> is not B<certProfile>.
+OSSL_CMP_ITAV_get0_rootCaKeyUpdate()
+requires that I<itav> has type B<rootCaKeyUpdate>.
+It assigns NULL to I<*newWithNew> if no root CA key update value is in I<itav>,
+otherwise an internal pointer to the certificate contained in the newWithNew
+field of the RootCaKeyUpdateContent structure.
+If I<newWithOld> is not NULL, it assigns to I<*newWithOld> an internal pointer
+to the certificate contained in the newWithOld field.
+If I<oldWithNew> is not NULL, it assigns to I<*oldWithNew> an internal pointer
+to the certificate contained in the oldWithNew field.
+Each of these two pointers will be NULL if no root CA key update value
+is in I<itav> or the respective field is not present.
 
 =head1 NOTES
 
@@ -86,12 +73,10 @@ CMP is defined in RFC 4210.
 
 OSSL_CMP_ITAV_new_caCerts(),
 OSSL_CMP_ITAV_new_rootCaCert(), OSSL_CMP_ITAV_new_rootCaKeyUpdate(),
-and OSSL_CMP_ITAV_new0_certProfile()
 return a pointer to the new ITAV structure on success, or NULL on error.
 
 OSSL_CMP_ITAV_get0_caCerts(),
 OSSL_CMP_ITAV_get0_rootCaCert(), OSSL_CMP_ITAV_get0_rootCaKeyUpdate(),
-and OSSL_CMP_ITAV_get0_certProfile()
 return 1 on success, 0 on error.
 
 =head1 SEE ALSO
@@ -103,8 +88,7 @@ L<OSSL_CMP_ITAV_create(3)> and L<OSSL_CMP_ITAV_get0_type(3)>
 OSSL_CMP_ITAV_new_caCerts(), OSSL_CMP_ITAV_get0_caCerts(),
 OSSL_CMP_ITAV_new_rootCaCert(), OSSL_CMP_ITAV_get0_rootCaCert(),
 OSSL_CMP_ITAV_new_rootCaKeyUpdate(), OSSL_CMP_ITAV_get0_rootCaKeyUpdate(),
-OSSL_CMP_ITAV_new0_certProfile(), and OSSL_CMP_ITAV_get0_certProfile()
-were added in OpenSSL 3.1.
+were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

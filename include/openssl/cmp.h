@@ -385,11 +385,13 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
                                    OSSL_CMP_ITAV *itav);
 void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+OSSL_CMP_ITAV
+*OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile);
+int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
+                                   STACK_OF(ASN1_UTF8STRING) **out);
+
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts);
 int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out);
-#endif
-#if OPENSSL_VERSION_NUMBER >= 0x30100000L
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaCert(const X509 *rootCaCert);
 int OSSL_CMP_ITAV_get0_rootCaCert(const OSSL_CMP_ITAV *itav, X509 **out);
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaKeyUpdate(const X509 *newWithNew,
@@ -399,11 +401,6 @@ int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
                                        X509 **newWithNew,
                                        X509 **newWithOld,
                                        X509 **oldWithNew);
-OSSL_CMP_ITAV
-*OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile);
-int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
-                                   STACK_OF(ASN1_UTF8STRING) **out);
-#endif
 
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 

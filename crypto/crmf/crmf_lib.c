@@ -41,7 +41,7 @@
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_PUBKEY)
 #endif
 
-#if OPENSSL_VERSION_NUMBER <= 0x30100000L
+#if OPENSSL_VERSION_NUMBER <= 0x30200000L
 /*-
  * atyp = Attribute Type
  * valt = Value Type
@@ -577,7 +577,7 @@ const ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *c
     return cid != NULL ? cid->serialNumber : NULL;
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x30100000L
+#if OPENSSL_VERSION_NUMBER < 0x30200000L
 /* copied from ../x509/x_pubkey.c: */
 struct X509_pubkey_st {
     X509_ALGOR *algor;
@@ -664,7 +664,7 @@ static int check_cmKGA(ossl_unused const X509_PURPOSE *purpose,
 
 DECLARE_ASN1_ITEM(CMS_SignedData) /* copied from cms_local.h */
 
-#if OPENSSL_VERSION_NUMBER < 0x30100000L
+#if OPENSSL_VERSION_NUMBER < 0x30200000L
 /* added to OpenSSL 3.1 in #18301 */
 BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                                EVP_PKEY *pkey, X509 *cert,
@@ -929,7 +929,7 @@ X509
 
 #ifndef OPENSSL_NO_CMS
 
-# if OPENSSL_VERSION_NUMBER <= 0x30100000L
+# if OPENSSL_VERSION_NUMBER <= 0x30200000L
 
 /* copied from crypto/cms/cms_local.h for being able to access */
 typedef struct CMS_DigestedData_st CMS_DigestedData;
@@ -1042,6 +1042,6 @@ BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
     return bio;
 }
 
-# endif /* OPENSSL_VERSION_NUMBER <= 0x30100000L */
+# endif /* OPENSSL_VERSION_NUMBER <= 0x30200000L */
 #endif /* OPENSSL_NO_CMS */
-#endif /* OPENSSL_VERSION_NUMBER <= 0x30100000L */
+#endif /* OPENSSL_VERSION_NUMBER <= 0x30200000L */
