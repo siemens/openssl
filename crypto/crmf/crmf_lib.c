@@ -692,6 +692,7 @@ EVP_PKEY
     CMS_SignedData *sd = NULL;
     BIO *pkey_bio = NULL;
     int purpose_id = X509_PURPOSE_get_count() + 1;
+    X509_VERIFY_PARAM *ts_vpm, *bak_vpm = NULL;
 #endif
     EVP_PKEY *ret = NULL;
 
@@ -713,37 +714,55 @@ EVP_PKEY
     }
 
 #ifndef OPENSSL_NO_CMS
+    if (ts == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
+        return NULL;
+    }
     if ((bio = CMS_EnvelopedData_decrypt(encryptedKey->value.envelopedData,
                                          NULL, pkey, cert, secret, 0,
                                          libctx, propq)) == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_ENCRYPTEDKEY);
         goto end;
     }
+    sd = ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_SignedData), bio, NULL);
+    if (sd == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY);
+        goto end;
+    }
 
-    if (!X509_PURPOSE_add(purpose_id, X509_TRUST_COMPAT, 0, check_cmKGA,
-                          "CMP Key Generation Authority", "cmKGA", NULL)
-            || !X509_STORE_set_purpose(ts, purpose_id)) {
+    if ((ts_vpm = X509_STORE_get0_param(ts)) == NULL
+        || (bak_vpm = X509_VERIFY_PARAM_new()) == NULL /* copy of VPMs of ts */
+        || !X509_VERIFY_PARAM_inherit(bak_vpm, ts_vpm)
+        || !X509_PURPOSE_add(purpose_id, X509_TRUST_COMPAT, 0, check_cmKGA,
+                             "CMP Key Generation Authority", "cmKGA", NULL)
+            /* override X509_PURPOSE_SMIME_SIGN: */
+        || !X509_STORE_set_purpose(ts, purpose_id)) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SETTING_PURPOSE);
         goto end;
     }
-    sd =  ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_SignedData), bio, NULL);
+
     extra = NULL; /* workaround for CMS_add0_cert() in cms_lib.c not allowing duplicate untrusted certs */
-    if (sd == NULL
-        || (pkey_bio = CMS_SignedData_verify(sd, NULL, NULL /* scerts */, ts,
-                                             extra, NULL, 0, libctx, propq))
-        == NULL) {
+    pkey_bio = CMS_SignedData_verify(sd, NULL, NULL /* scerts */, ts,
+                                     extra, NULL, 0, libctx, propq);
+
+    /* workaround for API limit getting and restoring original purpose in ts */
+    if (!X509_VERIFY_PARAM_set_inh_flags(bak_vpm, X509_VP_FLAG_OVERWRITE)
+            || !X509_STORE_set1_param(ts, bak_vpm)) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SETTING_PURPOSE);
+        goto end;
+    }
+
+    if (pkey_bio == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY);
         goto end;
     }
 
     /* unpack AsymmetricKeyPackage */
-    ret = d2i_PrivateKey_ex_bio(pkey_bio, NULL, libctx, propq);
-    if (ret == NULL) {
+    if ((ret = d2i_PrivateKey_ex_bio(pkey_bio, NULL, libctx, propq)) == NULL)
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECODING_ENCRYPTEDKEY);
-        goto end;
-    }
 
  end:
+    X509_VERIFY_PARAM_free(bak_vpm);
     CMS_SignedData_free(sd);
     BIO_free(bio);
     BIO_free(pkey_bio);
