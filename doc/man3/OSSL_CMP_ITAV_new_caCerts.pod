@@ -9,7 +9,14 @@ OSSL_CMP_ITAV_get0_rootCaCert,
 OSSL_CMP_ITAV_new_rootCaKeyUpdate,
 OSSL_CMP_ITAV_get0_rootCaKeyUpdate,
 OSSL_CMP_ITAV_new0_certReqTemplate,
-OSSL_CMP_ITAV_get1_certReqTemplate
+OSSL_CMP_ITAV_get1_certReqTemplate,
+OSSL_CMP_CRLSTATUS_new1,
+OSSL_CMP_CRLSTATUS_create,
+OSSL_CMP_CRLSTATUS_get0,
+OSSL_CMP_ITAV_new0_crlStatusList,
+OSSL_CMP_ITAV_get0_crlStatusList,
+OSSL_CMP_ITAV_new0_crls,
+OSSL_CMP_ITAV_get0_crls
 - CMP utility functions for handling specific genm and genp messages
 
 =head1 SYNOPSIS
@@ -18,7 +25,6 @@ OSSL_CMP_ITAV_get1_certReqTemplate
 
  OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts);
  int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out);
-
  OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaCert(const X509 *rootCaCert);
  int OSSL_CMP_ITAV_get0_rootCaCert(const OSSL_CMP_ITAV *itav, X509 **out);
  OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaKeyUpdate(const X509 *newWithNew,
@@ -34,6 +40,21 @@ OSSL_CMP_ITAV_get1_certReqTemplate
  int OSSL_CMP_ITAV_get1_certReqTemplate(const OSSL_CMP_ITAV *itav,
                                         OSSL_CRMF_CERTTEMPLATE **certTemplate,
                                         OSSL_CMP_ATAVS **keySpec);
+ OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_new1(const DIST_POINT_NAME *dpn,
+                                             const GENERAL_NAMES *issuer,
+                                             const ASN1_TIME *thisUpdate);
+ OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_create(const X509_CRL *crl,
+                                               const X509 *cert, int only_DN);
+ int OSSL_CMP_CRLSTATUS_get0(const OSSL_CMP_CRLSTATUS *crlstatus,
+                             DIST_POINT_NAME **dpn, GENERAL_NAMES **issuer,
+                             ASN1_TIME **thisUpdate);
+ OSSL_CMP_ITAV
+ *OSSL_CMP_ITAV_new0_crlStatusList(STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList);
+ int OSSL_CMP_ITAV_get0_crlStatusList(const OSSL_CMP_ITAV *itav,
+                                      STACK_OF(OSSL_CMP_CRLSTATUS) **out);
+ OSSL_CMP_ITAV
+ *OSSL_CMP_ITAV_new0_crls(STACK_OF(X509_CRL) *crls);
+ int OSSL_CMP_ITAV_get0_crls(const OSSL_CMP_ITAV *itav, STACK_OF(X509_CRL) **out);
 
 =head1 DESCRIPTION
 
@@ -94,6 +115,61 @@ if the structure is not present in I<itav> or the keySpec field is absent.
 Otherwise, the function checks that all elements of keySpec field are of type
 B<algId> or B<rsaKeyLen> and assigns to I<*keySpec> a copy of the keySpec field.
 
+OSSL_CMP_CRLSTATUS_new1() allocates a new B<OSSL_CMP_CRLSTATUS> structure
+that contains either a copy of the distribution point name I<dpn>
+or a copy of the certificate issuer I<issuer>, while giving both is an error.
+If given, a copy of the CRL issuance time I<thisUpdate> is also included.
+
+OSSL_CMP_CRLSTATUS_create() is a high-level variant of OSSL_CMP_CRLSTATUS_new1()
+using data obtained from the I<crl> and/or I<cert> parameters.
+The thisUpdate field is filled with the thisUpdate field of I<crl> if present.
+The CRLSource field is filled with the first data item found in them as follows.
+Any available distribution point name is preferred over issuer names.
+Data from I<cert>, if present, is preferred over data from I<crl>.
+If no distribution point names are available,
+candidate issuer names are taken from following sources, as far as present:
+
+=over 4
+
+=item the list of distribution points in the first cRLDistributionPoints
+extension of I<cert>,
+
+=item the issuer field of the authority key identifier of I<cert>,
+
+=item the issuer DN of I<cert>,
+
+=item the issuer field of the authority key identifier of I<crl>, and
+
+=item the issuer DN of I<crl>.
+
+=back
+
+If <only_DN> is set, a candidate issuer name of type B<GENERAL_NAMES> is
+accepted only if it contains exactly one general name of type directoryName.
+
+OSSL_CMP_CRLSTATUS_get0() reads the fields of I<crlstatus>
+and assigns them to I<*dpn>, I<*issuer>, and I<*thisUpdate>.
+I<*thisUpdate> is assigned only if the I<thisUpdate> argument is not NULL.
+Depending on the choice present, either I<*dpn> or I<*issuer> will be NULL.
+I<*thisUpdate> can also be NULL if the field is not present.
+
+OSSL_CMP_ITAV_new0_crlStatusList() creates a new B<OSSL_CMP_ITAV> structure of
+type B<crlStatusList> that includes the optionally given list of
+CRL status data, each of which is of type B<OSSL_CMP_CRLSTATUS>.
+
+OSSL_CMP_ITAV_get0_crlStatusList() on success assigns to I<*out> an internal
+pointer to the list of CRL status data in the infoValue field of I<itav>.
+The pointer may be NULL if no CRL status data is included.
+It is an error if the infoType of I<itav> is not B<crlStatusList>.
+
+OSSL_CMP_ITAV_new0_crls() creates a new B<OSSL_CMP_ITAV> structure
+of type B<crls> that includes the optionally given list of CRLs.
+
+OSSL_CMP_ITAV_get0_crls() on success assigns to I<*out> an internal pointer to
+the list of CRLs contained in the infoValue field of I<itav>.
+The pointer may be NULL if no CRL is included.
+It is an error if the infoType of I<itav> is not B<crls>.
+
 =head1 NOTES
 
 CMP is defined in RFC 4210.
@@ -101,11 +177,15 @@ CMP is defined in RFC 4210.
 =head1 RETURN VALUES
 
 OSSL_CMP_ITAV_new_caCerts(), OSSL_CMP_ITAV_new_rootCaCert(),
-OSSL_CMP_ITAV_new_rootCaKeyUpdate(), and OSSL_CMP_ITAV_new0_certReqTemplate()
+OSSL_CMP_ITAV_new_rootCaKeyUpdate(), OSSL_CMP_ITAV_new0_certReqTemplate(),
+OSSL_CMP_CRLSTATUS_new1(), OSSL_CMP_CRLSTATUS_create(),
+OSSL_CMP_ITAV_new0_crlStatusList(), and OSSL_CMP_ITAV_new0_crls()
 return a pointer to the new ITAV structure on success, or NULL on error.
 
 OSSL_CMP_ITAV_get0_caCerts(), OSSL_CMP_ITAV_get0_rootCaCert(),
-OSSL_CMP_ITAV_get0_rootCaKeyUpdate(), and OSSL_CMP_ITAV_get1_certReqTemplate()
+OSSL_CMP_ITAV_get0_rootCaKeyUpdate(), OSSL_CMP_ITAV_get1_certReqTemplate(),
+OSSL_CMP_CRLSTATUS_get0, OSSL_CMP_ITAV_get0_crlStatusList(),
+and OSSL_CMP_ITAV_get0_crls()
 return 1 on success, 0 on error.
 
 =head1 SEE ALSO

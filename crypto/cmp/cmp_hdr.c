@@ -82,7 +82,8 @@ int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
 }
 
 /* assign to *tgt a copy of src (which may be NULL to indicate an empty DN) */
-static int set1_general_name(GENERAL_NAME **tgt, const X509_NAME *src)
+/* TODO move to ../x509/ and use also for OCSP, ESS, etc. */   
+int GENERAL_NAME_create(GENERAL_NAME **tgt, const X509_NAME *src)
 {
     GENERAL_NAME *name;
 
@@ -118,14 +119,14 @@ int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm)
 {
     if (!ossl_assert(hdr != NULL))
         return 0;
-    return set1_general_name(&hdr->sender, nm);
+    return GENERAL_NAME_create(&hdr->sender, nm);
 }
 
 int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm)
 {
     if (!ossl_assert(hdr != NULL))
         return 0;
-    return set1_general_name(&hdr->recipient, nm);
+    return GENERAL_NAME_create(&hdr->recipient, nm);
 }
 
 int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr)

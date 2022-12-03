@@ -31,6 +31,9 @@
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 
+/* TODO move to x509v3.h.in and use also for OCSP, ESS, etc. */
+int GENERAL_NAME_create(GENERAL_NAME **tgt, const X509_NAME *src);
+
 #  ifdef __cplusplus
 extern "C" {
 #  endif
@@ -280,6 +283,34 @@ SKM_DEFINE_STACK_OF_INTERNAL(OSSL_CMP_ITAV, OSSL_CMP_ITAV, OSSL_CMP_ITAV)
 #define sk_OSSL_CMP_ITAV_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(OSSL_CMP_ITAV) *)OPENSSL_sk_deep_copy(ossl_check_const_OSSL_CMP_ITAV_sk_type(sk), ossl_check_OSSL_CMP_ITAV_copyfunc_type(copyfunc), ossl_check_OSSL_CMP_ITAV_freefunc_type(freefunc)))
 #define sk_OSSL_CMP_ITAV_set_cmp_func(sk, cmp) ((sk_OSSL_CMP_ITAV_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_OSSL_CMP_ITAV_sk_type(sk), ossl_check_OSSL_CMP_ITAV_compfunc_type(cmp)))
 
+typedef struct ossl_cmp_crlstatus_st OSSL_CMP_CRLSTATUS;
+SKM_DEFINE_STACK_OF_INTERNAL(OSSL_CMP_CRLSTATUS, OSSL_CMP_CRLSTATUS, OSSL_CMP_CRLSTATUS)
+#define sk_OSSL_CMP_CRLSTATUS_num(sk) OPENSSL_sk_num(ossl_check_const_OSSL_CMP_CRLSTATUS_sk_type(sk))
+#define sk_OSSL_CMP_CRLSTATUS_value(sk, idx) ((OSSL_CMP_CRLSTATUS *)OPENSSL_sk_value(ossl_check_const_OSSL_CMP_CRLSTATUS_sk_type(sk), (idx)))
+#define sk_OSSL_CMP_CRLSTATUS_new(cmp) ((STACK_OF(OSSL_CMP_CRLSTATUS) *)OPENSSL_sk_new(ossl_check_OSSL_CMP_CRLSTATUS_compfunc_type(cmp)))
+#define sk_OSSL_CMP_CRLSTATUS_new_null() ((STACK_OF(OSSL_CMP_CRLSTATUS) *)OPENSSL_sk_new_null())
+#define sk_OSSL_CMP_CRLSTATUS_new_reserve(cmp, n) ((STACK_OF(OSSL_CMP_CRLSTATUS) *)OPENSSL_sk_new_reserve(ossl_check_OSSL_CMP_CRLSTATUS_compfunc_type(cmp), (n)))
+#define sk_OSSL_CMP_CRLSTATUS_reserve(sk, n) OPENSSL_sk_reserve(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), (n))
+#define sk_OSSL_CMP_CRLSTATUS_free(sk) OPENSSL_sk_free(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk))
+#define sk_OSSL_CMP_CRLSTATUS_zero(sk) OPENSSL_sk_zero(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk))
+#define sk_OSSL_CMP_CRLSTATUS_delete(sk, i) ((OSSL_CMP_CRLSTATUS *)OPENSSL_sk_delete(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), (i)))
+#define sk_OSSL_CMP_CRLSTATUS_delete_ptr(sk, ptr) ((OSSL_CMP_CRLSTATUS *)OPENSSL_sk_delete_ptr(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), ossl_check_OSSL_CMP_CRLSTATUS_type(ptr)))
+#define sk_OSSL_CMP_CRLSTATUS_push(sk, ptr) OPENSSL_sk_push(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), ossl_check_OSSL_CMP_CRLSTATUS_type(ptr))
+#define sk_OSSL_CMP_CRLSTATUS_unshift(sk, ptr) OPENSSL_sk_unshift(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), ossl_check_OSSL_CMP_CRLSTATUS_type(ptr))
+#define sk_OSSL_CMP_CRLSTATUS_pop(sk) ((OSSL_CMP_CRLSTATUS *)OPENSSL_sk_pop(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk)))
+#define sk_OSSL_CMP_CRLSTATUS_shift(sk) ((OSSL_CMP_CRLSTATUS *)OPENSSL_sk_shift(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk)))
+#define sk_OSSL_CMP_CRLSTATUS_pop_free(sk, freefunc) OPENSSL_sk_pop_free(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk),ossl_check_OSSL_CMP_CRLSTATUS_freefunc_type(freefunc))
+#define sk_OSSL_CMP_CRLSTATUS_insert(sk, ptr, idx) OPENSSL_sk_insert(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), ossl_check_OSSL_CMP_CRLSTATUS_type(ptr), (idx))
+#define sk_OSSL_CMP_CRLSTATUS_set(sk, idx, ptr) ((OSSL_CMP_CRLSTATUS *)OPENSSL_sk_set(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), (idx), ossl_check_OSSL_CMP_CRLSTATUS_type(ptr)))
+#define sk_OSSL_CMP_CRLSTATUS_find(sk, ptr) OPENSSL_sk_find(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), ossl_check_OSSL_CMP_CRLSTATUS_type(ptr))
+#define sk_OSSL_CMP_CRLSTATUS_find_ex(sk, ptr) OPENSSL_sk_find_ex(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), ossl_check_OSSL_CMP_CRLSTATUS_type(ptr))
+#define sk_OSSL_CMP_CRLSTATUS_find_all(sk, ptr, pnum) OPENSSL_sk_find_all(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), ossl_check_OSSL_CMP_CRLSTATUS_type(ptr), pnum)
+#define sk_OSSL_CMP_CRLSTATUS_sort(sk) OPENSSL_sk_sort(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk))
+#define sk_OSSL_CMP_CRLSTATUS_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_const_OSSL_CMP_CRLSTATUS_sk_type(sk))
+#define sk_OSSL_CMP_CRLSTATUS_dup(sk) ((STACK_OF(OSSL_CMP_CRLSTATUS) *)OPENSSL_sk_dup(ossl_check_const_OSSL_CMP_CRLSTATUS_sk_type(sk)))
+#define sk_OSSL_CMP_CRLSTATUS_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(OSSL_CMP_CRLSTATUS) *)OPENSSL_sk_deep_copy(ossl_check_const_OSSL_CMP_CRLSTATUS_sk_type(sk), ossl_check_OSSL_CMP_CRLSTATUS_copyfunc_type(copyfunc), ossl_check_OSSL_CMP_CRLSTATUS_freefunc_type(freefunc)))
+#define sk_OSSL_CMP_CRLSTATUS_set_cmp_func(sk, cmp) ((sk_OSSL_CMP_CRLSTATUS_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_OSSL_CMP_CRLSTATUS_sk_type(sk), ossl_check_OSSL_CMP_CRLSTATUS_compfunc_type(cmp)))
+
 #  define CMP_R_INVALID_KEYSPEC 178
 typedef OSSL_CRMF_ATTRIBUTETYPEANDVALUE OSSL_CMP_ATAV;
 #  define OSSL_CMP_ATAV_free OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free
@@ -390,7 +421,7 @@ void OSSL_CMP_ITAV_set0(OSSL_CMP_ITAV *itav, ASN1_OBJECT *type,
                         ASN1_TYPE *value);
 ASN1_OBJECT *OSSL_CMP_ITAV_get0_type(const OSSL_CMP_ITAV *itav);
 ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav);
-int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
+int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **sk_p,
                                    OSSL_CMP_ITAV *itav);
 void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
 
@@ -416,6 +447,23 @@ OSSL_CMP_ITAV
 int OSSL_CMP_ITAV_get1_certReqTemplate(const OSSL_CMP_ITAV *itav,
                                        OSSL_CRMF_CERTTEMPLATE **certTemplate,
                                        OSSL_CMP_ATAVS **keySpec);
+
+OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_create(const X509_CRL *crl,
+                                              const X509 *cert, int only_DN);
+OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_new1(const DIST_POINT_NAME *dpn,
+                                            const GENERAL_NAMES *issuer,
+                                            const ASN1_TIME *thisUpdate);
+int OSSL_CMP_CRLSTATUS_get0(const OSSL_CMP_CRLSTATUS *crlstatus,
+                            DIST_POINT_NAME **dpn, GENERAL_NAMES **issuer,
+                            ASN1_TIME **thisUpdate);
+void OSSL_CMP_CRLSTATUS_free(OSSL_CMP_CRLSTATUS *crlstatus);
+OSSL_CMP_ITAV
+*OSSL_CMP_ITAV_new0_crlStatusList(STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList);
+int OSSL_CMP_ITAV_get0_crlStatusList(const OSSL_CMP_ITAV *itav,
+                                     STACK_OF(OSSL_CMP_CRLSTATUS) **out);
+OSSL_CMP_ITAV
+*OSSL_CMP_ITAV_new0_crls(STACK_OF(X509_CRL) *crls);
+int OSSL_CMP_ITAV_get0_crls(const OSSL_CMP_ITAV *it, STACK_OF(X509_CRL) **out);
 
 OSSL_CMP_ATAV *OSSL_CMP_ATAV_create(ASN1_OBJECT *type, ASN1_TYPE *value);
 void OSSL_CMP_ATAV_set0(OSSL_CMP_ATAV *itav, ASN1_OBJECT *type,
