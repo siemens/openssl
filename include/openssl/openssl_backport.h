@@ -31,7 +31,7 @@ _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
 # include <openssl/e_os2.h> /* for ossl_inline etc. */
 # include <openssl/x509v3.h> /* for GENERAL_NAME, X509_ALGOR, etc. */
 
-# if OPENSSL_VERSION_NUMBER <= 0x30200000L
+# if OPENSSL_VERSION_NUMBER < 0x30200000L
 #  define SN_id_mod_cmp2000_02            "id-mod-cmp2000-02"
 #  define NID_id_mod_cmp2000_02           1251
 #  define OBJ_id_mod_cmp2000_02           OBJ_id_pkix_mod,50L
@@ -61,14 +61,14 @@ _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
 #  define SN_id_regCtrl_rsaKeyLen         "id-regCtrl-rsaKeyLen"
 #  define NID_id_regCtrl_rsaKeyLen                1260
 #  define OBJ_id_regCtrl_rsaKeyLen                OBJ_id_regCtrl,12L
-X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 #  define OSSL_STACK_OF_X509_free(sk) sk_X509_pop_free(sk, X509_free)
 #  define OPENSSL_strcasecmp  strcasecmp
 #  define OPENSSL_strncasecmp strncasecmp
-#  define ossl_asn1_string_set_bits_left(str, num) \
-    ((str)->flags &= ~0x07, \
-     (str)->flags |= ASN1_STRING_FLAG_BITS_LEFT | ((num) & 0x07))
 # endif
+X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
+# define ossl_asn1_string_set_bits_left(str, num) \
+   ((str)->flags &= ~0x07, \
+    (str)->flags |= ASN1_STRING_FLAG_BITS_LEFT | ((num) & 0x07))
 
 # if OPENSSL_VERSION_NUMBER < 0x30000000L
 #  define ossl_unused __attribute__((unused))
