@@ -469,14 +469,15 @@ B<WARNING:> This leads to behavior violating RFC 4210.
 
 =item B<-certout> I<filename>
 
-The file where the newly enrolled certificate should be saved.
+The file where any newly enrolled certificate should be saved.
+
 If B<-newkey> and B<-newkeytype> are given and B<-cmd> is not I<p10cr>
 then the related chain and key are stored in this file as well,
-else if B<-chainout> is not given the the related chain is stored here as well.
+else if B<-chainout> is not given the related chain is stored here as well.
 
 =item B<-chainout> I<filename>
 
-The file where the chain of the newly enrolled certificate should be saved.
+The file where the chain of any newly enrolled certificate should be saved.
 If B<-newkey> and B<-newkeytype> are given and B<-cmd> is not I<p10cr>
 this option is ignored.
 
@@ -705,17 +706,19 @@ with a signature key."
 
 The file where to save the successfully validated certificate, if any,
 that the CMP server used for signature-based response message protection.
+If there is no such certificate, typically because the protection was MAC-based,
+this is indicated by deleting the file (if it existed).
 
 =item B<-extracertsout> I<filename>
 
-The file where to save any extra certificates received in the extraCerts field
-of response messages.
+The file where to save the list of certificates contained in the extraCerts
+field of the last received response message that is not a pollRep nor PKIConf.
 
 =item B<-extracerts_dir> I<dirname>
 
 Directory to save extra certificates received in the extraCerts field
 that are not self-issued.
-If given, the name must end with the (potentally platform-specific) path separator.
+If given, the name must end with the (potentially platform-specific) path separator.
 
 =item B<-extracerts_dir_format> <I<PEM|DER|P12|extension>
 
@@ -725,12 +728,13 @@ Default is C<pem>.
 
 =item B<-cacertsout> I<filename>
 
-The file where to save any CA certificates received in the caPubs field.
+The file where to save the list of CA certificates contained in the caPubs field
+if a positive certificate response (i.e., IP, CP, or KUP) message was received.
 
 =item B<-cacerts_dir> I<dirname>
 
 Directory to save self-issued (root CA) certificates received in the caPubs field.
-If given, the name must end with the (potentally platform-specific) path separator.
+If given, the name must end with the (potentially platform-specific) path separator.
 
 =item B<-cacerts_dir_format> <I<PEM|DER|P12|extension>
 
@@ -1002,7 +1006,7 @@ or to send issuer Distinguished Names (DNs) to in the form C<url?issuer=DN>.
 =item B<-crl_cache_dir> I<dirname>
 
 Directory where to cache CRLs downloaded during verification.
-If given, the name must end with the (potentally platform-specific) path separator.
+If given, the name must end with the (potentially platform-specific) path separator.
 Then downloaded CRLs will be stored at the given location
 using files names uniquely derived from the URL of the CRL distribution point.
 
