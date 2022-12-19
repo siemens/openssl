@@ -92,6 +92,7 @@ Server authentication options:
 [B<-expect_sender> I<name>]
 [B<-ignore_keyusage>]
 [B<-unprotected_errors>]
+[B<-no_cache_extracerts>]
 [B<-srvcertout> I<filename>]
 [B<-extracertsout> I<filename>]
 [B<-extracerts_dir> I<dirname>]
@@ -678,6 +679,12 @@ This option can be used for both CMP clients and servers.
 
 Accept missing or invalid protection of negative responses from the server.
 This applies to the following message types and contents:
+
+=item B<-no_cache_extracerts>
+
+Do not cache certificates in the extraCerts field of CMP messages received.
+By default, they are kept as they may be helful for validating further messages.
+This option can be given for both the CMP client and server side.
 
 =over 4
 
