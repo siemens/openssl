@@ -149,10 +149,10 @@ SYSTEM_LIB=/usr/lib
 SYSTEM_INCLUDE=/usr/include
 DEST_LIB=$(ROOTFS)$(SYSTEM_LIB)
 DEST_INC=$(ROOTFS)$(SYSTEM_INCLUDE)/cmp
-DEST_DOC=$(ROOTFS)/usr/share/doc/libcmp-dev # TODO improve
-LIBCMP_HDRS_install = $(patsubst %,$(DEST_INC)/%,$(LIBCMP_HDRS_))
+DEST_DOC=$(ROOTFS)/usr/share/doc/libcmp-dev
+#LIBCMP_HDRS_install = $(patsubst %,$(DEST_INC)/%,$(LIBCMP_HDRS_))
 LIBCMP_DOCS_ = $(wildcard doc/man3/*.pod)
-LIBCMP_DOCS_install = $(patsubst doc/man3/%,$(DEST_DOC)/%,$(LIBCMP_DOCS_))
+#LIBCMP_DOCS_install = $(patsubst doc/man3/%,$(DEST_DOC)/%,$(LIBCMP_DOCS_))
 
 .phony: install uninstall clean_install
 
@@ -169,10 +169,13 @@ install: $(OUT_DIR)/$(OUTLIB).$(VERSION)
 	install -D $(LIBCMP_DOCS_) $(DEST_DOC)
 
 clean_install:
-	rm -fr $(DEST_INC)
 	rm -f $(DEST_LIB)/$(OUTLIB)*
-	rm -f $(LIBCMP_HDRS_install)
-	rm -f $(LIBCMP_DOCS_install)
+	@ #rm -f $(LIBCMP_HDRS_install)
+	rm -rf $(DEST_INC)/{openssl,internal}
+	rmdir $(DEST_INC) || true
+	@ #rm -f $(LIBCMP_DOCS_install)
+	rm -f $(DEST_DOC)/{OSSL_*{.pod,.gz},changelog.gz,copyright}
+	rmdir $(DEST_DOC) || true
 
 uninstall: clean_install
 
