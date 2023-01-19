@@ -58,7 +58,7 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const
     return hdr->transactionID;
 }
 
-ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr)
+ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr)
 {
     if (!ossl_assert(hdr != NULL))
         return NULL;
