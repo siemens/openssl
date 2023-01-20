@@ -156,7 +156,7 @@ LIBCMP_DOCS_ = $(wildcard doc/man3/*.pod)
 
 .phony: install uninstall clean_install
 
-install: $(OUT_DIR)/$(OUTLIB).$(VERSION)
+install: # $(OUT_DIR)/$(OUTLIB).$(VERSION)
 	install -D $(OUT_DIR)/$(OUTLIB).$(VERSION) $(DEST_LIB)/$(OUTLIB).$(VERSION)
 	ln -sfr $(DEST_LIB)/$(OUTLIB){.$(VERSION),}
 #install_headers:
