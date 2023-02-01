@@ -449,7 +449,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     ASN1_OCTET_STRING *backup_secret;
     OSSL_CMP_PKIHEADER *hdr;
     int req_type, rsp_type;
-    int res;
+    int req_verified = 0;
     OSSL_CMP_MSG *rsp = NULL;
 
     if (srv_ctx == NULL || srv_ctx->ctx == NULL
@@ -507,12 +507,12 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         }
     }
 
-    res = ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
-                                    srv_ctx->acceptUnprotected);
+    req_verified = ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
+                                             srv_ctx->acceptUnprotected);
     if (ctx->secretValue != NULL && ctx->pkey != NULL
             && ossl_cmp_hdr_get_protection_nid(hdr) != NID_id_PasswordBasedMAC)
         ctx->secretValue = NULL; /* use MSG_SIG_ALG when protecting rsp */
-    if (!res)
+    if (!req_verified)
         goto err;
 
     switch (req_type) {
@@ -571,9 +571,15 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         /* well, fail_info could be more specific */
         OSSL_CMP_PKISI *si = NULL;
 
-        if (ctx->transactionID == NULL) {
-            /* ignore any (extra) error in next two function calls: */
-            (void)OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID);
+        if (!req_verified) {
+            /*
+             * Above ossl_cmp_msg_check_update() was not successfully executed,
+             * which normally would set ctx->transactionID and ctx->recipNonce.
+             * So anyway try to provide the right transactionID and recipNonce,
+             * while ignoring any (extra) error in next two function calls.
+             */
+            if (ctx->transactionID == NULL)
+                (void)OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID);
             (void)ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce);
         }
 
