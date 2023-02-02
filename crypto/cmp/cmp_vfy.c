@@ -653,7 +653,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 
 static int check_transactionID_or_nonce(ASN1_OCTET_STRING *expected,
                                         ASN1_OCTET_STRING *actual,
-                                        ossl_unused int reason)
+                                        int reason)
 {
     if (expected != NULL
         && (actual == NULL || ASN1_OCTET_STRING_cmp(expected, actual) != 0)) {
