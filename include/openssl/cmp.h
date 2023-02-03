@@ -601,7 +601,6 @@ OSSL_CMP_STATUSINFO_new(int status, int fail_info, const char *text);
 /* from cmp_hdr.c */
 ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const
                                                    OSSL_CMP_PKIHEADER *hdr);
-ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr);
 ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr);
 
 /* from cmp_msg.c */
