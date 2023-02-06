@@ -31,6 +31,7 @@ struct ossl_cmp_srv_ctx_st
     OSSL_CMP_SRV_error_cb_t process_error;
     OSSL_CMP_SRV_certConf_cb_t process_certConf;
     OSSL_CMP_SRV_pollReq_cb_t process_pollReq;
+    OSSL_CMP_SRV_resetVar_cb_t process_resetVar;
 
     int sendUnprotectedErrors; /* Send error and rejection msgs unprotected */
     int acceptUnprotected;     /* Accept requests with no/invalid prot. */
@@ -71,7 +72,8 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
                           OSSL_CMP_SRV_genm_cb_t process_genm,
                           OSSL_CMP_SRV_error_cb_t process_error,
                           OSSL_CMP_SRV_certConf_cb_t process_certConf,
-                          OSSL_CMP_SRV_pollReq_cb_t process_pollReq)
+                          OSSL_CMP_SRV_pollReq_cb_t process_pollReq,
+                          OSSL_CMP_SRV_resetVar_cb_t process_resetVar)
 {
     if (srv_ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -84,6 +86,7 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
     srv_ctx->process_error = process_error;
     srv_ctx->process_certConf = process_certConf;
     srv_ctx->process_pollReq = process_pollReq;
+    srv_ctx->process_resetVar = process_resetVar;
     return 1;
 }
 
@@ -494,6 +497,11 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         if (!OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
                 || !OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
             goto err;
+
+        /*Reset dynamic variables*/
+        if (srv_ctx->process_resetVar)
+                srv_ctx->process_resetVar(srv_ctx);
+
         break;
     default:
         /* transactionID should be already initialized */
@@ -615,6 +623,8 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
         (void)OSSL_CMP_CTX_set1_senderNonce(ctx, NULL);
         ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
+        if (srv_ctx->process_resetVar)
+                srv_ctx->process_resetVar(srv_ctx);
 
     default: /* not closing transaction in other cases */
         break;
