@@ -352,6 +352,27 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     return 0;
 }
 
+/*It send request and poll is required with error response*/
+static int send_receive_withpolling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
+                              OSSL_CMP_MSG **rep, int expected_type) {
+
+
+    if (!send_receive_check(ctx, req, rep, expected_type))
+        return 0;
+
+    if( OSSL_CMP_MSG_get_bodytype(*rep) == OSSL_CMP_PKIBODY_ERROR
+        && ossl_cmp_pkisi_get_status( (*rep)->body->value.error->pKIStatusInfo) == OSSL_CMP_PKISTATUS_waiting) {
+
+        OSSL_CMP_MSG_free(*rep);
+        rep = NULL;
+
+        if( poll_for_response(ctx, 1 /*can sleep*/, -1 /*rid*/, rep, NULL /*checkAfter*/ ) <= 0) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_POLLING_FAILED);
+            return 0;
+        }
+    }
+    return 1;
+}
 /*
  * Send certConf for IR, CR or KUR sequences and check response,
  * not modifying ctx->status during the certConf exchange
@@ -367,7 +388,7 @@ int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int fail_info,
     if ((certConf = ossl_cmp_certConf_new(ctx, fail_info, txt)) == NULL)
         goto err;
 
-    res = send_receive_check(ctx, certConf, &PKIconf, OSSL_CMP_PKIBODY_PKICONF);
+    res = send_receive_withpolling(ctx, certConf, &PKIconf, OSSL_CMP_PKIBODY_PKICONF);
 
  err:
     OSSL_CMP_MSG_free(certConf);
@@ -391,7 +412,7 @@ int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
     if ((error = ossl_cmp_error_new(ctx, si, errorCode, details, 0)) == NULL)
         goto err;
 
-    res = send_receive_check(ctx, error, &PKIconf, OSSL_CMP_PKIBODY_PKICONF);
+    res = send_receive_withpolling(ctx, error, &PKIconf, OSSL_CMP_PKIBODY_PKICONF);
 
  err:
     OSSL_CMP_MSG_free(error);
@@ -752,7 +773,7 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
         goto end;
 
     ctx->status = OSSL_CMP_PKISTATUS_trans;
-    if (!send_receive_check(ctx, rr, &rp, OSSL_CMP_PKIBODY_RP))
+    if (!send_receive_withpolling(ctx, rr, &rp, OSSL_CMP_PKIBODY_RP))
         goto end;
 
     rrep = rp->body->value.rp;
@@ -873,7 +894,7 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
         goto err;
 
     ctx->status = OSSL_CMP_PKISTATUS_trans;
-    if (!send_receive_check(ctx, genm, &genp, OSSL_CMP_PKIBODY_GENP))
+    if (!send_receive_withpolling(ctx, genm, &genp, OSSL_CMP_PKIBODY_GENP))
         goto err;
     ctx->status = OSSL_CMP_PKISTATUS_accepted;
 
