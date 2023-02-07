@@ -190,8 +190,11 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         return 0;
 
     if (bt == expected_type
-        /* as an answer to polling, there could be IP/CP/KUP: */
-            || (IS_CREP(bt) && expected_type == OSSL_CMP_PKIBODY_POLLREP))
+        /* as an answer to polling, there could be any reply other than error */
+            || (expected_type == OSSL_CMP_PKIBODY_POLLREP
+                ? bt != OSSL_CMP_PKIBODY_ERROR
+                : bt == OSSL_CMP_PKIBODY_ERROR
+                  && ossl_cmp_pkisi_get_status((*rep)->body->value.error->pKIStatusInfo) == OSSL_CMP_PKISTATUS_waiting))
         return 1;
 
     /* received message type is not one of the expected ones (e.g., error) */
