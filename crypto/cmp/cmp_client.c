@@ -364,7 +364,8 @@ static int send_receive_withpolling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         return 0;
 
     if( OSSL_CMP_MSG_get_bodytype(*rep) == OSSL_CMP_PKIBODY_ERROR
-        && ossl_cmp_pkisi_get_status( (*rep)->body->value.error->pKIStatusInfo) == OSSL_CMP_PKISTATUS_waiting) {
+        && ossl_cmp_pkisi_get_status( (*rep)->body->value.error->pKIStatusInfo)
+            == OSSL_CMP_PKISTATUS_waiting) {
 
         OSSL_CMP_MSG_free(*rep);
         rep = NULL;
@@ -374,6 +375,11 @@ static int send_receive_withpolling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
             return 0;
         }
     }
+    if(OSSL_CMP_MSG_get_bodytype(*rep) != expected_type) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        return 0;
+    }
+
     return 1;
 }
 /*
@@ -600,6 +606,10 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         }
     }
 
+    if(OSSL_CMP_MSG_get_bodytype(*resp) != expected_type) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        return 0;
+    }
     cert = get1_cert_status(ctx, (*resp)->body->type, crep);
     if (cert == NULL) {
         ERR_add_error_data(1, "; cannot extract certificate from response");
