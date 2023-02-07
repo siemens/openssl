@@ -208,15 +208,12 @@ static int refcert_cmp(const X509 *refcert,
 /*
 * Reset dynamic variable in case of incomplete tansaction
 */
-static int process_resetVar(OSSL_CMP_SRV_CTX *srv_ctx){
+static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx){
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     ctx->curr_pollCount = 0;
-    if (ctx->certReq != NULL) {
-        OSSL_CMP_MSG_free(ctx->certReq);
-        ctx->certReq = NULL;
-    }
-
+    OSSL_CMP_MSG_free(ctx->certReq);
+    ctx->certReq = NULL;
     return 1;
 }
 
@@ -482,7 +479,7 @@ OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx, const char *propq)
     if (srv_ctx != NULL && ctx != NULL
             && OSSL_CMP_SRV_CTX_init(srv_ctx, ctx, process_cert_request,
                                      process_rr, process_genm, process_error,
-                                     process_certConf, process_pollReq, process_resetVar))
+                                     process_certConf, process_pollReq, reset_transaction))
         return srv_ctx;
 
     mock_srv_ctx_free(ctx);
