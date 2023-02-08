@@ -502,7 +502,8 @@ OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx, const char *propq)
     if (srv_ctx != NULL && ctx != NULL
             && OSSL_CMP_SRV_CTX_init(srv_ctx, ctx, process_cert_request,
                                      process_rr, process_genm, process_error,
-                                     process_certConf, process_pollReq, reset_transaction))
+                                     process_certConf, process_pollReq,
+                                     reset_transaction, initiate_delayed_delivery))
         return srv_ctx;
 
     mock_srv_ctx_free(ctx);
