@@ -32,6 +32,7 @@ struct ossl_cmp_srv_ctx_st
     OSSL_CMP_SRV_certConf_cb_t process_certConf;
     OSSL_CMP_SRV_pollReq_cb_t process_pollReq;
     OSSL_CMP_SRV_resettxn_cb_t reset_transaction;
+    OSSL_CMP_SRV_intiate_delayed_del_cb_t initiate_delayed_delivery;
 
     int sendUnprotectedErrors; /* Send error and rejection msgs unprotected */
     int acceptUnprotected;     /* Accept requests with no/invalid prot. */
@@ -73,7 +74,8 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
                           OSSL_CMP_SRV_error_cb_t process_error,
                           OSSL_CMP_SRV_certConf_cb_t process_certConf,
                           OSSL_CMP_SRV_pollReq_cb_t process_pollReq,
-                          OSSL_CMP_SRV_resettxn_cb_t reset_transaction)
+                          OSSL_CMP_SRV_resettxn_cb_t reset_transaction,
+                          OSSL_CMP_SRV_intiate_delayed_del_cb_t initiate_delayed_delivery)
 {
     if (srv_ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -87,6 +89,7 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
     srv_ctx->process_certConf = process_certConf;
     srv_ctx->process_pollReq = process_pollReq;
     srv_ctx->reset_transaction = reset_transaction;
+    srv_ctx->initiate_delayed_delivery = initiate_delayed_delivery;
     return 1;
 }
 
@@ -148,6 +151,30 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     srv_ctx->grantImplicitConfirm = val != 0;
     return 1;
+}
+
+static OSSL_CMP_MSG *initiate_delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
+                                                const OSSL_CMP_MSG *req)
+{
+    OSSL_CMP_MSG *msg = NULL;
+    OSSL_CMP_PKISI *si = NULL;
+    int req_type = OSSL_CMP_MSG_get_bodytype(req);
+
+    if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
+        return NULL;
+
+    if( req_type == OSSL_CMP_PKIBODY_IR || req_type == OSSL_CMP_PKIBODY_CR
+        || req_type == OSSL_CMP_PKIBODY_P10CR || req_type == OSSL_CMP_PKIBODY_KUR)
+        return NULL;
+
+
+    if ((si = srv_ctx->initiate_delayed_delivery(srv_ctx, req)) != NULL) {
+        msg = ossl_cmp_error_new(srv_ctx->ctx, si, 0,
+                                     NULL, srv_ctx->sendUnprotectedErrors);
+        OSSL_CMP_PKISI_free(si);
+        return msg;
+    }
+    return NULL;
 }
 
 /*
@@ -521,6 +548,11 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!res)
         goto err;
 
+    if (srv_ctx->initiate_delayed_delivery != NULL
+        && req_type != OSSL_CMP_PKIBODY_POLLREQ
+        && (rsp = initiate_delayed_delivery(srv_ctx, req)) != NULL){
+            goto err;
+   }
     switch (req_type) {
     case OSSL_CMP_PKIBODY_IR:
     case OSSL_CMP_PKIBODY_CR:
