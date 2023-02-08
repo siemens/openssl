@@ -406,6 +406,67 @@ static OSSL_CMP_MSG *process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
     return msg;
 }
 
+static OSSL_CMP_MSG *process_request(OSSL_CMP_SRV_CTX *srv_ctx,
+                                           const OSSL_CMP_MSG *req)
+{
+    OSSL_CMP_MSG *rsp = NULL;
+
+    if (srv_ctx == NULL || srv_ctx->ctx == NULL
+            || req == NULL || req->body == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+
+    switch (OSSL_CMP_MSG_get_bodytype(req)) {
+    case OSSL_CMP_PKIBODY_IR:
+    case OSSL_CMP_PKIBODY_CR:
+    case OSSL_CMP_PKIBODY_P10CR:
+    case OSSL_CMP_PKIBODY_KUR:
+        if (srv_ctx->process_cert_request == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_cert_request(srv_ctx, req);
+        break;
+    case OSSL_CMP_PKIBODY_RR:
+        if (srv_ctx->process_rr == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_rr(srv_ctx, req);
+        break;
+    case OSSL_CMP_PKIBODY_GENM:
+        if (srv_ctx->process_genm == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_genm(srv_ctx, req);
+        break;
+    case OSSL_CMP_PKIBODY_ERROR:
+        if (srv_ctx->process_error == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_error(srv_ctx, req);
+        break;
+    case OSSL_CMP_PKIBODY_CERTCONF:
+        if (srv_ctx->process_certConf == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_certConf(srv_ctx, req);
+        break;
+	/*pollreq should be handled sepreately, to avoid reentrant code*/
+    /*case OSSL_CMP_PKIBODY_POLLREQ:
+        if (srv_ctx->process_pollReq == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_pollReq(srv_ctx, req);
+        break;*/
+    default:
+        /* Other request message types are not supported */
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        break;
+    }
+
+    return rsp;
+}
+
 static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
                                      const OSSL_CMP_MSG *req)
 {
@@ -432,7 +493,7 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
 
     if (certReq != NULL) {
-        msg = process_cert_request(srv_ctx, certReq);
+        msg = process_request(srv_ctx, certReq);
         OSSL_CMP_MSG_free(certReq);
     } else {
         if ((msg = ossl_cmp_pollRep_new(srv_ctx->ctx, certReqId,
@@ -552,52 +613,16 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         && req_type != OSSL_CMP_PKIBODY_POLLREQ
         && (rsp = initiate_delayed_delivery(srv_ctx, req)) != NULL){
             goto err;
-   }
-    switch (req_type) {
-    case OSSL_CMP_PKIBODY_IR:
-    case OSSL_CMP_PKIBODY_CR:
-    case OSSL_CMP_PKIBODY_P10CR:
-    case OSSL_CMP_PKIBODY_KUR:
-        if (srv_ctx->process_cert_request == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_cert_request(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_RR:
-        if (srv_ctx->process_rr == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_rr(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_GENM:
-        if (srv_ctx->process_genm == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_genm(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_ERROR:
-        if (srv_ctx->process_error == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_error(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_CERTCONF:
-        if (srv_ctx->process_certConf == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_certConf(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_POLLREQ:
+    }
+
+    if(req_type == OSSL_CMP_PKIBODY_POLLREQ){
         if (srv_ctx->process_pollReq == NULL)
             ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
         else
             rsp = process_pollReq(srv_ctx, req);
-        break;
-    default:
-        /* Other request message types are not supported */
-        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        break;
     }
+    else
+        rsp = process_request(srv_ctx, req);
 
  err:
     if (rsp == NULL) {
@@ -654,7 +679,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
 
     case OSSL_CMP_PKIBODY_RP:
     case OSSL_CMP_PKIBODY_PKICONF:
-    case OSSL_CMP_PKIBODY_GENP
+    case OSSL_CMP_PKIBODY_GENP:
         /* Other terminating response message types are not supported */
         /* Prepare for next transaction, ignoring any errors here: */
         (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
