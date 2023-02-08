@@ -652,10 +652,15 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             break;
         /* fall through */
 
+    case OSSL_CMP_PKIBODY_ERROR:
+        if(rsp_type == OSSL_CMP_PKIBODY_ERROR
+            && ossl_cmp_pkisi_get_status( rsp->body->value.error->pKIStatusInfo) == OSSL_CMP_PKISTATUS_waiting)
+            break;
+        /* fall through */
+
     case OSSL_CMP_PKIBODY_RP:
     case OSSL_CMP_PKIBODY_PKICONF:
-    case OSSL_CMP_PKIBODY_GENP:
-    case OSSL_CMP_PKIBODY_ERROR:
+    case OSSL_CMP_PKIBODY_GENP
         /* Other terminating response message types are not supported */
         /* Prepare for next transaction, ignoring any errors here: */
         (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
