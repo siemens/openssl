@@ -368,7 +368,7 @@ static int send_receive_withpolling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
             == OSSL_CMP_PKISTATUS_waiting) {
 
         OSSL_CMP_MSG_free(*rep);
-        rep = NULL;
+        *rep = NULL;
 
         if( poll_for_response(ctx, 1 /*can sleep*/, -1 /*rid*/, rep, NULL /*checkAfter*/ ) <= 0) {
             ERR_raise(ERR_LIB_CMP, CMP_R_POLLING_FAILED);
