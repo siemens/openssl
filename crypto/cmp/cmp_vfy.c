@@ -772,8 +772,15 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 
     /* compare received nonce with the one we sent */
     if (!check_transactionID_or_nonce(ctx->senderNonce, hdr->recipNonce,
-                                      CMP_R_RECIPNONCE_UNMATCHED))
-        return 0;
+                 CMP_R_RECIPNONCE_UNMATCHED)) {
+        /* compare received nonce with initial request sender nonce */
+        if ( !(OSSL_CMP_MSG_get_bodytype(msg) != OSSL_CMP_PKIBODY_POLLREP
+            && check_transactionID_or_nonce(ctx->reqsenderNonce, hdr->recipNonce,
+                 CMP_R_RECIPNONCE_UNMATCHED))){
+                return 0;
+        }
+    }
+    
 
     /* if not yet present, learn transactionID */
     if (ctx->transactionID == NULL

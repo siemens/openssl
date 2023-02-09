@@ -337,8 +337,9 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                 return -1; /* exits the loop */
             }
         } else {
-            ossl_cmp_info(ctx, "received ip/cp/kup after polling");
-            /* any other body type has been rejected by send_receive_check() */
+            ossl_cmp_info(ctx, "received response after polling");
+            if (!ossl_cmp_ctx_set1_reqsenderNonce(ctx, NULL))
+                return 0;
             break;
         }
     }
@@ -366,6 +367,14 @@ static int send_receive_withpolling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     if( OSSL_CMP_MSG_get_bodytype(*rep) == OSSL_CMP_PKIBODY_ERROR
         && ossl_cmp_pkisi_get_status( (*rep)->body->value.error->pKIStatusInfo)
             == OSSL_CMP_PKISTATUS_waiting) {
+        /*
+        * LWCMP section 4.4 states: the senderNonce of the preceding request
+        * message because this value will be needed for checking the recipNonce
+        * of the final response to be received after polling.
+        * --> Store for setting in next message
+        */
+        if (!ossl_cmp_ctx_set1_reqsenderNonce(ctx, ctx->senderNonce))
+            return 0;
 
         OSSL_CMP_MSG_free(*rep);
         *rep = NULL;
@@ -622,6 +631,9 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     }
 
     if (ossl_cmp_pkisi_get_status(crep->status) == OSSL_CMP_PKISTATUS_waiting) {
+        /* save initial sender nonce in case of polling*/
+        if (!ossl_cmp_ctx_set1_reqsenderNonce(ctx, ctx->senderNonce))
+            return 0;
         OSSL_CMP_MSG_free(*resp);
         *resp = NULL;
         if ((ret = poll_for_response(ctx, sleep, rid, resp, checkAfter)) != 0) {
