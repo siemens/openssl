@@ -450,7 +450,8 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
                           OSSL_CMP_SRV_genm_cb_t process_genm,
                           OSSL_CMP_SRV_error_cb_t process_error,
                           OSSL_CMP_SRV_certConf_cb_t process_certConf,
-                          OSSL_CMP_SRV_pollReq_cb_t process_pollReq,
+                          OSSL_CMP_SRV_pollReq_cb_t process_pollReq);
+int OSSL_CMP_SRV_CTX_init1(OSSL_CMP_SRV_CTX *srv_ctx,
                           OSSL_CMP_SRV_resettxn_cb_t reset_transaction,
                           OSSL_CMP_SRV_intiate_delayed_del_cb_t initiate_delayed_delivery);
 OSSL_CMP_CTX *OSSL_CMP_SRV_CTX_get0_cmp_ctx(const OSSL_CMP_SRV_CTX *srv_ctx);
