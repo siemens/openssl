@@ -196,8 +196,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                                        print_noop)
             && OSSL_CMP_SRV_CTX_init(srv_ctx, NULL, process_cert_request,
                                      process_rr, process_genm, process_error,
-                                     process_certConf, process_pollReq,
-                                     reset_transaction, initiate_delayed_delivery))
+                                     process_certConf, process_pollReq)
+            && OSSL_CMP_SRV_CTX_init1(srv_ctx, reset_transaction,
+                                     initiate_delayed_delivery))
             OSSL_CMP_MSG_free(OSSL_CMP_SRV_process_request(srv_ctx, msg));
 
         OSSL_CMP_CTX_free(client_ctx);
