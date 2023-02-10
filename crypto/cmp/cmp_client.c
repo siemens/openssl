@@ -178,7 +178,15 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
      * Still we use this preliminary value already for a progress report because
      * the following msg verification may also produce log entries and may fail.
      */
-    ossl_cmp_log1(INFO, ctx, "received %s", ossl_cmp_bodytype_to_string(bt));
+    ossl_cmp_log2(INFO, ctx, "received %s %s",
+                        ossl_cmp_bodytype_to_string(bt),
+                        bt == OSSL_CMP_PKIBODY_ERROR
+                        ? ossl_cmp_pkisi_get_status(
+                            (*rep)->body->value.error->pKIStatusInfo)
+                            == OSSL_CMP_PKISTATUS_waiting
+                            ? "(waiting)"
+                            : ""
+                        : "" );
 
     /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
     if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF
