@@ -384,6 +384,11 @@ static int send_receive_withpolling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         if (!ossl_cmp_ctx_set1_reqsenderNonce(ctx, ctx->senderNonce))
             return 0;
 
+        /* not modifying ctx->status during the certConf & error exchange */
+        if (expected_type != OSSL_CMP_PKIBODY_PKICONF
+            && !save_statusInfo(ctx, (*rep)->body->value.error->pKIStatusInfo))
+            return 0;
+
         OSSL_CMP_MSG_free(*rep);
         *rep = NULL;
 
