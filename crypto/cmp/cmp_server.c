@@ -73,9 +73,7 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
                           OSSL_CMP_SRV_genm_cb_t process_genm,
                           OSSL_CMP_SRV_error_cb_t process_error,
                           OSSL_CMP_SRV_certConf_cb_t process_certConf,
-                          OSSL_CMP_SRV_pollReq_cb_t process_pollReq,
-                          OSSL_CMP_SRV_resettxn_cb_t reset_transaction,
-                          OSSL_CMP_SRV_intiate_delayed_del_cb_t initiate_delayed_delivery)
+                          OSSL_CMP_SRV_pollReq_cb_t process_pollReq)
 {
     if (srv_ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -88,6 +86,17 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
     srv_ctx->process_error = process_error;
     srv_ctx->process_certConf = process_certConf;
     srv_ctx->process_pollReq = process_pollReq;
+    return 1;
+}
+
+int OSSL_CMP_SRV_CTX_init1(OSSL_CMP_SRV_CTX *srv_ctx,
+                          OSSL_CMP_SRV_resettxn_cb_t reset_transaction,
+                          OSSL_CMP_SRV_intiate_delayed_del_cb_t initiate_delayed_delivery)
+{
+    if (srv_ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
     srv_ctx->reset_transaction = reset_transaction;
     srv_ctx->initiate_delayed_delivery = initiate_delayed_delivery;
     return 1;
