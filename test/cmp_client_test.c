@@ -468,6 +468,7 @@ static int test_exchange_certConf(void)
     return result;
 }
 
+/* test exchange error */
 static int test_exchange_error(void)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
