@@ -24,7 +24,7 @@ typedef struct
     STACK_OF(X509) *caPubsOut; /* certs to return in caPubs field of ip msg */
     OSSL_CMP_PKISI *statusOut; /* status for ip/cp/kup/rp msg unless polling */
     int sendError;             /* send error response on given request type */
-    OSSL_CMP_MSG *certReq;     /* ir/cr/p10cr/kur remembered while polling */
+    OSSL_CMP_MSG *req;     	/* remember req while polling */
     int certReqId;             /* id of last ir/cr/kur, used for polling */
     int pollCount;             /* number of polls before actual cert response */
     int curr_pollCount;        /* number of polls so far for current request */
@@ -42,7 +42,7 @@ static void mock_srv_ctx_free(mock_srv_ctx *ctx)
     X509_free(ctx->certOut);
     OSSL_STACK_OF_X509_free(ctx->chainOut);
     OSSL_STACK_OF_X509_free(ctx->caPubsOut);
-    OSSL_CMP_MSG_free(ctx->certReq);
+    OSSL_CMP_MSG_free(ctx->req);
     OPENSSL_free(ctx);
 }
 
@@ -201,12 +201,12 @@ static OSSL_CMP_PKISI *initiate_delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     if (ctx->pollCount > 0 && ctx->curr_pollCount == 0) {
         /* start polling */
-        if (ctx->certReq != NULL) {
+        if (ctx->req != NULL) {
             /* already in polling mode */
             ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
             return NULL;
         }
-        if ((ctx->certReq = OSSL_CMP_MSG_dup(req)) == NULL)
+        if ((ctx->req = OSSL_CMP_MSG_dup(req)) == NULL)
             return NULL;
 
         return OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL);
@@ -235,8 +235,8 @@ static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx){
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     ctx->curr_pollCount = 0;
-    OSSL_CMP_MSG_free(ctx->certReq);
-    ctx->certReq = NULL;
+    OSSL_CMP_MSG_free(ctx->req);
+    ctx->req = NULL;
     return 1;
 }
 
@@ -271,12 +271,12 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
 
     if (ctx->pollCount > 0 && ctx->curr_pollCount == 0) {
         /* start polling */
-        if (ctx->certReq != NULL) {
+        if (ctx->req != NULL) {
             /* already in polling mode */
             ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
             return NULL;
         }
-        if ((ctx->certReq = OSSL_CMP_MSG_dup(cert_req)) == NULL)
+        if ((ctx->req = OSSL_CMP_MSG_dup(cert_req)) == NULL)
             return NULL;
         return OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL);
     }
@@ -460,35 +460,35 @@ static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
 
 static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
                            const OSSL_CMP_MSG *pollReq, int certReqId,
-                           OSSL_CMP_MSG **certReq, int64_t *check_after)
+                           OSSL_CMP_MSG **req, int64_t *check_after)
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     if (ctx == NULL || pollReq == NULL
-            || certReq == NULL || check_after == NULL) {
+            || req == NULL || check_after == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (ctx->sendError == 1
             || ctx->sendError == OSSL_CMP_MSG_get_bodytype(pollReq)) {
-        *certReq = NULL;
+        *req = NULL;
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return 0;
     }
-    if (ctx->certReq == NULL) {
+    if (ctx->req == NULL) {
         /* not currently in polling mode */
-        *certReq = NULL;
+        *req = NULL;
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
         return 0;
     }
 
     if (++ctx->curr_pollCount >= ctx->pollCount) {
         /* end polling */
-        *certReq = ctx->certReq;
-        ctx->certReq = NULL;
+        *req = ctx->req;
+        ctx->req = NULL;
         *check_after = 0;
     } else {
-        *certReq = NULL;
+        *req = NULL;
         *check_after = ctx->checkAfterTime;
     }
     return 1;
