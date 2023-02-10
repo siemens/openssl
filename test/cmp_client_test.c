@@ -372,6 +372,36 @@ static int test_try_certreq_poll_abort(void)
     return result;
 }
 
+static int test_exec_GENM_ses_poll(int check_after, int poll_count,
+                                 int total_timeout, int expect)
+{
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    fixture->expected = expect;
+    ossl_cmp_mock_srv_set_checkAfterTime(fixture->srv_ctx, check_after);
+    ossl_cmp_mock_srv_set_pollCount(fixture->srv_ctx, poll_count);
+    OSSL_CMP_CTX_set_option(fixture->cmp_ctx,
+                            OSSL_CMP_OPT_TOTAL_TIMEOUT, total_timeout);
+    EXECUTE_TEST(execute_exec_GENM_ses_test, tear_down);
+    return result;
+}
+
+static int test_exec_GENM_ses_poll_ok(void)
+{
+    return test_exec_GENM_ses_poll(checkAfter, 2, 0, OSSL_CMP_PKISTATUS_accepted);
+}
+
+static int test_exec_GENM_ses_poll_no_timeout(void)
+{
+    return test_exec_GENM_ses_poll(checkAfter, 1 /* pollCount */, checkAfter + 1,
+                                 OSSL_CMP_PKISTATUS_accepted);
+}
+
+static int test_exec_GENM_ses_poll_total_timeout(void)
+{
+    return test_exec_GENM_ses_poll(checkAfter + 1, 2 /* pollCount */, checkAfter,
+                                 OSSL_CMP_PKISTATUS_waiting);
+}
+
 static int test_exec_GENM_ses(int transfer_error, int total_timeout, int expect)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
@@ -502,6 +532,9 @@ int setup_tests(void)
     ADD_TEST(test_exec_GENM_ses_ok);
     ADD_TEST(test_exec_GENM_ses_transfer_error);
     ADD_TEST(test_exec_GENM_ses_total_timeout);
+    ADD_TEST(test_exec_GENM_ses_poll_ok);
+    ADD_TEST(test_exec_GENM_ses_poll_no_timeout);
+    ADD_TEST(test_exec_GENM_ses_poll_total_timeout);
     ADD_TEST(test_exchange_certConf);
     ADD_TEST(test_exchange_error);
     return 1;
