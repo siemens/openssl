@@ -611,6 +611,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
 
     if (srv_ctx->initiate_delayed_delivery != NULL
         && req_type != OSSL_CMP_PKIBODY_POLLREQ
+        && req_type != OSSL_CMP_PKIBODY_ERROR
         && (rsp = initiate_delayed_delivery(srv_ctx, req)) != NULL){
             goto err;
     }
