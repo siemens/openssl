@@ -684,6 +684,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
 
     case OSSL_CMP_PKIBODY_ERROR:
         if (rsp_type == OSSL_CMP_PKIBODY_ERROR
+            && rsp != NULL
             && ossl_cmp_pkisi_get_status(rsp->body->value.error->pKIStatusInfo)
             == OSSL_CMP_PKISTATUS_waiting)
             break;
