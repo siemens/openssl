@@ -178,15 +178,13 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
      * Still we use this preliminary value already for a progress report because
      * the following msg verification may also produce log entries and may fail.
      */
-    ossl_cmp_log2(INFO, ctx, "received %s %s",
-                        ossl_cmp_bodytype_to_string(bt),
-                        bt == OSSL_CMP_PKIBODY_ERROR
-                        ? ossl_cmp_pkisi_get_status(
-                            (*rep)->body->value.error->pKIStatusInfo)
-                            == OSSL_CMP_PKISTATUS_waiting
-                            ? "(waiting)"
-                            : ""
-                        : "" );
+    ossl_cmp_log2s(INFO, ctx, "received %s %s", ossl_cmp_bodytype_to_string(bt),
+                   bt == OSSL_CMP_PKIBODY_ERROR
+                   ? ossl_cmp_pkisi_get_status((*rep)->body->value.error->pKIStatusInfo)
+                   == OSSL_CMP_PKISTATUS_waiting
+                   ? "(waiting)"
+                   : ""
+                   : "");
 
     /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
     if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF
@@ -199,10 +197,11 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     if (bt == expected_type
         /* as an answer to polling, there could be any reply other than error */
-            || (expected_type == OSSL_CMP_PKIBODY_POLLREP
-                ? bt != OSSL_CMP_PKIBODY_ERROR
-                : bt == OSSL_CMP_PKIBODY_ERROR
-                  && ossl_cmp_pkisi_get_status((*rep)->body->value.error->pKIStatusInfo) == OSSL_CMP_PKISTATUS_waiting))
+        || (expected_type == OSSL_CMP_PKIBODY_POLLREP
+            ? bt != OSSL_CMP_PKIBODY_ERROR
+            : bt == OSSL_CMP_PKIBODY_ERROR
+            && ossl_cmp_pkisi_get_status((*rep)->body->value.error->pKIStatusInfo)
+            == OSSL_CMP_PKISTATUS_waiting))
         return 1;
 
     /* received message type is not one of the expected ones (e.g., error) */
@@ -364,23 +363,23 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     return 0;
 }
 
-/*It send request and poll is required with error response*/
+/* It send request and poll is required with error response */
 static int send_receive_withpolling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
-                              OSSL_CMP_MSG **rep, int expected_type) {
-
+                                    OSSL_CMP_MSG **rep, int expected_type)
+{
 
     if (!send_receive_check(ctx, req, rep, expected_type))
         return 0;
 
-    if( OSSL_CMP_MSG_get_bodytype(*rep) == OSSL_CMP_PKIBODY_ERROR
-        && ossl_cmp_pkisi_get_status( (*rep)->body->value.error->pKIStatusInfo)
-            == OSSL_CMP_PKISTATUS_waiting) {
+    if (OSSL_CMP_MSG_get_bodytype(*rep) == OSSL_CMP_PKIBODY_ERROR
+        && ossl_cmp_pkisi_get_status((*rep)->body->value.error->pKIStatusInfo)
+        == OSSL_CMP_PKISTATUS_waiting) {
         /*
-        * LWCMP section 4.4 states: the senderNonce of the preceding request
-        * message because this value will be needed for checking the recipNonce
-        * of the final response to be received after polling.
-        * --> Store for setting in next message
-        */
+         * LWCMP section 4.4 states: the senderNonce of the preceding request
+         * message because this value will be needed for checking the recipNonce
+         * of the final response to be received after polling.
+         * --> Store for setting in next message
+         */
         if (!ossl_cmp_ctx_set1_reqsenderNonce(ctx, ctx->senderNonce))
             return 0;
 
@@ -392,12 +391,13 @@ static int send_receive_withpolling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         OSSL_CMP_MSG_free(*rep);
         *rep = NULL;
 
-        if( poll_for_response(ctx, 1 /*can sleep*/, -1 /*rid*/, rep, NULL /*checkAfter*/ ) <= 0) {
+        if (poll_for_response(ctx, 1 /* can sleep */, -1 /* rid */,
+                              rep, NULL /* checkAfter */) <= 0) {
             ERR_raise(ERR_LIB_CMP, CMP_R_POLLING_FAILED);
             return 0;
         }
     }
-    if(OSSL_CMP_MSG_get_bodytype(*rep) != expected_type) {
+    if (OSSL_CMP_MSG_get_bodytype(*rep) != expected_type) {
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
         return 0;
     }
@@ -419,7 +419,8 @@ int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int fail_info,
     if ((certConf = ossl_cmp_certConf_new(ctx, fail_info, txt)) == NULL)
         goto err;
 
-    res = send_receive_withpolling(ctx, certConf, &PKIconf, OSSL_CMP_PKIBODY_PKICONF);
+    res = send_receive_withpolling(ctx, certConf,
+                                   &PKIconf, OSSL_CMP_PKIBODY_PKICONF);
 
  err:
     OSSL_CMP_MSG_free(certConf);
@@ -443,7 +444,8 @@ int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
     if ((error = ossl_cmp_error_new(ctx, si, errorCode, details, 0)) == NULL)
         goto err;
 
-    res = send_receive_withpolling(ctx, error, &PKIconf, OSSL_CMP_PKIBODY_PKICONF);
+    res = send_receive_withpolling(ctx, error,
+                                   &PKIconf, OSSL_CMP_PKIBODY_PKICONF);
 
  err:
     OSSL_CMP_MSG_free(error);
@@ -616,7 +618,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     }
 
     if (ossl_cmp_pkisi_get_status(crep->status) == OSSL_CMP_PKISTATUS_waiting) {
-        /* save initial sender nonce in case of polling*/
+        /* save initial sender nonce in case of polling */
         if (!ossl_cmp_ctx_set1_reqsenderNonce(ctx, ctx->senderNonce))
             return 0;
         OSSL_CMP_MSG_free(*resp);
@@ -631,7 +633,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         }
     }
 
-    if(OSSL_CMP_MSG_get_bodytype(*resp) != expected_type) {
+    if (OSSL_CMP_MSG_get_bodytype(*resp) != expected_type) {
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
         return 0;
     }

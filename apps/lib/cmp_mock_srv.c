@@ -24,13 +24,12 @@ typedef struct
     STACK_OF(X509) *caPubsOut; /* certs to return in caPubs field of ip msg */
     OSSL_CMP_PKISI *statusOut; /* status for ip/cp/kup/rp msg unless polling */
     int sendError;             /* send error response on given request type */
-    OSSL_CMP_MSG *req;     	/* remember req while polling */
+    OSSL_CMP_MSG *req;         /* remember req while polling */
     int certReqId;             /* id of last ir/cr/kur, used for polling */
     int pollCount;             /* number of polls before actual cert response */
     int curr_pollCount;        /* number of polls so far for current request */
     int checkAfterTime;        /* time the client should wait between polling */
 } mock_srv_ctx;
-
 
 static void mock_srv_ctx_free(mock_srv_ctx *ctx)
 {
@@ -191,11 +190,11 @@ int ossl_cmp_mock_srv_set_checkAfterTime(OSSL_CMP_SRV_CTX *srv_ctx, int sec)
 }
 
 static OSSL_CMP_PKISI *initiate_delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
-							const OSSL_CMP_MSG *req )
+                                                 const OSSL_CMP_MSG *req)
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
-    if (ctx == NULL || req == NULL ) {
+    if (ctx == NULL || req == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
@@ -228,10 +227,9 @@ static int refcert_cmp(const X509 *refcert,
         && (ref_serial == NULL || ASN1_INTEGER_cmp(serial, ref_serial) == 0);
 }
 
-/*
-* Reset dynamic variable in case of incomplete tansaction
-*/
-static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx){
+/* Reset dynamic variable in case of incomplete tansaction */
+static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx)
+{
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     ctx->curr_pollCount = 0;
@@ -239,7 +237,6 @@ static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx){
     ctx->req = NULL;
     return 1;
 }
-
 
 static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             const OSSL_CMP_MSG *cert_req,
@@ -504,7 +501,7 @@ OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx, const char *propq)
                                      process_rr, process_genm, process_error,
                                      process_certConf, process_pollReq)
             && OSSL_CMP_SRV_CTX_init1(srv_ctx, reset_transaction,
-                                     initiate_delayed_delivery))
+                                      initiate_delayed_delivery))
         return srv_ctx;
 
     mock_srv_ctx_free(ctx);

@@ -443,7 +443,7 @@ typedef int (*OSSL_CMP_SRV_pollReq_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx,
                                          int64_t *check_after);
 typedef int (*OSSL_CMP_SRV_resettxn_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx);
 typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_intiate_delayed_del_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx,
-                                                                    const OSSL_CMP_MSG *req );
+                                                                 const OSSL_CMP_MSG *req);
 int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
                           OSSL_CMP_SRV_cert_request_cb_t process_cert_request,
                           OSSL_CMP_SRV_rr_cb_t process_rr,
@@ -452,8 +452,8 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
                           OSSL_CMP_SRV_certConf_cb_t process_certConf,
                           OSSL_CMP_SRV_pollReq_cb_t process_pollReq);
 int OSSL_CMP_SRV_CTX_init1(OSSL_CMP_SRV_CTX *srv_ctx,
-                          OSSL_CMP_SRV_resettxn_cb_t reset_transaction,
-                          OSSL_CMP_SRV_intiate_delayed_del_cb_t initiate_delayed_delivery);
+                           OSSL_CMP_SRV_resettxn_cb_t reset_transaction,
+                           OSSL_CMP_SRV_intiate_delayed_del_cb_t initiate_delayed_delivery);
 OSSL_CMP_CTX *OSSL_CMP_SRV_CTX_get0_cmp_ctx(const OSSL_CMP_SRV_CTX *srv_ctx);
 void *OSSL_CMP_SRV_CTX_get0_custom_ctx(const OSSL_CMP_SRV_CTX *srv_ctx);
 int OSSL_CMP_SRV_CTX_set_send_unprotected_errors(OSSL_CMP_SRV_CTX *srv_ctx,
