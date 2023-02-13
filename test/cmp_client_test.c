@@ -373,7 +373,7 @@ static int test_try_certreq_poll_abort(void)
 }
 
 static int test_exec_GENM_ses_poll(int check_after, int poll_count,
-                                 int total_timeout, int expect)
+                                   int total_timeout, int expect)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
     fixture->expected = expect;
@@ -387,19 +387,22 @@ static int test_exec_GENM_ses_poll(int check_after, int poll_count,
 
 static int test_exec_GENM_ses_poll_ok(void)
 {
-    return test_exec_GENM_ses_poll(checkAfter, 2, 0, OSSL_CMP_PKISTATUS_accepted);
+    return test_exec_GENM_ses_poll(checkAfter, 2, 0,
+                                   OSSL_CMP_PKISTATUS_accepted);
 }
 
 static int test_exec_GENM_ses_poll_no_timeout(void)
 {
-    return test_exec_GENM_ses_poll(checkAfter, 1 /* pollCount */, checkAfter + 1,
-                                 OSSL_CMP_PKISTATUS_accepted);
+    return test_exec_GENM_ses_poll(checkAfter, 1 /* pollCount */,
+                                   checkAfter + 1,
+                                   OSSL_CMP_PKISTATUS_accepted);
 }
 
 static int test_exec_GENM_ses_poll_total_timeout(void)
 {
-    return test_exec_GENM_ses_poll(checkAfter + 1, 2 /* pollCount */, checkAfter,
-                                 OSSL_CMP_PKISTATUS_waiting);
+    return test_exec_GENM_ses_poll(checkAfter + 1, 2 /* pollCount */,
+                                   checkAfter,
+                                   OSSL_CMP_PKISTATUS_waiting);
 }
 
 static int test_exec_GENM_ses(int transfer_error, int total_timeout, int expect)
