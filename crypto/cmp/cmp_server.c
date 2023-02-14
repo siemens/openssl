@@ -178,7 +178,8 @@ static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
         || req_type == OSSL_CMP_PKIBODY_KUR)
         return NULL;
 
-    if ((si = srv_ctx->delayed_delivery(srv_ctx, req)) != NULL) {
+    if (srv_ctx->delayed_delivery(srv_ctx, req) == 1) {
+        si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL);
         msg = ossl_cmp_error_new(srv_ctx->ctx, si, 0,
                                  NULL, srv_ctx->sendUnprotectedErrors);
         OSSL_CMP_PKISI_free(si);
