@@ -471,6 +471,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
 #  define OSSL_CMP_P10CR 4
 #  define OSSL_CMP_KUR   7
 #  define OSSL_CMP_GENM  21
+#  define OSSL_CMP_ERROR 23
 #  define OSSL_CMP_exec_IR_ses(ctx) \
     OSSL_CMP_exec_certreq(ctx, OSSL_CMP_IR, NULL)
 #  define OSSL_CMP_exec_CR_ses(ctx) \

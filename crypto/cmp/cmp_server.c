@@ -172,12 +172,6 @@ static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
         return NULL;
 
-    if (req_type == OSSL_CMP_PKIBODY_IR
-        || req_type == OSSL_CMP_PKIBODY_CR
-        || req_type == OSSL_CMP_PKIBODY_P10CR
-        || req_type == OSSL_CMP_PKIBODY_KUR)
-        return NULL;
-
     if (srv_ctx->delayed_delivery(srv_ctx, req) == 1) {
         si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL);
         msg = ossl_cmp_error_new(srv_ctx->ctx, si, 0,
@@ -417,17 +411,15 @@ static OSSL_CMP_MSG *process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
     return msg;
 }
 
-/* pollreq should be handled sepreately, to avoid recursive call */
-static OSSL_CMP_MSG *process_request(OSSL_CMP_SRV_CTX *srv_ctx,
-                                     const OSSL_CMP_MSG *req)
+/* pollreq should be handled separately, to avoid recursive call */
+static OSSL_CMP_MSG *process_non_polling_request(OSSL_CMP_SRV_CTX *srv_ctx,
+                                                 const OSSL_CMP_MSG *req)
 {
     OSSL_CMP_MSG *rsp = NULL;
 
-    if (srv_ctx == NULL || srv_ctx->ctx == NULL
-            || req == NULL || req->body == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL
+                     && req->body != NULL))
         return NULL;
-    }
 
     switch (OSSL_CMP_MSG_get_bodytype(req)) {
     case OSSL_CMP_PKIBODY_IR:
@@ -498,7 +490,7 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
 
     if (req_out != NULL) {
-        msg = process_request(srv_ctx, req_out);
+        msg = process_non_polling_request(srv_ctx, req_out);
         OSSL_CMP_MSG_free(req_out);
     } else {
         if ((msg = ossl_cmp_pollRep_new(srv_ctx->ctx, certReqId,
@@ -592,7 +584,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             goto err;
 
         if (srv_ctx->reset_transaction != NULL)
-            srv_ctx->reset_transaction(srv_ctx);
+            (void)srv_ctx->reset_transaction(srv_ctx);
 
         break;
     default:
@@ -615,7 +607,6 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
 
     if (srv_ctx->delayed_delivery != NULL
         && req_type != OSSL_CMP_PKIBODY_POLLREQ
-        && req_type != OSSL_CMP_PKIBODY_ERROR
         && (rsp = delayed_delivery(srv_ctx, req)) != NULL) {
         goto err;
     }
@@ -626,7 +617,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         else
             rsp = process_pollReq(srv_ctx, req);
     } else {
-        rsp = process_request(srv_ctx, req);
+        rsp = process_non_polling_request(srv_ctx, req);
     }
 
  err:
@@ -697,7 +688,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         (void)OSSL_CMP_CTX_set1_senderNonce(ctx, NULL);
         ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
         if (srv_ctx->reset_transaction != NULL)
-            srv_ctx->reset_transaction(srv_ctx);
+            (void)srv_ctx->reset_transaction(srv_ctx);
 
     default: /* not closing transaction in other cases */
         break;

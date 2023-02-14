@@ -193,11 +193,20 @@ static int delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                             const OSSL_CMP_MSG *req)
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
+    int req_type = OSSL_CMP_MSG_get_bodytype(req);
 
     if (ctx == NULL || req == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
+
+    if (req_type == OSSL_CMP_IR
+        || req_type == OSSL_CMP_CR
+        || req_type == OSSL_CMP_P10CR
+        || req_type == OSSL_CMP_KUR
+        || req_type == OSSL_CMP_ERROR)
+        return 0;
+
     if (ctx->pollCount > 0 && ctx->curr_pollCount == 0) {
         /* start polling */
         if (ctx->req != NULL) {
