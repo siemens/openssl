@@ -789,7 +789,7 @@ DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, recipNonce)
 DEFINE_set1_ASN1_OCTET_STRING(OSSL_CMP_CTX, senderNonce)
 
 /* store the first req sender nonce for verifying delayed delivery */
-DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, reqsenderNonce)
+DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, first_senderNonce)
 
 /* Set the proxy server to use for HTTP(S) connections */
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
