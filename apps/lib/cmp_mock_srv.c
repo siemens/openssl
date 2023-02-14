@@ -189,28 +189,28 @@ int ossl_cmp_mock_srv_set_checkAfterTime(OSSL_CMP_SRV_CTX *srv_ctx, int sec)
     return 1;
 }
 
-static OSSL_CMP_PKISI *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
-                                        const OSSL_CMP_MSG *req)
+static int delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
+                            const OSSL_CMP_MSG *req)
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     if (ctx == NULL || req == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return NULL;
+        return 0;
     }
     if (ctx->pollCount > 0 && ctx->curr_pollCount == 0) {
         /* start polling */
         if (ctx->req != NULL) {
             /* already in polling mode */
             ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-            return NULL;
+            return 0;
         }
         if ((ctx->req = OSSL_CMP_MSG_dup(req)) == NULL)
-            return NULL;
+            return 0;
 
-        return OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL);
+        return 1;
     }
-    return NULL;
+    return 0;
 }
 /* check for matching reference cert components, as far as given */
 static int refcert_cmp(const X509 *refcert,

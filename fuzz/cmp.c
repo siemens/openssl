@@ -161,11 +161,11 @@ static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx)
     return 0;
 }
 
-static OSSL_CMP_PKISI *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
+static int delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                                         const OSSL_CMP_MSG *req)
 {
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
-    return NULL;
+    return 0;
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
