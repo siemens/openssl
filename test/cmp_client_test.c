@@ -330,7 +330,7 @@ static int execute_try_certreq_poll_test(CMP_SES_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
     int check_after;
-    const int CHECK_AFTER = 5;
+    const int CHECK_AFTER = 0;
     const int TYPE = OSSL_CMP_KUR;
 
     ossl_cmp_mock_srv_set_pollCount(fixture->srv_ctx, 3);

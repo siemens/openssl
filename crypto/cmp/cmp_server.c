@@ -167,7 +167,6 @@ static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_PKISI *si = NULL;
-    int req_type = OSSL_CMP_MSG_get_bodytype(req);
 
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
         return NULL;
