@@ -193,36 +193,44 @@ static int test_exec_IR_ses(void)
     return result;
 }
 
-static int test_exec_IR_ses_poll(int check_after, int poll_count,
-                                 int total_timeout, int expect)
+static int test_exec_REQ_ses_poll(int req_type, int check_after,
+                                  int poll_count, int total_timeout,
+                                  int expect)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
-    fixture->req_type = OSSL_CMP_IR;
+    fixture->req_type = req_type;
     fixture->expected = expect;
     ossl_cmp_mock_srv_set_checkAfterTime(fixture->srv_ctx, check_after);
     ossl_cmp_mock_srv_set_pollCount(fixture->srv_ctx, poll_count);
     OSSL_CMP_CTX_set_option(fixture->cmp_ctx,
                             OSSL_CMP_OPT_TOTAL_TIMEOUT, total_timeout);
-    EXECUTE_TEST(execute_exec_certrequest_ses_test, tear_down);
+
+    if (req_type == OSSL_CMP_IR) {
+        EXECUTE_TEST(execute_exec_certrequest_ses_test, tear_down);
+    } else if (req_type == OSSL_CMP_GENM) {
+        EXECUTE_TEST(execute_exec_GENM_ses_test, tear_down);
+    }
     return result;
 }
 
 static int checkAfter = 1;
 static int test_exec_IR_ses_poll_ok(void)
 {
-    return test_exec_IR_ses_poll(checkAfter, 2, 0, OSSL_CMP_PKISTATUS_accepted);
+    return test_exec_REQ_ses_poll(OSSL_CMP_IR, checkAfter, 2, 0,
+                                  OSSL_CMP_PKISTATUS_accepted);
 }
 
 static int test_exec_IR_ses_poll_no_timeout(void)
 {
-    return test_exec_IR_ses_poll(checkAfter, 1 /* pollCount */, checkAfter + 1,
-                                 OSSL_CMP_PKISTATUS_accepted);
+    return test_exec_REQ_ses_poll(OSSL_CMP_IR, checkAfter, 1 /* pollCount */,
+                                  checkAfter + 3, OSSL_CMP_PKISTATUS_accepted);
 }
 
 static int test_exec_IR_ses_poll_total_timeout(void)
 {
-    return test_exec_IR_ses_poll(checkAfter + 1, 2 /* pollCount */, checkAfter,
-                                 OSSL_CMP_PKISTATUS_waiting);
+    return test_exec_REQ_ses_poll(OSSL_CMP_IR, checkAfter + 1,
+                                  2 /* pollCount */, checkAfter,
+                                  OSSL_CMP_PKISTATUS_waiting);
 }
 
 static int test_exec_CR_ses(int implicit_confirm, int granted, int reject)
@@ -372,37 +380,26 @@ static int test_try_certreq_poll_abort(void)
     return result;
 }
 
-static int test_exec_GENM_ses_poll(int check_after, int poll_count,
-                                   int total_timeout, int expect)
-{
-    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
-    fixture->expected = expect;
-    ossl_cmp_mock_srv_set_checkAfterTime(fixture->srv_ctx, check_after);
-    ossl_cmp_mock_srv_set_pollCount(fixture->srv_ctx, poll_count);
-    OSSL_CMP_CTX_set_option(fixture->cmp_ctx,
-                            OSSL_CMP_OPT_TOTAL_TIMEOUT, total_timeout);
-    EXECUTE_TEST(execute_exec_GENM_ses_test, tear_down);
-    return result;
-}
-
 static int test_exec_GENM_ses_poll_ok(void)
 {
-    return test_exec_GENM_ses_poll(checkAfter, 2, 0,
-                                   OSSL_CMP_PKISTATUS_accepted);
+    return test_exec_REQ_ses_poll(OSSL_CMP_GENM, checkAfter, 2, 0,
+                                  OSSL_CMP_PKISTATUS_accepted);
 }
 
 static int test_exec_GENM_ses_poll_no_timeout(void)
 {
-    return test_exec_GENM_ses_poll(checkAfter, 1 /* pollCount */,
-                                   checkAfter + 1,
-                                   OSSL_CMP_PKISTATUS_accepted);
+    return test_exec_REQ_ses_poll(OSSL_CMP_GENM, checkAfter,
+                                  1 /* pollCount */,
+                                  checkAfter + 1,
+                                  OSSL_CMP_PKISTATUS_accepted);
 }
 
 static int test_exec_GENM_ses_poll_total_timeout(void)
 {
-    return test_exec_GENM_ses_poll(checkAfter + 1, 2 /* pollCount */,
-                                   checkAfter,
-                                   OSSL_CMP_PKISTATUS_waiting);
+    return test_exec_REQ_ses_poll(OSSL_CMP_GENM, checkAfter + 1,
+                                  2 /* pollCount */,
+                                  checkAfter,
+                                  OSSL_CMP_PKISTATUS_waiting);
 }
 
 static int test_exec_GENM_ses(int transfer_error, int total_timeout, int expect)
@@ -468,7 +465,6 @@ static int test_exchange_certConf(void)
     return result;
 }
 
-/* test exchange error */
 static int test_exchange_error(void)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);

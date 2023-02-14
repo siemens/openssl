@@ -161,8 +161,8 @@ static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx)
     return 0;
 }
 
-static OSSL_CMP_PKISI *initiate_delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
-                                                 const OSSL_CMP_MSG *req)
+static OSSL_CMP_PKISI *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
+                                        const OSSL_CMP_MSG *req)
 {
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return NULL;
@@ -197,8 +197,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             && OSSL_CMP_SRV_CTX_init(srv_ctx, NULL, process_cert_request,
                                      process_rr, process_genm, process_error,
                                      process_certConf, process_pollReq)
-            && OSSL_CMP_SRV_CTX_init1(srv_ctx, reset_transaction,
-                                      initiate_delayed_delivery))
+            && OSSL_CMP_SRV_CTX_setup_polling(srv_ctx, reset_transaction,
+                                              delayed_delivery))
             OSSL_CMP_MSG_free(OSSL_CMP_SRV_process_request(srv_ctx, msg));
 
         OSSL_CMP_CTX_free(client_ctx);

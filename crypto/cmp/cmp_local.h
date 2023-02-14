@@ -27,6 +27,11 @@
 
 # define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 
+# define START_DELAYED_DELIVERY(t) \
+    (OSSL_CMP_MSG_get_bodytype(*t) == OSSL_CMP_PKIBODY_ERROR \
+     ? ossl_cmp_pkisi_get_status((*t)->body->value.error->pKIStatusInfo) \
+     == OSSL_CMP_PKISTATUS_waiting : 0)
+
 /*
  * this structure is used to store the context for CMP sessions
  */
@@ -92,7 +97,7 @@ struct ossl_cmp_ctx_st {
     ASN1_OCTET_STRING *transactionID; /* the current transaction ID */
     ASN1_OCTET_STRING *senderNonce; /* last nonce sent */
     ASN1_OCTET_STRING *recipNonce; /* last nonce received */
-    ASN1_OCTET_STRING *reqsenderNonce; /* first request sender nonce */
+    ASN1_OCTET_STRING *first_senderNonce; /* first request sender nonce */
     ASN1_UTF8STRING *freeText; /* optional string to include each msg */
     STACK_OF(OSSL_CMP_ITAV) *geninfo_ITAVs;
     int implicitConfirm; /* set implicitConfirm in IR/KUR/CR messages */
@@ -793,8 +798,8 @@ int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
                                    STACK_OF(X509) *extraCertsIn);
 int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
                                  const ASN1_OCTET_STRING *nonce);
-int ossl_cmp_ctx_set1_reqsenderNonce(OSSL_CMP_CTX *ctx,
-                                     const ASN1_OCTET_STRING *nonce);
+int ossl_cmp_ctx_set1_first_senderNonce(OSSL_CMP_CTX *ctx,
+                                        const ASN1_OCTET_STRING *nonce);
 
 /* from cmp_status.c */
 int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si);
