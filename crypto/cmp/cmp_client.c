@@ -382,7 +382,10 @@ static int send_receive_polling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     if (START_DELAYED_DELIVERY(rep)) {
 
-        /* not modifying ctx->status during the certConf & error exchange */
+        /*
+         * not modifying ctx->status during the certConf & error exchange,
+         * because these additional exchanges should not change the status.
+         */
         if (expected_type != OSSL_CMP_PKIBODY_PKICONF
             && !save_statusInfo(ctx, (*rep)->body->value.error->pKIStatusInfo))
             return 0;

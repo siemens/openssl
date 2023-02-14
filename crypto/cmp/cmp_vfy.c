@@ -773,12 +773,13 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     /* compare received nonce with the one we sent */
     if (!check_transactionID_or_nonce(ctx->senderNonce, hdr->recipNonce,
                                       CMP_R_RECIPNONCE_UNMATCHED)) {
-        /* compare received nonce with initial request sender nonce */
-        if (!(OSSL_CMP_MSG_get_bodytype(msg) != OSSL_CMP_PKIBODY_POLLREP
-              && ctx->first_senderNonce != NULL
-              && check_transactionID_or_nonce(ctx->first_senderNonce,
+        /* check if we are polling and received final response */
+        if (ctx->first_senderNonce == NULL
+            ||OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_POLLREP
+            /* compare received nonce with initial request sender nonce */
+            || !check_transactionID_or_nonce(ctx->first_senderNonce,
                                               hdr->recipNonce,
-                                              CMP_R_RECIPNONCE_UNMATCHED))) {
+                                              CMP_R_RECIPNONCE_UNMATCHED)) {
             return 0;
         }
     }

@@ -157,14 +157,12 @@ static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
 
 static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx)
 {
-    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
-    return 0;
+    return 1;
 }
 
 static int delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                                         const OSSL_CMP_MSG *req)
 {
-    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;
 }
 

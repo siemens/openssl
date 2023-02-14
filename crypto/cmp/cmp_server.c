@@ -604,18 +604,16 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!req_verified)
         goto err;
 
-    if (srv_ctx->delayed_delivery != NULL
-        && req_type != OSSL_CMP_PKIBODY_POLLREQ
-        && (rsp = delayed_delivery(srv_ctx, req)) != NULL) {
-        goto err;
-    }
-
     if (req_type == OSSL_CMP_PKIBODY_POLLREQ) {
         if (srv_ctx->process_pollReq == NULL)
             ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
         else
             rsp = process_pollReq(srv_ctx, req);
     } else {
+        if (srv_ctx->delayed_delivery != NULL
+            && (rsp = delayed_delivery(srv_ctx, req)) != NULL) {
+            goto err;
+        }
         rsp = process_non_polling_request(srv_ctx, req);
     }
 
