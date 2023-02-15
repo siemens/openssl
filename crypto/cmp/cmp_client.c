@@ -179,7 +179,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
      * the following msg verification may also produce log entries and may fail.
      */
     ossl_cmp_log2(INFO, ctx, "received %s %s", ossl_cmp_bodytype_to_string(bt),
-                  START_DELAYED_DELIVERY(rep) ? "(waiting)" : "");
+                  START_ERROR_DELAYED_DELIVERY(rep) ? "(waiting)" : "");
 
     /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
     if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF
@@ -197,7 +197,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     if (bt == expected_type
         || (expected_type == OSSL_CMP_PKIBODY_POLLREP
             ? bt != OSSL_CMP_PKIBODY_ERROR
-            : START_DELAYED_DELIVERY(rep)))
+            : START_ERROR_DELAYED_DELIVERY(rep)))
         return 1;
 
     /* received message type is not one of the expected ones (e.g., error) */
@@ -380,7 +380,14 @@ static int send_receive_polling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     if (!send_receive_check(ctx, req, rep, expected_type))
         return 0;
 
-    if (START_DELAYED_DELIVERY(rep)) {
+    if (START_ERROR_DELAYED_DELIVERY(rep)) {
+        /*
+         * LWCMP section 4.4 states: the senderNonce of the preceding request
+         * message because this value will be needed for checking the recipNonce
+         * of the final response to be received after polling.
+         */
+        if (!ossl_cmp_ctx_set1_first_senderNonce(ctx, ctx->senderNonce))
+            return 0;
 
         /*
          * not modifying ctx->status during the certConf & error exchange,
@@ -398,7 +405,7 @@ static int send_receive_polling(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
             ERR_raise(ERR_LIB_CMP, CMP_R_POLLING_FAILED);
             return 0;
         }
-        if (START_DELAYED_DELIVERY(rep))
+        if (START_ERROR_DELAYED_DELIVERY(rep))
             (void)ossl_cmp_exchange_error(ctx, OSSL_CMP_PKISTATUS_rejection,
                                           OSSL_CMP_CTX_FAILINFO_badRequest,
                                           "polling already started",

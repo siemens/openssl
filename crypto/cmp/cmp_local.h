@@ -27,7 +27,7 @@
 
 # define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 
-# define START_DELAYED_DELIVERY(t) \
+# define START_ERROR_DELAYED_DELIVERY(t) \
     (OSSL_CMP_MSG_get_bodytype(*t) == OSSL_CMP_PKIBODY_ERROR \
      ? ossl_cmp_pkisi_get_status((*t)->body->value.error->pKIStatusInfo) \
      == OSSL_CMP_PKISTATUS_waiting : 0)

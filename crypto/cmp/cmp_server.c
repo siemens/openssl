@@ -672,7 +672,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
 
     case OSSL_CMP_PKIBODY_ERROR:
         if (rsp != NULL
-            && START_DELAYED_DELIVERY(&rsp))
+            && START_ERROR_DELAYED_DELIVERY(&rsp))
             break;
         /* fall through */
 
