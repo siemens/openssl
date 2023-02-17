@@ -5449,6 +5449,7 @@ OSSL_CMP_CTX_get0_libctx                ?	3_2_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_propq                 ?	3_2_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_reset_geninfo_ITAVs        ?	3_0_8	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_validatedSrvCert      ?	3_2_0	EXIST::FUNCTION:CMP
+OSSL_CMP_SRV_CTX_setup_polling          ?	3_2_0	EXIST::FUNCTION:CMP
 OSSL_CRMF_CERTTEMPLATE_get0_publicKey   ?	3_2_0	EXIST::FUNCTION:CRMF
 CMS_final_digest                        ?	3_2_0	EXIST::FUNCTION:CMS
 CMS_EnvelopedData_it                    ?	3_2_0	EXIST::FUNCTION:CMS
@@ -5513,4 +5514,3 @@ ASN1_item_unpack_ex                     ?	3_2_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get1_cert_ex             ?	3_2_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get1_crl_ex              ?	3_2_0	EXIST::FUNCTION:
 EC_GROUP_to_params                      ?	3_2_0	EXIST::FUNCTION:EC
-OSSL_CMP_SRV_CTX_setup_polling          ?	3_2_0	EXIST::FUNCTION:CMP

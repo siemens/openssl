@@ -162,23 +162,31 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
     return 1;
 }
 
+/*
+ * It returns error msg with waiting status if server want to start the polling
+ * else NULL.
+ */
 static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                                       const OSSL_CMP_MSG *req)
 {
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_PKISI *si = NULL;
 
-    if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
+    if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL
+                     && srv_ctx->delayed_delivery != NULL))
         return NULL;
 
-    if (srv_ctx->delayed_delivery(srv_ctx, req) == 1) {
-        si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL);
-        msg = ossl_cmp_error_new(srv_ctx->ctx, si, 0,
-                                 NULL, srv_ctx->sendUnprotectedErrors);
-        OSSL_CMP_PKISI_free(si);
-        return msg;
-    }
-    return NULL;
+    if (srv_ctx->delayed_delivery(srv_ctx, req) <= 0)
+        return NULL;
+
+    if ((si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL))
+        == NULL)
+        return NULL;
+
+    msg = ossl_cmp_error_new(srv_ctx->ctx, si, 0,
+                             NULL, srv_ctx->sendUnprotectedErrors);
+    OSSL_CMP_PKISI_free(si);
+    return msg;
 }
 
 /*

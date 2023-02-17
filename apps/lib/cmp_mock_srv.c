@@ -200,10 +200,15 @@ static int delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
         return 0;
     }
 
+    /*
+     * For ir/cr/p10cr/kur delayed delivery is handled separately in
+     * process_cert_request
+     */
     if (req_type == OSSL_CMP_IR
         || req_type == OSSL_CMP_CR
         || req_type == OSSL_CMP_P10CR
         || req_type == OSSL_CMP_KUR
+        /* Client may use error to abort the ongoing polling */
         || req_type == OSSL_CMP_ERROR)
         return 0;
 
@@ -215,12 +220,13 @@ static int delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
             return 0;
         }
         if ((ctx->req = OSSL_CMP_MSG_dup(req)) == NULL)
-            return 0;
+            return -1;
 
         return 1;
     }
     return 0;
 }
+
 /* check for matching reference cert components, as far as given */
 static int refcert_cmp(const X509 *refcert,
                        const X509_NAME *issuer, const ASN1_INTEGER *serial)
@@ -241,13 +247,16 @@ static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx)
 {
     mock_srv_ctx *ctx = NULL;
 
-    if (srv_ctx == NULL)
+    if (srv_ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
+    }
 
     ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
     ctx->curr_pollCount = 0;
     OSSL_CMP_MSG_free(ctx->req);
     ctx->req = NULL;
+    ctx->certReqId = -1;
     return 1;
 }
 
