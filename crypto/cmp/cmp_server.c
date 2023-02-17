@@ -163,8 +163,8 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
 }
 
 /*
- * It returns error msg with waiting status if server want to start the polling
- * else NULL.
+ * It returns error msg with waiting status, if server want to start the polling
+ * else return NULL.
  */
 static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                                       const OSSL_CMP_MSG *req)
@@ -477,7 +477,7 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
     OSSL_CMP_POLLREQCONTENT *prc;
     OSSL_CMP_POLLREQ *pr;
     int certReqId;
-    OSSL_CMP_MSG *req_out;
+    OSSL_CMP_MSG *orig_req;
     int64_t check_after = 0;
     OSSL_CMP_MSG *msg = NULL;
 
@@ -493,12 +493,12 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
     pr = sk_OSSL_CMP_POLLREQ_value(prc, 0);
     certReqId = ossl_cmp_asn1_get_int(pr->certReqId);
     if (!srv_ctx->process_pollReq(srv_ctx, req, certReqId,
-                                  &req_out, &check_after))
+                                  &orig_req, &check_after))
         return NULL;
 
-    if (req_out != NULL) {
-        msg = process_non_polling_request(srv_ctx, req_out);
-        OSSL_CMP_MSG_free(req_out);
+    if (orig_req != NULL) {
+        msg = process_non_polling_request(srv_ctx, orig_req);
+        OSSL_CMP_MSG_free(orig_req);
     } else {
         if ((msg = ossl_cmp_pollRep_new(srv_ctx->ctx, certReqId,
                                         check_after)) == NULL)
@@ -680,7 +680,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
 
     case OSSL_CMP_PKIBODY_ERROR:
         if (rsp != NULL
-            && START_ERROR_DELAYED_DELIVERY(&rsp))
+            && ossl_cmp_is_error_with_waiting(rsp))
             break;
         /* fall through */
 
