@@ -27,11 +27,6 @@
 
 # define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 
-# define START_ERROR_DELAYED_DELIVERY(t) \
-    (OSSL_CMP_MSG_get_bodytype(*t) == OSSL_CMP_PKIBODY_ERROR \
-     ? ossl_cmp_pkisi_get_status((*t)->body->value.error->pKIStatusInfo) \
-     == OSSL_CMP_PKISTATUS_waiting : 0)
-
 /*
  * this structure is used to store the context for CMP sessions
  */
@@ -914,6 +909,7 @@ ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crm,
 X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CERTRESPONSE *crep,
                                       const OSSL_CMP_CTX *ctx, EVP_PKEY *pkey);
 OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file);
+int ossl_cmp_is_error_with_waiting(OSSL_CMP_MSG *msg);
 
 /* from cmp_protect.c */
 int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);

@@ -196,7 +196,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
      * the following msg verification may also produce log entries and may fail.
      */
     ossl_cmp_log2(INFO, ctx, "received %s%s", ossl_cmp_bodytype_to_string(bt),
-                  START_ERROR_DELAYED_DELIVERY(rep) ? "(waiting)" : "");
+                  ossl_cmp_is_error_with_waiting(*rep) ? "(waiting)" : "");
 
     /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
     if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF
@@ -217,7 +217,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     if (bt == expected_type
         || (expected_type == OSSL_CMP_PKIBODY_POLLREP
             ? bt != OSSL_CMP_PKIBODY_ERROR
-            : START_ERROR_DELAYED_DELIVERY(rep)))
+            : ossl_cmp_is_error_with_waiting(*rep)))
         return 1;
 
     /* received message type is not one of the expected ones (e.g., error) */
@@ -361,7 +361,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                 return -1; /* exits the loop */
             }
         } else if (is_crep_with_waiting(prep, rid)
-                   || START_ERROR_DELAYED_DELIVERY(&prep)) {
+                   || ossl_cmp_is_error_with_waiting(prep)) {
             /* status cannot be 'waiting' at this point */
             (void)ossl_cmp_exchange_error(ctx, OSSL_CMP_PKISTATUS_rejection,
                                           OSSL_CMP_CTX_FAILINFO_badRequest,
@@ -401,7 +401,7 @@ static int send_receive_also_delayed(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     if (!send_receive_check(ctx, req, rep, expected_type))
         return 0;
 
-    if (START_ERROR_DELAYED_DELIVERY(rep)) {
+    if (ossl_cmp_is_error_with_waiting(*rep)) {
         /*
          * LWCMP section 4.4 states: the senderNonce of the preceding request
          * message because this value will be needed for checking the recipNonce
@@ -807,7 +807,7 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
 
         /* save initial sender nonce in case of polling */
         if ((is_crep_with_waiting(rep, rid)
-             || START_ERROR_DELAYED_DELIVERY(&rep))
+             || ossl_cmp_is_error_with_waiting(rep))
             && !ossl_cmp_ctx_set1_first_senderNonce(ctx, ctx->senderNonce))
             return 0;
     } else {
@@ -853,7 +853,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
 
     /* save initial sender nonce in case of polling */
     if ((is_crep_with_waiting(rep, rid)
-         || START_ERROR_DELAYED_DELIVERY(&rep))
+         || ossl_cmp_is_error_with_waiting(rep))
         && !ossl_cmp_ctx_set1_first_senderNonce(ctx, ctx->senderNonce))
         return 0;
 
