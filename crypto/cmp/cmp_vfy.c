@@ -781,7 +781,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         /* check if we are polling and received final response */
         if (ctx->first_senderNonce == NULL
             || OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_POLLREP
-            /* compare received nonce with initial request sender nonce */
+            /* compare received nonce with our sender nonce at poll start */
             || !check_transactionID_or_nonce(ctx->first_senderNonce,
                                              hdr->recipNonce,
                                              CMP_R_RECIPNONCE_UNMATCHED)) {
