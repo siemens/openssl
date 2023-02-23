@@ -214,7 +214,7 @@ static int delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
 
     if (ctx->pollCount > 0 && ctx->curr_pollCount == 0) {
         /* start polling */
-        if (ctx->req != NULL) {
+        if (ctx->req != NULL) { /* TODO: move this check to cmp_server.c */
             /* already in polling mode */
             ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
             return 0;
@@ -494,7 +494,7 @@ static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return 0;
     }
-    if (ctx->req == NULL) {
+    if (ctx->req == NULL) { /* TODO: move this check to cmp_server.c */
         /* not currently in polling mode */
         *req = NULL;
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
