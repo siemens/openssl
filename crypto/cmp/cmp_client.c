@@ -390,6 +390,22 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     return 0;
 }
 
+static int save_senderNonce_if_waiting(OSSL_CMP_CTX *ctx,
+                                       OSSL_CMP_MSG *rep, int rid)
+{
+    /*
+     * LWCMP section 4.4 states: the senderNonce of the preceding request
+     * message because this value will be needed for checking the recipNonce
+     * of the final response to be received after polling.
+     */
+    if ((is_crep_with_waiting(rep, rid)
+         || ossl_cmp_is_error_with_waiting(rep))
+        && !ossl_cmp_ctx_set1_first_senderNonce(ctx, ctx->senderNonce))
+        return 0;
+
+    return 1;
+}
+
 /*
  * send request and get response possibly with polling initiated by error msg.
  * Polling for ip/cp/kup/ with 'waiting' status is handled elsewhere.
@@ -402,14 +418,8 @@ static int send_receive_also_delayed(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         return 0;
 
     if (ossl_cmp_is_error_with_waiting(*rep)) {
-        /*
-         * LWCMP section 4.4 states: the senderNonce of the preceding request
-         * message because this value will be needed for checking the recipNonce
-         * of the final response to be received after polling.
-         */
-        if (!ossl_cmp_ctx_set1_first_senderNonce(ctx, ctx->senderNonce))
+        if (!save_senderNonce_if_waiting(ctx, *rep, -1 /* rid */))
             return 0;
-
         /*
          * not modifying ctx->status during the certConf & error exchange,
          * because these additional exchanges should not change the status.
@@ -689,6 +699,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         return 0;
 
     if (ossl_cmp_pkisi_get_status(si) == OSSL_CMP_PKISTATUS_waiting) {
+        /* here we allow different flavor of ip/cp/kup & error with waiting */
         OSSL_CMP_MSG_free(*resp);
         *resp = NULL;
         if ((ret = poll_for_response(ctx, sleep, rid, resp, checkAfter)) != 0) {
@@ -701,10 +712,17 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         }
     }
 
+    /* at this point, ip/cp/kup or error without waiting */
+    if (rcvd_type == OSSL_CMP_PKIBODY_ERROR) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_RECEIVED_ERROR);
+        return 0;
+    }
+    /* here we are strict on the flavor of ip/cp/kup */
     if (rcvd_type != expected_type) {
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
         return 0;
     }
+
     cert = get1_cert_status(ctx, (*resp)->body->type, crep);
     if (cert == NULL) {
         ERR_add_error_data(1, "; cannot extract certificate from response");
@@ -805,10 +823,7 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
         if (!initial_certreq(ctx, req_type, crm, &rep, rep_type))
             goto err;
 
-        /* save initial sender nonce in case of polling */
-        if ((is_crep_with_waiting(rep, rid)
-             || ossl_cmp_is_error_with_waiting(rep))
-            && !ossl_cmp_ctx_set1_first_senderNonce(ctx, ctx->senderNonce))
+        if (!save_senderNonce_if_waiting(ctx, rep, rid))
             return 0;
     } else {
         if (req_type < 0)
@@ -851,10 +866,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
     if (!initial_certreq(ctx, req_type, crm, &rep, rep_type))
         goto err;
 
-    /* save initial sender nonce in case of polling */
-    if ((is_crep_with_waiting(rep, rid)
-         || ossl_cmp_is_error_with_waiting(rep))
-        && !ossl_cmp_ctx_set1_first_senderNonce(ctx, ctx->senderNonce))
+    if (!save_senderNonce_if_waiting(ctx, rep, rid))
         return 0;
 
     if (cert_response(ctx, 1 /* sleep */, rid, &rep, NULL, req_type, rep_type)

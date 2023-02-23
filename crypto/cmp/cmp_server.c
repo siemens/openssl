@@ -162,21 +162,20 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
     return 1;
 }
 
-/*
- * It returns error msg with waiting status, if server want to start the polling
- * else return NULL.
- */
+/* Return error msg with waiting status if polling is initiated, else NULL. */
 static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                                       const OSSL_CMP_MSG *req)
 {
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_PKISI *si = NULL;
+    int ret;
 
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL
                      && srv_ctx->delayed_delivery != NULL))
         return NULL;
 
-    if (srv_ctx->delayed_delivery(srv_ctx, req) <= 0)
+    ret = srv_ctx->delayed_delivery(srv_ctx, req);
+    if (ret == 0 || !ossl_assert(ret != -1))
         return NULL;
 
     if ((si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL))
