@@ -337,7 +337,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                           str, check_after);
 
             if (ctx->total_timeout != 0) { /* timeout is not infinite */
-                const int exp = 5; /* expected max time per msg round trip */
+                const int exp = OSSL_CMP_EXPECTED_RESP_TIME;
                 int64_t time_left = (int64_t)(ctx->end_time - exp - time(NULL));
 
                 if (time_left <= 0) {
@@ -655,8 +655,8 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     EVP_PKEY *rkey = OSSL_CMP_CTX_get0_newPkey(ctx /* may be NULL */, 0);
     int fail_info = 0; /* no failure */
     const char *txt = NULL;
-    OSSL_CMP_CERTREPMESSAGE *crepmsg;
-    OSSL_CMP_CERTRESPONSE *crep;
+    OSSL_CMP_CERTREPMESSAGE *crepmsg = NULL;
+    OSSL_CMP_CERTRESPONSE *crep = NULL;
     OSSL_CMP_certConf_cb_t cb;
     X509 *cert;
     char *subj = NULL;
@@ -735,7 +735,8 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
      * if the CMP server returned certificates in the caPubs field, copy them
      * to the context so that they can be retrieved if necessary
      */
-    if (crepmsg->caPubs != NULL
+    if (crepmsg != NULL
+            && crepmsg->caPubs != NULL
             && !ossl_cmp_ctx_set1_caPubs(ctx, crepmsg->caPubs))
         return 0;
 
