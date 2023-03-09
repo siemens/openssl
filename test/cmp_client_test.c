@@ -222,15 +222,15 @@ static int test_exec_IR_ses_poll_ok(void)
 
 static int test_exec_IR_ses_poll_no_timeout(void)
 {
-    return test_exec_REQ_ses_poll(OSSL_CMP_IR, checkAfter, 1 /* pollCount */,
+    return test_exec_REQ_ses_poll(OSSL_CMP_IR, checkAfter, 2 /* pollCount */,
                                   checkAfter + 3, OSSL_CMP_PKISTATUS_accepted);
 }
 
 static int test_exec_IR_ses_poll_total_timeout(void)
 {
-    return test_exec_REQ_ses_poll(OSSL_CMP_IR, checkAfter + 1,
-                                  2 /* pollCount */, checkAfter,
-                                  OSSL_CMP_PKISTATUS_waiting);
+    return !test_exec_REQ_ses_poll(OSSL_CMP_IR, checkAfter + 1,
+                                   3 /* pollCount */, checkAfter + 6,
+                                   OSSL_CMP_PKISTATUS_waiting);
 }
 
 static int test_exec_CR_ses(int implicit_confirm, int granted, int reject)
@@ -397,8 +397,8 @@ static int test_exec_GENM_ses_poll_no_timeout(void)
 static int test_exec_GENM_ses_poll_total_timeout(void)
 {
     return test_exec_REQ_ses_poll(OSSL_CMP_GENM, checkAfter + 1,
-                                  2 /* pollCount */,
-                                  checkAfter,
+                                  3 /* pollCount */,
+                                  checkAfter + 2,
                                   OSSL_CMP_PKISTATUS_waiting);
 }
 
