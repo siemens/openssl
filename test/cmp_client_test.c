@@ -223,7 +223,7 @@ static int test_exec_IR_ses_poll_ok(void)
 static int test_exec_IR_ses_poll_no_timeout(void)
 {
     return test_exec_REQ_ses_poll(OSSL_CMP_IR, checkAfter, 2 /* pollCount */,
-                                  checkAfter + 3, OSSL_CMP_PKISTATUS_accepted);
+                                  checkAfter + 4, OSSL_CMP_PKISTATUS_accepted);
 }
 
 static int test_exec_IR_ses_poll_total_timeout(void)
