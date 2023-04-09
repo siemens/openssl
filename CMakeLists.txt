@@ -2,81 +2,108 @@ cmake_minimum_required(VERSION 3.7)
 
 project(cmp)
 
-find_package(OpenSSL REQUIRED)
-
-set(LIBCMP_INC ${PROJECT_SOURCE_DIR}/include/cmp)
-set(LIBCMP_INTERNAL_INC ${PROJECT_SOURCE_DIR}/crypto/cmp)
-
-if(NOT DEFINED CMP_VERSION )
-    set(CMP_VERSION 0.9.1)
+if(NOT DEFINED CMPOSSL_VERSION)
+  set(MAJOR 2)
+  set(CMPOSSL_VERSION ${MAJOR}.0.0)
 endif()
 
-message(STATUS ${CMP_VERSION})
+message(STATUS "CMPforOpenSSL version " ${CMPOSSL_VERSION})
 
-file(MAKE_DIRECTORY ${LIBCMP_INC}/openssl)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(CMP_SSL_INC_DIR ${PROJECT_SOURCE_DIR}/include/openssl)
+if(DEFINED ENV{OPENSSL_DIR})
+  set(OpenSSL_INCLUDE_DIRS $ENV{OPENSSL_DIR}/include)
+  set(OPENSSL_LIBRARIES $ENV{OPENSSL_DIR}/libssl.so $ENV{OPENSSL_DIR}/libcrypto.so)
+  add_definitions(-isystem ${OpenSSL_INCLUDE_DIRS})
+else()
+  find_package(OpenSSL REQUIRED)
+endif()
 
-set(CMP_SSL_INC ${CMP_SSL_INC_DIR}/cmp.h
-    ${CMP_SSL_INC_DIR}/cmperr.h
-    ${CMP_SSL_INC_DIR}/cmp_util.h
-    ${CMP_SSL_INC_DIR}/crmf.h
-    ${CMP_SSL_INC_DIR}/crmferr.h
-    ${CMP_SSL_INC_DIR}/safestack_backport.h
-    ${LIBCMP_INTERNAL_INC}/cmp_local.h
+set(INC_OPENSSL 	${PROJECT_SOURCE_DIR}/include/openssl)
+set(INC_INTERNAL	${PROJECT_SOURCE_DIR}/include/internal)
+set(LIBCMP_INC 		${PROJECT_SOURCE_DIR}/include/cmp)
+set(LIBCMP_INC_OPENSSL  ${LIBCMP_INC}/openssl)
+set(LIBCMP_INC_INTERNAL ${LIBCMP_INC}/internal)
+
+set(CMPOSSL_SRC_CMP_DIR  ${PROJECT_SOURCE_DIR}/crypto/cmp)
+set(CMPOSSL_SRC_CRMF_DIR ${PROJECT_SOURCE_DIR}/crypto/crmf)
+set(CMPOSSL_SRC_HTTP_DIR ${PROJECT_SOURCE_DIR}/crypto/http)
+
+# TODO remove 
+file(GLOB INC_OPENSSL_HDRS  "${INC_OPENSSL}/*.h") 
+file(MAKE_DIRECTORY ${LIBCMP_INC_OPENSSL}) 
+file(COPY ${INC_OPENSSL_HDRS} DESTINATION ${LIBCMP_INC_OPENSSL}) 
+
+file(GLOB INC_INTERNAL_HDRS "${INC_INTERNAL}/*.h")
+file(MAKE_DIRECTORY ${LIBCMP_INC_INTERNAL})
+file(COPY ${INC_INTERNAL_HDRS} DESTINATION ${LIBCMP_INC_INTERNAL})
+
+set(INC_PUBLIC_HDRS
+  ${INC_OPENSSL}/cmp.h
+  ${INC_OPENSSL}/cmperr.h
+  ${INC_OPENSSL}/cmp_util.h
+  ${INC_OPENSSL}/crmf.h
+  ${INC_OPENSSL}/crmferr.h
+  ${INC_OPENSSL}/cryptoerr_legacy.h
+  ${INC_OPENSSL}/safestack_backport.h
+  ${INC_OPENSSL}/openssl_backport.h
+  ${INC_OPENSSL}/http.h
 )
 
-file (COPY ${CMP_SSL_INC} DESTINATION ${LIBCMP_INC}/openssl)
-file (READ ${CMP_SSL_INC_DIR}/crmf.h CMPH_CONTENTS)
-file (WRITE ${LIBCMP_INC}/openssl/crmf.h "#undef CMP_STANDALONE\n")
-file (APPEND ${LIBCMP_INC}/openssl/crmf.h "#define CMP_STANDALONE\n")
-file (APPEND ${LIBCMP_INC}/openssl/crmf.h "${CMPH_CONTENTS}")
-
-include_directories(
-    ${OPENSSL_INCLUDE_DIR}
-    ${LIBCMP_INC}
+set(CMPOSSL_SRC
+  ${CMPOSSL_SRC_CRMF_DIR}/crmf_asn.c
+  ${CMPOSSL_SRC_CRMF_DIR}/crmf_err.c
+  ${CMPOSSL_SRC_CRMF_DIR}/crmf_lib.c
+  ${CMPOSSL_SRC_CRMF_DIR}/crmf_pbm.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_asn.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_ctx.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_err.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_http.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_hdr.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_msg.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_protect.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_client.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_server.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_status.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_vfy.c
+  ${CMPOSSL_SRC_CMP_DIR}/cmp_util.c
+  ${CMPOSSL_SRC_CMP_DIR}/openssl_backport.c
+  ${CMPOSSL_SRC_HTTP_DIR}/http_client.c
+  ${CMPOSSL_SRC_HTTP_DIR}/http_err.c
+  ${CMPOSSL_SRC_HTTP_DIR}/http_lib.c
 )
 
-add_definitions(-include ${LIBCMP_INC}/openssl/crmf.h)
+add_library(${PROJECT_NAME} SHARED ${CMPOSSL_SRC})
+target_link_libraries(${PROJECT_NAME} ${OPENSSL_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE ${LIBCMP_INC})
 
-set(CMP_SRCDIR ${PROJECT_SOURCE_DIR}/crypto/cmp)
-set(CRMF_SRCDIR ${PROJECT_SOURCE_DIR}/crypto/crmf)
+if(DEFINED ENV{NDEBUG})
+  add_definitions(-DNDEBUG=1 -O2)
+else()
+  add_definitions(-g -O0)
+  set(DEBUG_FLAGS -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all)
+  add_definitions(${DEBUG_FLAGS})
+  link_libraries(${DEBUG_FLAGS})
+endif()
 
-set(CMP_SRC ${CMP_SRCDIR}/cmp_asn.c
-    ${CMP_SRCDIR}/cmp_ctx.c
-    ${CMP_SRCDIR}/cmp_err.c
-    ${CMP_SRCDIR}/cmp_http.c
-    ${CMP_SRCDIR}/cmp_lib.c
-    ${CMP_SRCDIR}/cmp_msg.c
-    ${CMP_SRCDIR}/cmp_client.c
-    ${CMP_SRCDIR}/cmp_server.c
-    ${CMP_SRCDIR}/cmp_vfy.c
+target_compile_options(${PROJECT_NAME} PRIVATE
+  -include ${LIBCMP_INC}/openssl/openssl_backport.h -DCMP_STANDALONE
+  -DDEBUG_UNUSED -DPEDANTIC -pedantic -Wall -Wextra
+  -Wswitch -Wsign-compare -Wmissing-prototypes -Wstrict-prototypes
+  -Wshadow -Wformat -Wtype-limits -Wundef)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  VERSION ${CMPOSSL_VERSION} SOVERSION ${MAJOR}
+  PUBLIC_HEADER "${INC_PUBLIC_HDRS}"
 )
 
-set(CRMF_SRC ${CRMF_SRCDIR}/crmf_asn.c
-    ${CRMF_SRCDIR}/crmf_err.c
-    ${CRMF_SRCDIR}/crmf_lib.c
-    ${CRMF_SRCDIR}/crmf_pbm.c
-)
+set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 90)
 
-add_library(cmp SHARED
-    ${CMP_SRC}
-    ${CRMF_SRC}
-)
-
-set_target_properties(cmp PROPERTIES
-    VERSION ${CMP_VERSION}
-    PUBLIC_HEADER "${CMP_SSL_INC}"
-)
-
-target_link_libraries(cmp ${OPENSSL_LIBRARIES})
-set_property(TARGET cmp PROPERTY C_STANDARD 90)
-
-install(TARGETS cmp
-    LIBRARY
-        DESTINATION lib
-        COMPONENT Library
-    PUBLIC_HEADER
-        DESTINATION include/openssl
-        COMPONENT Development
+install(TARGETS ${PROJECT_NAME}
+  LIBRARY
+    DESTINATION lib
+    COMPONENT Library
+  PUBLIC_HEADER
+    DESTINATION include/openssl
+    COMPONENT Development
 )
