@@ -189,6 +189,7 @@ int ossl_cmp_mock_srv_set_checkAfterTime(OSSL_CMP_SRV_CTX *srv_ctx, int sec)
     return 1;
 }
 
+/* Determine whether to delay response to req */
 static int delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                             const OSSL_CMP_MSG *req)
 {
@@ -242,8 +243,9 @@ static int refcert_cmp(const X509 *refcert,
         && (ref_serial == NULL || ASN1_INTEGER_cmp(serial, ref_serial) == 0);
 }
 
-/* Reset dynamic variable in case of incomplete tansaction */
-static int reset_transaction(OSSL_CMP_SRV_CTX *srv_ctx)
+/* Reset the state that belongs to a transaction */
+static int clean_transaction(OSSL_CMP_SRV_CTX *srv_ctx,
+                             ossl_unused const ASN1_OCTET_STRING *id)
 {
     mock_srv_ctx *ctx = NULL;
 
@@ -522,8 +524,8 @@ OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx, const char *propq)
             && OSSL_CMP_SRV_CTX_init(srv_ctx, ctx, process_cert_request,
                                      process_rr, process_genm, process_error,
                                      process_certConf, process_pollReq)
-            && OSSL_CMP_SRV_CTX_setup_polling(srv_ctx, reset_transaction,
-                                              delayed_delivery))
+            && OSSL_CMP_SRV_CTX_setup_polling(srv_ctx, delayed_delivery,
+                                              clean_transaction))
         return srv_ctx;
 
     mock_srv_ctx_free(ctx);

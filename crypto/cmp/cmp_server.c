@@ -31,8 +31,8 @@ struct ossl_cmp_srv_ctx_st
     OSSL_CMP_SRV_error_cb_t process_error;
     OSSL_CMP_SRV_certConf_cb_t process_certConf;
     OSSL_CMP_SRV_pollReq_cb_t process_pollReq;
-    OSSL_CMP_SRV_reset_transaction_cb_t reset_transaction;
     OSSL_CMP_SRV_delayed_delivery_cb_t delayed_delivery;
+    OSSL_CMP_SRV_clean_transaction_cb_t clean_transaction;
 
     int sendUnprotectedErrors; /* Send error and rejection msgs unprotected */
     int acceptUnprotected;     /* Accept requests with no/invalid prot. */
@@ -90,15 +90,15 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
 }
 
 int OSSL_CMP_SRV_CTX_setup_polling(OSSL_CMP_SRV_CTX *srv_ctx,
-                                   OSSL_CMP_SRV_reset_transaction_cb_t reset_transaction,
-                                   OSSL_CMP_SRV_delayed_delivery_cb_t delayed_delivery)
+                                   OSSL_CMP_SRV_delayed_delivery_cb_t delay,
+                                   OSSL_CMP_SRV_clean_transaction_cb_t clean)
 {
     if (srv_ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    srv_ctx->reset_transaction = reset_transaction;
-    srv_ctx->delayed_delivery = delayed_delivery;
+    srv_ctx->delayed_delivery = delay;
+    srv_ctx->clean_transaction = clean;
     return 1;
 }
 
@@ -589,8 +589,8 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
                 || !OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
             goto err;
 
-        if (srv_ctx->reset_transaction != NULL)
-            (void)srv_ctx->reset_transaction(srv_ctx);
+        if (srv_ctx->clean_transaction != NULL)
+            (void)srv_ctx->clean_transaction(srv_ctx, NULL);
 
         break;
     default:
@@ -688,11 +688,11 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     case OSSL_CMP_PKIBODY_GENP:
         /* Other terminating response message types are not supported */
         /* Prepare for next transaction, ignoring any errors here: */
+        if (srv_ctx->clean_transaction != NULL)
+            (void)srv_ctx->clean_transaction(srv_ctx, ctx->transactionID);
         (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
         (void)OSSL_CMP_CTX_set1_senderNonce(ctx, NULL);
         ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
-        if (srv_ctx->reset_transaction != NULL)
-            (void)srv_ctx->reset_transaction(srv_ctx);
 
     default: /* not closing transaction in other cases */
         break;
