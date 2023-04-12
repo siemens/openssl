@@ -162,7 +162,7 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
     return 1;
 }
 
-/* Return error msg with waiting status if polling is initiated, else NULL. */
+/* Return error msg with waiting status if polling is initiated, else NULL */
 static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                                       const OSSL_CMP_MSG *req)
 {
@@ -178,8 +178,8 @@ static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
     if (ret == 0 || !ossl_assert(ret != -1))
         return NULL;
 
-    if ((si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL))
-        == NULL)
+    si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL);
+    if (si == NULL)
         return NULL;
 
     msg = ossl_cmp_error_new(srv_ctx->ctx, si, 0,
@@ -678,8 +678,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         /* fall through */
 
     case OSSL_CMP_PKIBODY_ERROR:
-        if (rsp != NULL
-            && ossl_cmp_is_error_with_waiting(rsp))
+        if (rsp != NULL && ossl_cmp_is_error_with_waiting(rsp))
             break;
         /* fall through */
 
