@@ -362,7 +362,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             }
         } else if (is_crep_with_waiting(prep, rid)
                    || ossl_cmp_is_error_with_waiting(prep)) {
-            /* status cannot be 'waiting' at this point */
+            /* received status must not be 'waiting' */
             (void)ossl_cmp_exchange_error(ctx, OSSL_CMP_PKISTATUS_rejection,
                                           OSSL_CMP_CTX_FAILINFO_badRequest,
                                           "polling already started",
@@ -408,7 +408,7 @@ static int save_senderNonce_if_waiting(OSSL_CMP_CTX *ctx,
 
 /*
  * send request and get response possibly with polling initiated by error msg.
- * Polling for ip/cp/kup/ with 'waiting' status is handled elsewhere.
+ * Polling for ip/cp/kup/ with 'waiting' status is handled by cert_response().
  */
 static int send_receive_also_delayed(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
                                      OSSL_CMP_MSG **rep, int expected_type)
@@ -420,10 +420,7 @@ static int send_receive_also_delayed(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     if (ossl_cmp_is_error_with_waiting(*rep)) {
         if (!save_senderNonce_if_waiting(ctx, *rep, -1 /* rid */))
             return 0;
-        /*
-         * not modifying ctx->status during the certConf & error exchange,
-         * because these additional exchanges should not change the status.
-         */
+        /* not modifying ctx->status during certConf and error exchanges */
         if (expected_type != OSSL_CMP_PKIBODY_PKICONF
             && !save_statusInfo(ctx, (*rep)->body->value.error->pKIStatusInfo))
             return 0;
@@ -699,7 +696,11 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         return 0;
 
     if (ossl_cmp_pkisi_get_status(si) == OSSL_CMP_PKISTATUS_waiting) {
-        /* here we allow different flavor of ip/cp/kup & error with waiting */
+        /*
+         * Here we allow both and error message with waiting indication
+         * as well as a certificate response with waiting indication, where
+         * its flavor (ip, cp, or kup) may not strictly match ir/cr/p10cr/kur.
+         */
         OSSL_CMP_MSG_free(*resp);
         *resp = NULL;
         if ((ret = poll_for_response(ctx, sleep, rid, resp, checkAfter)) != 0) {
@@ -712,12 +713,12 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         }
     }
 
-    /* at this point, ip/cp/kup or error without waiting */
+    /* at this point, we have received ip/cp/kup/error without waiting */
     if (rcvd_type == OSSL_CMP_PKIBODY_ERROR) {
         ERR_raise(ERR_LIB_CMP, CMP_R_RECEIVED_ERROR);
         return 0;
     }
-    /* here we are strict on the flavor of ip/cp/kup */
+    /* here we are strict on the flavor of ip/cp/kup: must match request */
     if (rcvd_type != expected_type) {
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
         return 0;
@@ -735,8 +736,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
      * if the CMP server returned certificates in the caPubs field, copy them
      * to the context so that they can be retrieved if necessary
      */
-    if (crepmsg != NULL
-            && crepmsg->caPubs != NULL
+    if (crepmsg != NULL && crepmsg->caPubs != NULL
             && !ossl_cmp_ctx_set1_caPubs(ctx, crepmsg->caPubs))
         return 0;
 
