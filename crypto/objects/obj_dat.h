@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8476] = {
+static const unsigned char so[8518] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1182,9 +1182,14 @@ static const unsigned char so[8476] = {
     0x55,0x1D,0x49,                                /* [ 8466] OBJ_alt_signature_algorithm */
     0x55,0x1D,0x4A,                                /* [ 8469] OBJ_alt_signature_value */
     0x55,0x1D,0x4B,                                /* [ 8472] OBJ_associated_information */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x18,       /* [ 8475] OBJ_id_it_KemCiphertextInfo */
+    0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x10,  /* [ 8483] OBJ_id_KemBasedMac */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x1C,  /* [ 8492] OBJ_hkdfWithSHA256 */
+    0x28,0x81,0x8C,0x71,0x02,0x02,0x04,            /* [ 8503] OBJ_id_kem_rsa */
+    0x28,0x81,0x8C,0x71,0x02,0x05,0x02,            /* [ 8510] OBJ_id_kdf_kdf2 */
 };
 
-#define NUM_NID 1320
+#define NUM_NID 1325
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2506,9 +2511,14 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureAlgorithm", "X509v3 Alternative Signature Algorithm", NID_alt_signature_algorithm, 3, &so[8466]},
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
+    {"id-it-KemCiphertextInfo", "id-it-KemCiphertextInfo", NID_id_it_KemCiphertextInfo, 8, &so[8475]},
+    {"id-KemBasedMac", "KEM based MAC", NID_id_KemBasedMac, 9, &so[8483]},
+    {"hkdfWithSHA256", "HKDF with SHA256", NID_hkdfWithSHA256, 11, &so[8492]},
+    {"id-kem-rsa", "id-kem-rsa", NID_id_kem_rsa, 7, &so[8503]},
+    {"id-kdf-kdf2", "id-kdf-kdf2", NID_id_kdf_kdf2, 7, &so[8510]},
 };
 
-#define NUM_SN 1311
+#define NUM_SN 1316
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3029,6 +3039,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      812,    /* "gost94" */
      850,    /* "gost94cc" */
     1310,    /* "groupAC" */
+    1322,    /* "hkdfWithSHA256" */
     1156,    /* "hmacWithDstu34311" */
      797,    /* "hmacWithMD5" */
      163,    /* "hmacWithSHA1" */
@@ -3089,6 +3100,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      808,    /* "id-GostR3411-94-with-GostR3410-94" */
      852,    /* "id-GostR3411-94-with-GostR3410-94-cc" */
      810,    /* "id-HMACGostR3411-94" */
+    1321,    /* "id-KemBasedMac" */
      782,    /* "id-PasswordBasedMAC" */
     1272,    /* "id-aa-ATSHashIndex" */
     1277,    /* "id-aa-ATSHashIndex-v2" */
@@ -3188,6 +3200,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1104,    /* "id-hmacWithSHA3-384" */
     1105,    /* "id-hmacWithSHA3-512" */
      260,    /* "id-it" */
+    1320,    /* "id-it-KemCiphertextInfo" */
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
@@ -3211,6 +3224,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      306,    /* "id-it-subscriptionResponse" */
      784,    /* "id-it-suppLangTags" */
      304,    /* "id-it-unsupportedOIDs" */
+    1324,    /* "id-kdf-kdf2" */
+    1323,    /* "id-kem-rsa" */
      128,    /* "id-kp" */
     1221,    /* "id-kp-BrandIndicatorforMessageIdentification" */
     1220,    /* "id-kp-bgpsec-router" */
@@ -3823,7 +3838,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1311
+#define NUM_LN 1316
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3914,6 +3929,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      808,    /* "GOST R 34.11-94 with GOST R 34.10-94" */
      852,    /* "GOST R 34.11-94 with GOST R 34.10-94 Cryptocom" */
      854,    /* "GOST R 3410-2001 Parameter Set Cryptocom" */
+    1322,    /* "HKDF with SHA256" */
     1156,    /* "HMAC DSTU Gost 34311-95" */
      988,    /* "HMAC GOST 34.11-2012 256 bit" */
      989,    /* "HMAC GOST 34.11-2012 512 bit" */
@@ -3936,6 +3952,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      665,    /* "Inherit all" */
      647,    /* "International Organizations" */
      142,    /* "Invalidity Date" */
+    1321,    /* "KEM based MAC" */
      504,    /* "MIME MHS" */
      388,    /* "Mail" */
      383,    /* "Management" */
@@ -4521,6 +4538,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      508,    /* "id-hex-multipart-message" */
      507,    /* "id-hex-partial-message" */
      260,    /* "id-it" */
+    1320,    /* "id-it-KemCiphertextInfo" */
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
@@ -4544,6 +4562,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      306,    /* "id-it-subscriptionResponse" */
      784,    /* "id-it-suppLangTags" */
      304,    /* "id-it-unsupportedOIDs" */
+    1324,    /* "id-kdf-kdf2" */
+    1323,    /* "id-kem-rsa" */
      128,    /* "id-kp" */
      280,    /* "id-mod-attribute-cert" */
      274,    /* "id-mod-cmc" */
@@ -5138,7 +5158,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1177
+#define NUM_OBJ 1182
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5552,6 +5572,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1278,    /* OBJ_id_aa_ATSHashIndex_v3        0 4 0 19122 1 5 */
     1279,    /* OBJ_signedAssertion              0 4 0 19122 1 6 */
      436,    /* OBJ_ucl                          0 9 2342 19200300 */
+    1323,    /* OBJ_id_kem_rsa                   1 0 18033 2 2 4 */
+    1324,    /* OBJ_id_kdf_kdf2                  1 0 18033 2 5 2 */
      820,    /* OBJ_id_Gost28147_89_None_KeyMeshing 1 2 643 2 2 14 0 */
      819,    /* OBJ_id_Gost28147_89_CryptoPro_KeyMeshing 1 2 643 2 2 14 1 */
      845,    /* OBJ_id_GostR3410_94_a            1 2 643 2 2 20 1 */
@@ -5830,6 +5852,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1255,    /* OBJ_id_it_certProfile            1 3 6 1 5 5 7 4 21 */
     1256,    /* OBJ_id_it_crlStatusList          1 3 6 1 5 5 7 4 22 */
     1257,    /* OBJ_id_it_crls                   1 3 6 1 5 5 7 4 23 */
+    1320,    /* OBJ_id_it_KemCiphertextInfo      1 3 6 1 5 5 7 4 24 */
      313,    /* OBJ_id_regCtrl                   1 3 6 1 5 5 7 5 1 */
      314,    /* OBJ_id_regInfo                   1 3 6 1 5 5 7 5 2 */
      323,    /* OBJ_id_alg_des40                 1 3 6 1 5 5 7 6 1 */
@@ -5939,6 +5962,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      108,    /* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
      112,    /* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
      782,    /* OBJ_id_PasswordBasedMAC          1 2 840 113533 7 66 13 */
+    1321,    /* OBJ_id_KemBasedMac               1 2 840 113533 7 66 16 */
      783,    /* OBJ_id_DHBasedMac                1 2 840 113533 7 66 30 */
        6,    /* OBJ_rsaEncryption                1 2 840 113549 1 1 1 */
        7,    /* OBJ_md2WithRSAEncryption         1 2 840 113549 1 1 2 */
@@ -6284,6 +6308,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      247,    /* OBJ_id_smime_alg_CMSRC2wrap      1 2 840 113549 1 9 16 3 7 */
      125,    /* OBJ_zlib_compression             1 2 840 113549 1 9 16 3 8 */
      893,    /* OBJ_id_alg_PWRI_KEK              1 2 840 113549 1 9 16 3 9 */
+    1322,    /* OBJ_hkdfWithSHA256               1 2 840 113549 1 9 16 3 28 */
      248,    /* OBJ_id_smime_cd_ldap             1 2 840 113549 1 9 16 4 1 */
      249,    /* OBJ_id_smime_spq_ets_sqt_uri     1 2 840 113549 1 9 16 5 1 */
      250,    /* OBJ_id_smime_spq_ets_sqt_unotice 1 2 840 113549 1 9 16 5 2 */

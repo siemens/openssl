@@ -141,6 +141,11 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     ctx->popoMethod = OSSL_CRMF_POPO_SIGNATURE;
     ctx->revocationReason = CRL_REASON_NONE;
 
+    /* TODO: default values for kem need to be generalized */
+    ctx->kem_ssklen = 32;
+    ctx->kem_mac = NID_hmacWithSHA256;
+    ctx->kem_kdf = NID_hkdfWithSHA256;
+
     /* all other elements are initialized to 0 or NULL, respectively */
     return ctx;
 
@@ -186,7 +191,12 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         && ossl_cmp_ctx_set1_first_senderNonce(ctx, NULL)
         && OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
         && OSSL_CMP_CTX_set1_senderNonce(ctx, NULL)
-        && ossl_cmp_ctx_set1_recipNonce(ctx, NULL);
+        && ossl_cmp_ctx_set1_recipNonce(ctx, NULL)
+        && ossl_cmp_ctx_set1_kem_senderNonce(ctx, NULL)
+        && ossl_cmp_ctx_set1_kem_recipNonce(ctx, NULL)
+        && ossl_cmp_ctx_set1_kem_ct(ctx, NULL)
+        && ossl_cmp_ctx_set1_kem_ssk(ctx, NULL, 0)
+        && ossl_cmp_ctx_set1_kem_secret(ctx, NULL, 0);
 }
 
 /* Frees OSSL_CMP_CTX variables allocated in OSSL_CMP_CTX_new() */
@@ -248,6 +258,12 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     OSSL_STACK_OF_X509_free(ctx->newChain);
     OSSL_STACK_OF_X509_free(ctx->caPubs);
     OSSL_STACK_OF_X509_free(ctx->extraCertsIn);
+
+    ASN1_OCTET_STRING_free(ctx->kem_senderNonce);
+    ASN1_OCTET_STRING_free(ctx->kem_recipNonce);
+    ASN1_OCTET_STRING_free(ctx->kem_ct );
+    ASN1_OCTET_STRING_free(ctx->kem_ssk);
+    ASN1_OCTET_STRING_free(ctx->kem_secret);
 
     OPENSSL_free(ctx);
 }
@@ -431,25 +447,34 @@ int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
         ossl_cmp_asn1_octet_string_set1_bytes(&ctx->referenceValue, ref, len);
 }
 
-/* Set or clear the password to be used for protecting messages with PBMAC */
-int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx,
-                                  const unsigned char *sec, int len)
-{
-    ASN1_OCTET_STRING *secretValue = NULL;
-
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-    if (ossl_cmp_asn1_octet_string_set1_bytes(&secretValue, sec, len) != 1)
-        return 0;
-    if (ctx->secretValue != NULL) {
-        OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
-        ASN1_OCTET_STRING_free(ctx->secretValue);
-    }
-    ctx->secretValue = secretValue;
-    return 1;
+#define DEFINE_OSSL_set1_octetsecret(PREFIX, FIELD) \
+int PREFIX##_set1_##FIELD(OSSL_CMP_CTX *ctx, \
+                          const unsigned char *sec, int len) \
+{ \
+    ASN1_OCTET_STRING *secret = NULL; \
+    \
+    if (ctx == NULL) { \
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT); \
+        return 0; \
+    } \
+    if (ossl_cmp_asn1_octet_string_set1_bytes(&secret, sec, len) != 1) \
+        return 0; \
+    if (ctx->FIELD != NULL) { \
+        OPENSSL_cleanse(ctx->FIELD->data, ctx->FIELD->length); \
+        ASN1_OCTET_STRING_free(ctx->FIELD); \
+    } \
+    ctx->FIELD = secret; \
+    return 1; \
 }
+
+/* Set or clear the password to be used for protecting messages with PBMAC */
+DEFINE_OSSL_set1_octetsecret(OSSL_CMP_CTX, secretValue)
+
+/* Set or clear the ssk to be used for protecting messages with KEM-MAC */
+DEFINE_OSSL_set1_octetsecret(ossl_cmp_ctx, kem_ssk)
+
+/* Set or clear the secret to be used for deriving ssk */
+DEFINE_OSSL_set1_octetsecret(ossl_cmp_ctx, kem_secret)
 
 #define DEFINE_OSSL_CMP_CTX_get1_certs(FIELD) \
 STACK_OF(X509) *OSSL_CMP_CTX_get1_##FIELD(const OSSL_CMP_CTX *ctx) \
@@ -797,6 +822,7 @@ EVP_PKEY *ossl_cmp_ctx_get0_newPubkey(const OSSL_CMP_CTX *ctx)
     return ctx->pkey;
 }
 
+
 #define DEFINE_set1_ASN1_OCTET_STRING(PREFIX, FIELD) \
 int PREFIX##_set1_##FIELD(OSSL_CMP_CTX *ctx, const ASN1_OCTET_STRING *id) \
 { \
@@ -818,6 +844,24 @@ DEFINE_set1_ASN1_OCTET_STRING(OSSL_CMP_CTX, senderNonce)
 
 /* store the first req sender nonce for verifying delayed delivery */
 DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, first_senderNonce)
+
+/* Set the kem_recipNonce to be used for the recipNonce in KemOtherInfo */
+DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, kem_recipNonce)
+
+/* get kem_recipNonce from context */
+DEFINE_OSSL_get(ossl_cmp_ctx, kem_recipNonce, ASN1_OCTET_STRING *, NULL)
+
+/* Set the kem_senderNonce to be used for the senderNonce in KemOtherInfo */
+DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, kem_senderNonce)
+
+/* get kem_senderNonce from context */
+DEFINE_OSSL_get(ossl_cmp_ctx, kem_senderNonce, ASN1_OCTET_STRING *, NULL)
+
+/* Set the ciphertext to be used in KemOtherInfo  */
+DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, kem_ct)
+
+/* get ciphertext from context */
+DEFINE_OSSL_get(ossl_cmp_ctx, kem_ct, ASN1_OCTET_STRING *, NULL)
 
 /* Set the proxy server to use for HTTP(S) connections */
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
@@ -973,6 +1017,15 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         }
         ctx->revocationReason = val;
         break;
+    case OSSL_CMP_OPT_KEM_STATUS:
+        ctx->kem_status = val;
+        break;
+    case OSSL_CMP_OPT_SSK_LEN:
+        ctx->kem_ssklen = val;
+        break;
+    case OSSL_CMP_OPT_KEM_MAC_ALGNID:
+        ctx->kem_mac = val;
+        break;
     default:
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_OPTION);
         return 0;
@@ -1035,6 +1088,12 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->permitTAInExtraCertsForIR;
     case OSSL_CMP_OPT_REVOCATION_REASON:
         return ctx->revocationReason;
+    case OSSL_CMP_OPT_KEM_STATUS:
+        return ctx->kem_status;
+    case OSSL_CMP_OPT_SSK_LEN:
+        return ctx->kem_ssklen;
+    case OSSL_CMP_OPT_KEM_MAC_ALGNID:
+        return ctx->kem_mac;
     default:
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_OPTION);
         return -1;
