@@ -449,6 +449,18 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
         ossl_cmp_warn(ctx, "ignoring missing protection of error message");
         return 1;
     }
+
+    if (OSSL_CMP_MSG_get_bodytype(req) == OSSL_CMP_PKIBODY_GENM
+        && sk_OSSL_CMP_ITAV_num(req->body->value.genm) == 1) {
+        OSSL_CMP_ITAV *req_itav = sk_OSSL_CMP_ITAV_value(req->body->value.genm,
+                                                         0);
+        ASN1_OBJECT *obj = OSSL_CMP_ITAV_get0_type(req_itav);
+
+        if (OBJ_obj2nid(obj) == NID_id_it_KemCiphertextInfo
+            && OSSL_CMP_ITAV_get0_value(req_itav) == NULL) {
+            return 1;
+        }
+    }
     return 0;
 }
 
