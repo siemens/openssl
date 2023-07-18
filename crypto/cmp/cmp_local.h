@@ -208,6 +208,19 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CAKEYUPDANNCONTENT)
 typedef struct ossl_cmp_rootcakeyupdate_st OSSL_CMP_ROOTCAKEYUPDATE;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
 
+/*
+ * KemCiphertextInfoValue :== KemCiphertextInfo
+ * KemCiphertextInfo ::= SEQUENCE {
+ *      kem       AlgorithmIdentifier{KEM-ALGORITHM, {...}},
+ *      ct        OCTET STRING}
+ */
+
+typedef struct ossl_cmp_KemCiphertextInfo_st {
+    X509_ALGOR *kem;
+    ASN1_OCTET_STRING *ct;
+} OSSL_CMP_KEMCIPHERTEXTINFO;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMCIPHERTEXTINFO)
+
 /*-
  * declared already here as it will be used in OSSL_CMP_MSG (nested) and
  * infoType and infoValue
@@ -259,6 +272,8 @@ struct ossl_cmp_itav_st {
         X509 *rootCaCert;
         /* NID_id_it_rootCaKeyUpdate - Root CA Certificate Update */
         OSSL_CMP_ROOTCAKEYUPDATE *rootCaKeyUpdate;
+        /* NID_id_it_KemCiphertextInfo -  KEM ciphertext */
+        OSSL_CMP_KEMCIPHERTEXTINFO *KemCiphertextInfoValue;
         /* this is to be used for so far undeclared objects */
         ASN1_TYPE *other;
     } infoValue;
