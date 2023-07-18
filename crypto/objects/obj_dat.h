@@ -1182,175 +1182,9 @@ static const unsigned char so[9517] = {
     0x55,0x1D,0x49,                                /* [ 8466] OBJ_alt_signature_algorithm */
     0x55,0x1D,0x4A,                                /* [ 8469] OBJ_alt_signature_value */
     0x55,0x1D,0x4B,                                /* [ 8472] OBJ_associated_information */
-    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x33,  /* [ 8475] OBJ_id_ct_rpkiSignedPrefixList */
-    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x04,       /* [ 8486] OBJ_id_on_hardwareModuleName */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0xE4,0x25,0x01,  /* [ 8494] OBJ_id_kp_wisun_fan_device */
-    0x67,0x81,0x05,                                /* [ 8503] OBJ_tcg */
-    0x67,0x81,0x05,0x01,                           /* [ 8506] OBJ_tcg_tcpaSpecVersion */
-    0x67,0x81,0x05,0x02,                           /* [ 8510] OBJ_tcg_attribute */
-    0x67,0x81,0x05,0x03,                           /* [ 8514] OBJ_tcg_protocol */
-    0x67,0x81,0x05,0x04,                           /* [ 8518] OBJ_tcg_algorithm */
-    0x67,0x81,0x05,0x05,                           /* [ 8522] OBJ_tcg_platformClass */
-    0x67,0x81,0x05,0x06,                           /* [ 8526] OBJ_tcg_ce */
-    0x67,0x81,0x05,0x08,                           /* [ 8530] OBJ_tcg_kp */
-    0x67,0x81,0x05,0x0B,                           /* [ 8534] OBJ_tcg_ca */
-    0x67,0x81,0x05,0x11,                           /* [ 8538] OBJ_tcg_address */
-    0x67,0x81,0x05,0x12,                           /* [ 8542] OBJ_tcg_registry */
-    0x67,0x81,0x05,0x13,                           /* [ 8546] OBJ_tcg_traits */
-    0x67,0x81,0x05,0x05,0x01,                      /* [ 8550] OBJ_tcg_common */
-    0x67,0x81,0x05,0x05,0x01,0x01,                 /* [ 8555] OBJ_tcg_at_platformManufacturerStr */
-    0x67,0x81,0x05,0x05,0x01,0x02,                 /* [ 8561] OBJ_tcg_at_platformManufacturerId */
-    0x67,0x81,0x05,0x05,0x01,0x03,                 /* [ 8567] OBJ_tcg_at_platformConfigUri */
-    0x67,0x81,0x05,0x05,0x01,0x04,                 /* [ 8573] OBJ_tcg_at_platformModel */
-    0x67,0x81,0x05,0x05,0x01,0x05,                 /* [ 8579] OBJ_tcg_at_platformVersion */
-    0x67,0x81,0x05,0x05,0x01,0x06,                 /* [ 8585] OBJ_tcg_at_platformSerial */
-    0x67,0x81,0x05,0x05,0x01,0x07,                 /* [ 8591] OBJ_tcg_at_platformConfiguration */
-    0x67,0x81,0x05,0x05,0x01,0x08,                 /* [ 8597] OBJ_tcg_at_platformIdentifier */
-    0x67,0x81,0x05,0x02,0x01,                      /* [ 8603] OBJ_tcg_at_tpmManufacturer */
-    0x67,0x81,0x05,0x02,0x02,                      /* [ 8608] OBJ_tcg_at_tpmModel */
-    0x67,0x81,0x05,0x02,0x03,                      /* [ 8613] OBJ_tcg_at_tpmVersion */
-    0x67,0x81,0x05,0x02,0x0A,                      /* [ 8618] OBJ_tcg_at_securityQualities */
-    0x67,0x81,0x05,0x02,0x0B,                      /* [ 8623] OBJ_tcg_at_tpmProtectionProfile */
-    0x67,0x81,0x05,0x02,0x0C,                      /* [ 8628] OBJ_tcg_at_tpmSecurityTarget */
-    0x67,0x81,0x05,0x02,0x0D,                      /* [ 8633] OBJ_tcg_at_tbbProtectionProfile */
-    0x67,0x81,0x05,0x02,0x0E,                      /* [ 8638] OBJ_tcg_at_tbbSecurityTarget */
-    0x67,0x81,0x05,0x02,0x0F,                      /* [ 8643] OBJ_tcg_at_tpmIdLabel */
-    0x67,0x81,0x05,0x02,0x10,                      /* [ 8648] OBJ_tcg_at_tpmSpecification */
-    0x67,0x81,0x05,0x02,0x11,                      /* [ 8653] OBJ_tcg_at_tcgPlatformSpecification */
-    0x67,0x81,0x05,0x02,0x12,                      /* [ 8658] OBJ_tcg_at_tpmSecurityAssertions */
-    0x67,0x81,0x05,0x02,0x13,                      /* [ 8663] OBJ_tcg_at_tbbSecurityAssertions */
-    0x67,0x81,0x05,0x02,0x17,                      /* [ 8668] OBJ_tcg_at_tcgCredentialSpecification */
-    0x67,0x81,0x05,0x02,0x19,                      /* [ 8673] OBJ_tcg_at_tcgCredentialType */
-    0x67,0x81,0x05,0x02,0x1A,                      /* [ 8678] OBJ_tcg_at_previousPlatformCertificates */
-    0x67,0x81,0x05,0x02,0x1B,                      /* [ 8683] OBJ_tcg_at_tbbSecurityAssertions_v3 */
-    0x67,0x81,0x05,0x02,0x1C,                      /* [ 8688] OBJ_tcg_at_cryptographicAnchors */
-    0x67,0x81,0x05,0x05,0x01,0x07,0x01,            /* [ 8693] OBJ_tcg_at_platformConfiguration_v1 */
-    0x67,0x81,0x05,0x05,0x01,0x07,0x02,            /* [ 8700] OBJ_tcg_at_platformConfiguration_v2 */
-    0x67,0x81,0x05,0x05,0x01,0x07,0x03,            /* [ 8707] OBJ_tcg_at_platformConfiguration_v3 */
-    0x67,0x81,0x05,0x05,0x01,0x07,0x04,            /* [ 8714] OBJ_tcg_at_platformConfigUri_v3 */
-    0x67,0x81,0x05,0x04,0x01,                      /* [ 8721] OBJ_tcg_algorithm_null */
-    0x67,0x81,0x05,0x08,0x01,                      /* [ 8726] OBJ_tcg_kp_EKCertificate */
-    0x67,0x81,0x05,0x08,0x02,                      /* [ 8731] OBJ_tcg_kp_PlatformAttributeCertificate */
-    0x67,0x81,0x05,0x08,0x03,                      /* [ 8736] OBJ_tcg_kp_AIKCertificate */
-    0x67,0x81,0x05,0x08,0x04,                      /* [ 8741] OBJ_tcg_kp_PlatformKeyCertificate */
-    0x67,0x81,0x05,0x08,0x05,                      /* [ 8746] OBJ_tcg_kp_DeltaPlatformAttributeCertificate */
-    0x67,0x81,0x05,0x08,0x06,                      /* [ 8751] OBJ_tcg_kp_DeltaPlatformKeyCertificate */
-    0x67,0x81,0x05,0x08,0x07,                      /* [ 8756] OBJ_tcg_kp_AdditionalPlatformAttributeCertificate */
-    0x67,0x81,0x05,0x08,0x08,                      /* [ 8761] OBJ_tcg_kp_AdditionalPlatformKeyCertificate */
-    0x67,0x81,0x05,0x06,0x02,                      /* [ 8766] OBJ_tcg_ce_relevantCredentials */
-    0x67,0x81,0x05,0x06,0x03,                      /* [ 8771] OBJ_tcg_ce_relevantManifests */
-    0x67,0x81,0x05,0x06,0x04,                      /* [ 8776] OBJ_tcg_ce_virtualPlatformAttestationService */
-    0x67,0x81,0x05,0x06,0x05,                      /* [ 8781] OBJ_tcg_ce_migrationControllerAttestationService */
-    0x67,0x81,0x05,0x06,0x06,                      /* [ 8786] OBJ_tcg_ce_migrationControllerRegistrationService */
-    0x67,0x81,0x05,0x06,0x07,                      /* [ 8791] OBJ_tcg_ce_virtualPlatformBackupService */
-    0x67,0x81,0x05,0x03,0x01,                      /* [ 8796] OBJ_tcg_prt_tpmIdProtocol */
-    0x67,0x81,0x05,0x11,0x01,                      /* [ 8801] OBJ_tcg_address_ethernetmac */
-    0x67,0x81,0x05,0x11,0x02,                      /* [ 8806] OBJ_tcg_address_wlanmac */
-    0x67,0x81,0x05,0x11,0x03,                      /* [ 8811] OBJ_tcg_address_bluetoothmac */
-    0x67,0x81,0x05,0x12,0x03,                      /* [ 8816] OBJ_tcg_registry_componentClass */
-    0x67,0x81,0x05,0x12,0x03,0x01,                 /* [ 8821] OBJ_tcg_registry_componentClass_tcg */
-    0x67,0x81,0x05,0x12,0x03,0x02,                 /* [ 8827] OBJ_tcg_registry_componentClass_ietf */
-    0x67,0x81,0x05,0x12,0x03,0x03,                 /* [ 8833] OBJ_tcg_registry_componentClass_dmtf */
-    0x67,0x81,0x05,0x12,0x03,0x04,                 /* [ 8839] OBJ_tcg_registry_componentClass_pcie */
-    0x67,0x81,0x05,0x12,0x03,0x05,                 /* [ 8845] OBJ_tcg_registry_componentClass_disk */
-    0x67,0x81,0x05,0x0B,0x04,                      /* [ 8851] OBJ_tcg_cap_verifiedPlatformCertificate */
-    0x67,0x81,0x05,0x13,0x01,                      /* [ 8856] OBJ_tcg_tr_ID */
-    0x67,0x81,0x05,0x13,0x02,                      /* [ 8861] OBJ_tcg_tr_category */
-    0x67,0x81,0x05,0x13,0x03,                      /* [ 8866] OBJ_tcg_tr_registry */
-    0x67,0x81,0x05,0x13,0x01,0x01,                 /* [ 8871] OBJ_tcg_tr_ID_Boolean */
-    0x67,0x81,0x05,0x13,0x01,0x02,                 /* [ 8877] OBJ_tcg_tr_ID_CertificateIdentifier */
-    0x67,0x81,0x05,0x13,0x01,0x03,                 /* [ 8883] OBJ_tcg_tr_ID_CommonCriteria */
-    0x67,0x81,0x05,0x13,0x01,0x04,                 /* [ 8889] OBJ_tcg_tr_ID_componentClass */
-    0x67,0x81,0x05,0x13,0x01,0x05,                 /* [ 8895] OBJ_tcg_tr_ID_componentIdentifierV11 */
-    0x67,0x81,0x05,0x13,0x01,0x06,                 /* [ 8901] OBJ_tcg_tr_ID_FIPSLevel */
-    0x67,0x81,0x05,0x13,0x01,0x07,                 /* [ 8907] OBJ_tcg_tr_ID_ISO9000Level */
-    0x67,0x81,0x05,0x13,0x01,0x08,                 /* [ 8913] OBJ_tcg_tr_ID_networkMAC */
-    0x67,0x81,0x05,0x13,0x01,0x09,                 /* [ 8919] OBJ_tcg_tr_ID_OID */
-    0x67,0x81,0x05,0x13,0x01,0x0A,                 /* [ 8925] OBJ_tcg_tr_ID_PEN */
-    0x67,0x81,0x05,0x13,0x01,0x0B,                 /* [ 8931] OBJ_tcg_tr_ID_platformFirmwareCapabilities */
-    0x67,0x81,0x05,0x13,0x01,0x0C,                 /* [ 8937] OBJ_tcg_tr_ID_platformFirmwareSignatureVerification */
-    0x67,0x81,0x05,0x13,0x01,0x0D,                 /* [ 8943] OBJ_tcg_tr_ID_platformFirmwareUpdateCompliance */
-    0x67,0x81,0x05,0x13,0x01,0x0E,                 /* [ 8949] OBJ_tcg_tr_ID_platformHardwareCapabilities */
-    0x67,0x81,0x05,0x13,0x01,0x0F,                 /* [ 8955] OBJ_tcg_tr_ID_RTM */
-    0x67,0x81,0x05,0x13,0x01,0x10,                 /* [ 8961] OBJ_tcg_tr_ID_status */
-    0x67,0x81,0x05,0x13,0x01,0x11,                 /* [ 8967] OBJ_tcg_tr_ID_URI */
-    0x67,0x81,0x05,0x13,0x01,0x12,                 /* [ 8973] OBJ_tcg_tr_ID_UTF8String */
-    0x67,0x81,0x05,0x13,0x01,0x13,                 /* [ 8979] OBJ_tcg_tr_ID_IA5String */
-    0x67,0x81,0x05,0x13,0x01,0x14,                 /* [ 8985] OBJ_tcg_tr_ID_PEMCertString */
-    0x67,0x81,0x05,0x13,0x01,0x15,                 /* [ 8991] OBJ_tcg_tr_ID_PublicKey */
-    0x67,0x81,0x05,0x13,0x02,0x01,                 /* [ 8997] OBJ_tcg_tr_cat_platformManufacturer */
-    0x67,0x81,0x05,0x13,0x02,0x02,                 /* [ 9003] OBJ_tcg_tr_cat_platformModel */
-    0x67,0x81,0x05,0x13,0x02,0x03,                 /* [ 9009] OBJ_tcg_tr_cat_platformVersion */
-    0x67,0x81,0x05,0x13,0x02,0x04,                 /* [ 9015] OBJ_tcg_tr_cat_platformSerial */
-    0x67,0x81,0x05,0x13,0x02,0x05,                 /* [ 9021] OBJ_tcg_tr_cat_platformManufacturerIdentifier */
-    0x67,0x81,0x05,0x13,0x02,0x06,                 /* [ 9027] OBJ_tcg_tr_cat_platformOwnership */
-    0x67,0x81,0x05,0x13,0x02,0x07,                 /* [ 9033] OBJ_tcg_tr_cat_componentClass */
-    0x67,0x81,0x05,0x13,0x02,0x08,                 /* [ 9039] OBJ_tcg_tr_cat_componentManufacturer */
-    0x67,0x81,0x05,0x13,0x02,0x09,                 /* [ 9045] OBJ_tcg_tr_cat_componentModel */
-    0x67,0x81,0x05,0x13,0x02,0x0A,                 /* [ 9051] OBJ_tcg_tr_cat_componentSerial */
-    0x67,0x81,0x05,0x13,0x02,0x0B,                 /* [ 9057] OBJ_tcg_tr_cat_componentStatus */
-    0x67,0x81,0x05,0x13,0x02,0x0C,                 /* [ 9063] OBJ_tcg_tr_cat_componentLocation */
-    0x67,0x81,0x05,0x13,0x02,0x0D,                 /* [ 9069] OBJ_tcg_tr_cat_componentRevision */
-    0x67,0x81,0x05,0x13,0x02,0x0E,                 /* [ 9075] OBJ_tcg_tr_cat_componentFieldReplaceable */
-    0x67,0x81,0x05,0x13,0x02,0x0F,                 /* [ 9081] OBJ_tcg_tr_cat_EKCertificate */
-    0x67,0x81,0x05,0x13,0x02,0x10,                 /* [ 9087] OBJ_tcg_tr_cat_IAKCertificate */
-    0x67,0x81,0x05,0x13,0x02,0x11,                 /* [ 9093] OBJ_tcg_tr_cat_IDevIDCertificate */
-    0x67,0x81,0x05,0x13,0x02,0x12,                 /* [ 9099] OBJ_tcg_tr_cat_DICECertificate */
-    0x67,0x81,0x05,0x13,0x02,0x13,                 /* [ 9105] OBJ_tcg_tr_cat_SPDMCertificate */
-    0x67,0x81,0x05,0x13,0x02,0x14,                 /* [ 9111] OBJ_tcg_tr_cat_PEMCertificate */
-    0x67,0x81,0x05,0x13,0x02,0x15,                 /* [ 9117] OBJ_tcg_tr_cat_PlatformCertificate */
-    0x67,0x81,0x05,0x13,0x02,0x16,                 /* [ 9123] OBJ_tcg_tr_cat_DeltaPlatformCertificate */
-    0x67,0x81,0x05,0x13,0x02,0x17,                 /* [ 9129] OBJ_tcg_tr_cat_RebasePlatformCertificate */
-    0x67,0x81,0x05,0x13,0x02,0x18,                 /* [ 9135] OBJ_tcg_tr_cat_genericCertificate */
-    0x67,0x81,0x05,0x13,0x02,0x19,                 /* [ 9141] OBJ_tcg_tr_cat_CommonCriteria */
-    0x67,0x81,0x05,0x13,0x02,0x1A,                 /* [ 9147] OBJ_tcg_tr_cat_componentIdentifierV11 */
-    0x67,0x81,0x05,0x13,0x02,0x1B,                 /* [ 9153] OBJ_tcg_tr_cat_FIPSLevel */
-    0x67,0x81,0x05,0x13,0x02,0x1C,                 /* [ 9159] OBJ_tcg_tr_cat_ISO9000 */
-    0x67,0x81,0x05,0x13,0x02,0x1D,                 /* [ 9165] OBJ_tcg_tr_cat_networkMAC */
-    0x67,0x81,0x05,0x13,0x02,0x1E,                 /* [ 9171] OBJ_tcg_tr_cat_attestationProtocol */
-    0x67,0x81,0x05,0x13,0x02,0x1F,                 /* [ 9177] OBJ_tcg_tr_cat_PEN */
-    0x67,0x81,0x05,0x13,0x02,0x20,                 /* [ 9183] OBJ_tcg_tr_cat_platformFirmwareCapabilities */
-    0x67,0x81,0x05,0x13,0x02,0x21,                 /* [ 9189] OBJ_tcg_tr_cat_platformHardwareCapabilities */
-    0x67,0x81,0x05,0x13,0x02,0x22,                 /* [ 9195] OBJ_tcg_tr_cat_platformFirmwareSignatureVerification */
-    0x67,0x81,0x05,0x13,0x02,0x23,                 /* [ 9201] OBJ_tcg_tr_cat_platformFirmwareUpdateCompliance */
-    0x67,0x81,0x05,0x13,0x02,0x24,                 /* [ 9207] OBJ_tcg_tr_cat_RTM */
-    0x67,0x81,0x05,0x13,0x02,0x25,                 /* [ 9213] OBJ_tcg_tr_cat_PublicKey */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x04,0x01,  /* [ 9219] OBJ_ML_KEM_512 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x04,0x02,  /* [ 9228] OBJ_ML_KEM_768 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x04,0x03,  /* [ 9237] OBJ_ML_KEM_1024 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x11,  /* [ 9246] OBJ_ML_DSA_44 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x12,  /* [ 9255] OBJ_ML_DSA_65 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x13,  /* [ 9264] OBJ_ML_DSA_87 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x14,  /* [ 9273] OBJ_SLH_DSA_SHA2_128s */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x15,  /* [ 9282] OBJ_SLH_DSA_SHA2_128f */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x16,  /* [ 9291] OBJ_SLH_DSA_SHA2_192s */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x17,  /* [ 9300] OBJ_SLH_DSA_SHA2_192f */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x18,  /* [ 9309] OBJ_SLH_DSA_SHA2_256s */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x19,  /* [ 9318] OBJ_SLH_DSA_SHA2_256f */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1A,  /* [ 9327] OBJ_SLH_DSA_SHAKE_128s */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1B,  /* [ 9336] OBJ_SLH_DSA_SHAKE_128f */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1C,  /* [ 9345] OBJ_SLH_DSA_SHAKE_192s */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1D,  /* [ 9354] OBJ_SLH_DSA_SHAKE_192f */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1E,  /* [ 9363] OBJ_SLH_DSA_SHAKE_256s */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1F,  /* [ 9372] OBJ_SLH_DSA_SHAKE_256f */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x20,  /* [ 9381] OBJ_HASH_ML_DSA_44_WITH_SHA512 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x21,  /* [ 9390] OBJ_HASH_ML_DSA_65_WITH_SHA512 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x22,  /* [ 9399] OBJ_HASH_ML_DSA_87_WITH_SHA512 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x23,  /* [ 9408] OBJ_SLH_DSA_SHA2_128s_WITH_SHA256 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x24,  /* [ 9417] OBJ_SLH_DSA_SHA2_128f_WITH_SHA256 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x25,  /* [ 9426] OBJ_SLH_DSA_SHA2_192s_WITH_SHA512 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x26,  /* [ 9435] OBJ_SLH_DSA_SHA2_192f_WITH_SHA512 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x27,  /* [ 9444] OBJ_SLH_DSA_SHA2_256s_WITH_SHA512 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x28,  /* [ 9453] OBJ_SLH_DSA_SHA2_256f_WITH_SHA512 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x29,  /* [ 9462] OBJ_SLH_DSA_SHAKE_128s_WITH_SHAKE128 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2A,  /* [ 9471] OBJ_SLH_DSA_SHAKE_128f_WITH_SHAKE128 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2B,  /* [ 9480] OBJ_SLH_DSA_SHAKE_192s_WITH_SHAKE256 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2C,  /* [ 9489] OBJ_SLH_DSA_SHAKE_192f_WITH_SHAKE256 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2D,  /* [ 9498] OBJ_SLH_DSA_SHAKE_256s_WITH_SHAKE256 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2E,  /* [ 9507] OBJ_SLH_DSA_SHAKE_256f_WITH_SHAKE256 */
 };
 
-#define NUM_NID 1487
+#define NUM_NID 1320
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2672,176 +2506,9 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureAlgorithm", "X509v3 Alternative Signature Algorithm", NID_alt_signature_algorithm, 3, &so[8466]},
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
-    {"id-ct-rpkiSignedPrefixList", "id-ct-rpkiSignedPrefixList", NID_id_ct_rpkiSignedPrefixList, 11, &so[8475]},
-    {"id-on-hardwareModuleName", "Hardware Module Name", NID_id_on_hardwareModuleName, 8, &so[8486]},
-    {"id-kp-wisun-fan-device", "Wi-SUN Alliance Field Area Network (FAN)", NID_id_kp_wisun_fan_device, 9, &so[8494]},
-    {"NULL", "NULL", NID_ac_auditEntity},
-    {"tcg", "Trusted Computing Group", NID_tcg, 3, &so[8503]},
-    {"tcg-tcpaSpecVersion", "tcg-tcpaSpecVersion", NID_tcg_tcpaSpecVersion, 4, &so[8506]},
-    {"tcg-attribute", "Trusted Computing Group Attributes", NID_tcg_attribute, 4, &so[8510]},
-    {"tcg-protocol", "Trusted Computing Group Protocols", NID_tcg_protocol, 4, &so[8514]},
-    {"tcg-algorithm", "Trusted Computing Group Algorithms", NID_tcg_algorithm, 4, &so[8518]},
-    {"tcg-platformClass", "Trusted Computing Group Platform Classes", NID_tcg_platformClass, 4, &so[8522]},
-    {"tcg-ce", "Trusted Computing Group Certificate Extensions", NID_tcg_ce, 4, &so[8526]},
-    {"tcg-kp", "Trusted Computing Group Key Purposes", NID_tcg_kp, 4, &so[8530]},
-    {"tcg-ca", "Trusted Computing Group Certificate Policies", NID_tcg_ca, 4, &so[8534]},
-    {"tcg-address", "Trusted Computing Group Address Formats", NID_tcg_address, 4, &so[8538]},
-    {"tcg-registry", "Trusted Computing Group Registry", NID_tcg_registry, 4, &so[8542]},
-    {"tcg-traits", "Trusted Computing Group Traits", NID_tcg_traits, 4, &so[8546]},
-    {"tcg-common", "Trusted Computing Group Common", NID_tcg_common, 5, &so[8550]},
-    {"tcg-at-platformManufacturerStr", "TCG Platform Manufacturer String", NID_tcg_at_platformManufacturerStr, 6, &so[8555]},
-    {"tcg-at-platformManufacturerId", "TCG Platform Manufacturer ID", NID_tcg_at_platformManufacturerId, 6, &so[8561]},
-    {"tcg-at-platformConfigUri", "TCG Platform Configuration URI", NID_tcg_at_platformConfigUri, 6, &so[8567]},
-    {"tcg-at-platformModel", "TCG Platform Model", NID_tcg_at_platformModel, 6, &so[8573]},
-    {"tcg-at-platformVersion", "TCG Platform Version", NID_tcg_at_platformVersion, 6, &so[8579]},
-    {"tcg-at-platformSerial", "TCG Platform Serial Number", NID_tcg_at_platformSerial, 6, &so[8585]},
-    {"tcg-at-platformConfiguration", "TCG Platform Configuration", NID_tcg_at_platformConfiguration, 6, &so[8591]},
-    {"tcg-at-platformIdentifier", "TCG Platform Identifier", NID_tcg_at_platformIdentifier, 6, &so[8597]},
-    {"tcg-at-tpmManufacturer", "TPM Manufacturer", NID_tcg_at_tpmManufacturer, 5, &so[8603]},
-    {"tcg-at-tpmModel", "TPM Model", NID_tcg_at_tpmModel, 5, &so[8608]},
-    {"tcg-at-tpmVersion", "TPM Version", NID_tcg_at_tpmVersion, 5, &so[8613]},
-    {"tcg-at-securityQualities", "Security Qualities", NID_tcg_at_securityQualities, 5, &so[8618]},
-    {"tcg-at-tpmProtectionProfile", "TPM Protection Profile", NID_tcg_at_tpmProtectionProfile, 5, &so[8623]},
-    {"tcg-at-tpmSecurityTarget", "TPM Security Target", NID_tcg_at_tpmSecurityTarget, 5, &so[8628]},
-    {"tcg-at-tbbProtectionProfile", "TBB Protection Profile", NID_tcg_at_tbbProtectionProfile, 5, &so[8633]},
-    {"tcg-at-tbbSecurityTarget", "TBB Security Target", NID_tcg_at_tbbSecurityTarget, 5, &so[8638]},
-    {"tcg-at-tpmIdLabel", "TPM ID Label", NID_tcg_at_tpmIdLabel, 5, &so[8643]},
-    {"tcg-at-tpmSpecification", "TPM Specification", NID_tcg_at_tpmSpecification, 5, &so[8648]},
-    {"tcg-at-tcgPlatformSpecification", "TPM Platform Specification", NID_tcg_at_tcgPlatformSpecification, 5, &so[8653]},
-    {"tcg-at-tpmSecurityAssertions", "TPM Security Assertions", NID_tcg_at_tpmSecurityAssertions, 5, &so[8658]},
-    {"tcg-at-tbbSecurityAssertions", "TBB Security Assertions", NID_tcg_at_tbbSecurityAssertions, 5, &so[8663]},
-    {"tcg-at-tcgCredentialSpecification", "TCG Credential Specification", NID_tcg_at_tcgCredentialSpecification, 5, &so[8668]},
-    {"tcg-at-tcgCredentialType", "TCG Credential Type", NID_tcg_at_tcgCredentialType, 5, &so[8673]},
-    {"tcg-at-previousPlatformCertificates", "TCG Previous Platform Certificates", NID_tcg_at_previousPlatformCertificates, 5, &so[8678]},
-    {"tcg-at-tbbSecurityAssertions-v3", "TCG TBB Security Assertions V3", NID_tcg_at_tbbSecurityAssertions_v3, 5, &so[8683]},
-    {"tcg-at-cryptographicAnchors", "TCG Cryptographic Anchors", NID_tcg_at_cryptographicAnchors, 5, &so[8688]},
-    {"tcg-at-platformConfiguration-v1", "Platform Configuration Version 1", NID_tcg_at_platformConfiguration_v1, 7, &so[8693]},
-    {"tcg-at-platformConfiguration-v2", "Platform Configuration Version 2", NID_tcg_at_platformConfiguration_v2, 7, &so[8700]},
-    {"tcg-at-platformConfiguration-v3", "Platform Configuration Version 3", NID_tcg_at_platformConfiguration_v3, 7, &so[8707]},
-    {"tcg-at-platformConfigUri-v3", "Platform Configuration URI Version 3", NID_tcg_at_platformConfigUri_v3, 7, &so[8714]},
-    {"tcg-algorithm-null", "TCG NULL Algorithm", NID_tcg_algorithm_null, 5, &so[8721]},
-    {"tcg-kp-EKCertificate", "Endorsement Key Certificate", NID_tcg_kp_EKCertificate, 5, &so[8726]},
-    {"tcg-kp-PlatformAttributeCertificate", "Platform Attribute Certificate", NID_tcg_kp_PlatformAttributeCertificate, 5, &so[8731]},
-    {"tcg-kp-AIKCertificate", "Attestation Identity Key Certificate", NID_tcg_kp_AIKCertificate, 5, &so[8736]},
-    {"tcg-kp-PlatformKeyCertificate", "Platform Key Certificate", NID_tcg_kp_PlatformKeyCertificate, 5, &so[8741]},
-    {"tcg-kp-DeltaPlatformAttributeCertificate", "Delta Platform Attribute Certificate", NID_tcg_kp_DeltaPlatformAttributeCertificate, 5, &so[8746]},
-    {"tcg-kp-DeltaPlatformKeyCertificate", "Delta Platform Key Certificate", NID_tcg_kp_DeltaPlatformKeyCertificate, 5, &so[8751]},
-    {"tcg-kp-AdditionalPlatformAttributeCertificate", "Additional Platform Attribute Certificate", NID_tcg_kp_AdditionalPlatformAttributeCertificate, 5, &so[8756]},
-    {"tcg-kp-AdditionalPlatformKeyCertificate", "Additional Platform Key Certificate", NID_tcg_kp_AdditionalPlatformKeyCertificate, 5, &so[8761]},
-    {"tcg-ce-relevantCredentials", "Relevant Credentials", NID_tcg_ce_relevantCredentials, 5, &so[8766]},
-    {"tcg-ce-relevantManifests", "Relevant Manifests", NID_tcg_ce_relevantManifests, 5, &so[8771]},
-    {"tcg-ce-virtualPlatformAttestationService", "Virtual Platform Attestation Service", NID_tcg_ce_virtualPlatformAttestationService, 5, &so[8776]},
-    {"tcg-ce-migrationControllerAttestationService", "Migration Controller Attestation Service", NID_tcg_ce_migrationControllerAttestationService, 5, &so[8781]},
-    {"tcg-ce-migrationControllerRegistrationService", "Migration Controller Registration Service", NID_tcg_ce_migrationControllerRegistrationService, 5, &so[8786]},
-    {"tcg-ce-virtualPlatformBackupService", "Virtual Platform Backup Service", NID_tcg_ce_virtualPlatformBackupService, 5, &so[8791]},
-    {"tcg-prt-tpmIdProtocol", "TCG TPM Protocol", NID_tcg_prt_tpmIdProtocol, 5, &so[8796]},
-    {"tcg-address-ethernetmac", "Ethernet MAC Address", NID_tcg_address_ethernetmac, 5, &so[8801]},
-    {"tcg-address-wlanmac", "WLAN MAC Address", NID_tcg_address_wlanmac, 5, &so[8806]},
-    {"tcg-address-bluetoothmac", "Bluetooth MAC Address", NID_tcg_address_bluetoothmac, 5, &so[8811]},
-    {"tcg-registry-componentClass", "TCG Component Class", NID_tcg_registry_componentClass, 5, &so[8816]},
-    {"tcg-registry-componentClass-tcg", "Trusted Computed Group Registry", NID_tcg_registry_componentClass_tcg, 6, &so[8821]},
-    {"tcg-registry-componentClass-ietf", "Internet Engineering Task Force Registry", NID_tcg_registry_componentClass_ietf, 6, &so[8827]},
-    {"tcg-registry-componentClass-dmtf", "Distributed Management Task Force Registry", NID_tcg_registry_componentClass_dmtf, 6, &so[8833]},
-    {"tcg-registry-componentClass-pcie", "PCIE Component Class", NID_tcg_registry_componentClass_pcie, 6, &so[8839]},
-    {"tcg-registry-componentClass-disk", "Disk Component Class", NID_tcg_registry_componentClass_disk, 6, &so[8845]},
-    {"tcg-cap-verifiedPlatformCertificate", "TCG Verified Platform Certificate CA Policy", NID_tcg_cap_verifiedPlatformCertificate, 5, &so[8851]},
-    {"tcg-tr-ID", "TCG Trait Identifiers", NID_tcg_tr_ID, 5, &so[8856]},
-    {"tcg-tr-category", "TCG Trait Categories", NID_tcg_tr_category, 5, &so[8861]},
-    {"tcg-tr-registry", "TCG Trait Registries", NID_tcg_tr_registry, 5, &so[8866]},
-    {"tcg-tr-ID-Boolean", "Boolean Trait", NID_tcg_tr_ID_Boolean, 6, &so[8871]},
-    {"tcg-tr-ID-CertificateIdentifier", "Certificate Identifier Trait", NID_tcg_tr_ID_CertificateIdentifier, 6, &so[8877]},
-    {"tcg-tr-ID-CommonCriteria", "Common Criteria Trait", NID_tcg_tr_ID_CommonCriteria, 6, &so[8883]},
-    {"tcg-tr-ID-componentClass", "Component Class Trait", NID_tcg_tr_ID_componentClass, 6, &so[8889]},
-    {"tcg-tr-ID-componentIdentifierV11", "Component Identifier V1.1 Trait", NID_tcg_tr_ID_componentIdentifierV11, 6, &so[8895]},
-    {"tcg-tr-ID-FIPSLevel", "FIPS Level Trait", NID_tcg_tr_ID_FIPSLevel, 6, &so[8901]},
-    {"tcg-tr-ID-ISO9000Level", "ISO 9000 Level Trait", NID_tcg_tr_ID_ISO9000Level, 6, &so[8907]},
-    {"tcg-tr-ID-networkMAC", "Network MAC Trait", NID_tcg_tr_ID_networkMAC, 6, &so[8913]},
-    {"tcg-tr-ID-OID", "Object Identifier Trait", NID_tcg_tr_ID_OID, 6, &so[8919]},
-    {"tcg-tr-ID-PEN", "Private Enterprise Number Trait", NID_tcg_tr_ID_PEN, 6, &so[8925]},
-    {"tcg-tr-ID-platformFirmwareCapabilities", "Platform Firmware Capabilities Trait", NID_tcg_tr_ID_platformFirmwareCapabilities, 6, &so[8931]},
-    {"tcg-tr-ID-platformFirmwareSignatureVerification", "Platform Firmware Signature Verification Trait", NID_tcg_tr_ID_platformFirmwareSignatureVerification, 6, &so[8937]},
-    {"tcg-tr-ID-platformFirmwareUpdateCompliance", "Platform Firmware Update Compliance Trait", NID_tcg_tr_ID_platformFirmwareUpdateCompliance, 6, &so[8943]},
-    {"tcg-tr-ID-platformHardwareCapabilities", "Platform Hardware Capabilities Trait", NID_tcg_tr_ID_platformHardwareCapabilities, 6, &so[8949]},
-    {"tcg-tr-ID-RTM", "Root of Trust for Measurement Trait", NID_tcg_tr_ID_RTM, 6, &so[8955]},
-    {"tcg-tr-ID-status", "Attribute Status Trait", NID_tcg_tr_ID_status, 6, &so[8961]},
-    {"tcg-tr-ID-URI", "Uniform Resource Identifier Trait", NID_tcg_tr_ID_URI, 6, &so[8967]},
-    {"tcg-tr-ID-UTF8String", "UTF8String Trait", NID_tcg_tr_ID_UTF8String, 6, &so[8973]},
-    {"tcg-tr-ID-IA5String", "IA5String Trait", NID_tcg_tr_ID_IA5String, 6, &so[8979]},
-    {"tcg-tr-ID-PEMCertString", "PEM-Encoded Certificate String Trait", NID_tcg_tr_ID_PEMCertString, 6, &so[8985]},
-    {"tcg-tr-ID-PublicKey", "Public Key Trait", NID_tcg_tr_ID_PublicKey, 6, &so[8991]},
-    {"tcg-tr-cat-platformManufacturer", "Platform Manufacturer Trait Category", NID_tcg_tr_cat_platformManufacturer, 6, &so[8997]},
-    {"tcg-tr-cat-platformModel", "Platform Model Trait Category", NID_tcg_tr_cat_platformModel, 6, &so[9003]},
-    {"tcg-tr-cat-platformVersion", "Platform Version Trait Category", NID_tcg_tr_cat_platformVersion, 6, &so[9009]},
-    {"tcg-tr-cat-platformSerial", "Platform Serial Trait Category", NID_tcg_tr_cat_platformSerial, 6, &so[9015]},
-    {"tcg-tr-cat-platformManufacturerIdentifier", "Platform Manufacturer Identifier Trait Category", NID_tcg_tr_cat_platformManufacturerIdentifier, 6, &so[9021]},
-    {"tcg-tr-cat-platformOwnership", "Platform Ownership Trait Category", NID_tcg_tr_cat_platformOwnership, 6, &so[9027]},
-    {"tcg-tr-cat-componentClass", "Component Class Trait Category", NID_tcg_tr_cat_componentClass, 6, &so[9033]},
-    {"tcg-tr-cat-componentManufacturer", "Component Manufacturer Trait Category", NID_tcg_tr_cat_componentManufacturer, 6, &so[9039]},
-    {"tcg-tr-cat-componentModel", "Component Model Trait Category", NID_tcg_tr_cat_componentModel, 6, &so[9045]},
-    {"tcg-tr-cat-componentSerial", "Component Serial Trait Category", NID_tcg_tr_cat_componentSerial, 6, &so[9051]},
-    {"tcg-tr-cat-componentStatus", "Component Status Trait Category", NID_tcg_tr_cat_componentStatus, 6, &so[9057]},
-    {"tcg-tr-cat-componentLocation", "Component Location Trait Category", NID_tcg_tr_cat_componentLocation, 6, &so[9063]},
-    {"tcg-tr-cat-componentRevision", "Component Revision Trait Category", NID_tcg_tr_cat_componentRevision, 6, &so[9069]},
-    {"tcg-tr-cat-componentFieldReplaceable", "Component Field Replaceable Trait Category", NID_tcg_tr_cat_componentFieldReplaceable, 6, &so[9075]},
-    {"tcg-tr-cat-EKCertificate", "EK Certificate Trait Category", NID_tcg_tr_cat_EKCertificate, 6, &so[9081]},
-    {"tcg-tr-cat-IAKCertificate", "IAK Certificate Trait Category", NID_tcg_tr_cat_IAKCertificate, 6, &so[9087]},
-    {"tcg-tr-cat-IDevIDCertificate", "IDevID Certificate Trait Category", NID_tcg_tr_cat_IDevIDCertificate, 6, &so[9093]},
-    {"tcg-tr-cat-DICECertificate", "DICE Certificate Trait Category", NID_tcg_tr_cat_DICECertificate, 6, &so[9099]},
-    {"tcg-tr-cat-SPDMCertificate", "SPDM Certificate Trait Category", NID_tcg_tr_cat_SPDMCertificate, 6, &so[9105]},
-    {"tcg-tr-cat-PEMCertificate", "PEM Certificate Trait Category", NID_tcg_tr_cat_PEMCertificate, 6, &so[9111]},
-    {"tcg-tr-cat-PlatformCertificate", "Platform Certificate Trait Category", NID_tcg_tr_cat_PlatformCertificate, 6, &so[9117]},
-    {"tcg-tr-cat-DeltaPlatformCertificate", "Delta Platform Certificate Trait Category", NID_tcg_tr_cat_DeltaPlatformCertificate, 6, &so[9123]},
-    {"tcg-tr-cat-RebasePlatformCertificate", "Rebase Platform Certificate Trait Category", NID_tcg_tr_cat_RebasePlatformCertificate, 6, &so[9129]},
-    {"tcg-tr-cat-genericCertificate", "Generic Certificate Trait Category", NID_tcg_tr_cat_genericCertificate, 6, &so[9135]},
-    {"tcg-tr-cat-CommonCriteria", "Common Criteria Trait Category", NID_tcg_tr_cat_CommonCriteria, 6, &so[9141]},
-    {"tcg-tr-cat-componentIdentifierV11", "Component Identifier V1.1 Trait Category", NID_tcg_tr_cat_componentIdentifierV11, 6, &so[9147]},
-    {"tcg-tr-cat-FIPSLevel", "FIPS Level Trait Category", NID_tcg_tr_cat_FIPSLevel, 6, &so[9153]},
-    {"tcg-tr-cat-ISO9000", "ISO 9000 Trait Category", NID_tcg_tr_cat_ISO9000, 6, &so[9159]},
-    {"tcg-tr-cat-networkMAC", "Network MAC Trait Category", NID_tcg_tr_cat_networkMAC, 6, &so[9165]},
-    {"tcg-tr-cat-attestationProtocol", "Attestation Protocol Trait Category", NID_tcg_tr_cat_attestationProtocol, 6, &so[9171]},
-    {"tcg-tr-cat-PEN", "Private Enterprise Number Trait Category", NID_tcg_tr_cat_PEN, 6, &so[9177]},
-    {"tcg-tr-cat-platformFirmwareCapabilities", "Platform Firmware Capabilities Trait Category", NID_tcg_tr_cat_platformFirmwareCapabilities, 6, &so[9183]},
-    {"tcg-tr-cat-platformHardwareCapabilities", "Platform Hardware Capabilities Trait Category", NID_tcg_tr_cat_platformHardwareCapabilities, 6, &so[9189]},
-    {"tcg-tr-cat-platformFirmwareSignatureVerification", "Platform Firmware Signature Verification Trait Category", NID_tcg_tr_cat_platformFirmwareSignatureVerification, 6, &so[9195]},
-    {"tcg-tr-cat-platformFirmwareUpdateCompliance", "Platform Firmware Update Compliance Trait Category", NID_tcg_tr_cat_platformFirmwareUpdateCompliance, 6, &so[9201]},
-    {"tcg-tr-cat-RTM", "Root of Trust of Measurement Trait Category", NID_tcg_tr_cat_RTM, 6, &so[9207]},
-    {"tcg-tr-cat-PublicKey", "Public Key Trait Category", NID_tcg_tr_cat_PublicKey, 6, &so[9213]},
-    {"id-alg-ml-kem-512", "ML-KEM-512", NID_ML_KEM_512, 9, &so[9219]},
-    {"id-alg-ml-kem-768", "ML-KEM-768", NID_ML_KEM_768, 9, &so[9228]},
-    {"id-alg-ml-kem-1024", "ML-KEM-1024", NID_ML_KEM_1024, 9, &so[9237]},
-    {"id-ml-dsa-44", "ML-DSA-44", NID_ML_DSA_44, 9, &so[9246]},
-    {"id-ml-dsa-65", "ML-DSA-65", NID_ML_DSA_65, 9, &so[9255]},
-    {"id-ml-dsa-87", "ML-DSA-87", NID_ML_DSA_87, 9, &so[9264]},
-    {"id-slh-dsa-sha2-128s", "SLH-DSA-SHA2-128s", NID_SLH_DSA_SHA2_128s, 9, &so[9273]},
-    {"id-slh-dsa-sha2-128f", "SLH-DSA-SHA2-128f", NID_SLH_DSA_SHA2_128f, 9, &so[9282]},
-    {"id-slh-dsa-sha2-192s", "SLH-DSA-SHA2-192s", NID_SLH_DSA_SHA2_192s, 9, &so[9291]},
-    {"id-slh-dsa-sha2-192f", "SLH-DSA-SHA2-192f", NID_SLH_DSA_SHA2_192f, 9, &so[9300]},
-    {"id-slh-dsa-sha2-256s", "SLH-DSA-SHA2-256s", NID_SLH_DSA_SHA2_256s, 9, &so[9309]},
-    {"id-slh-dsa-sha2-256f", "SLH-DSA-SHA2-256f", NID_SLH_DSA_SHA2_256f, 9, &so[9318]},
-    {"id-slh-dsa-shake-128s", "SLH-DSA-SHAKE-128s", NID_SLH_DSA_SHAKE_128s, 9, &so[9327]},
-    {"id-slh-dsa-shake-128f", "SLH-DSA-SHAKE-128f", NID_SLH_DSA_SHAKE_128f, 9, &so[9336]},
-    {"id-slh-dsa-shake-192s", "SLH-DSA-SHAKE-192s", NID_SLH_DSA_SHAKE_192s, 9, &so[9345]},
-    {"id-slh-dsa-shake-192f", "SLH-DSA-SHAKE-192f", NID_SLH_DSA_SHAKE_192f, 9, &so[9354]},
-    {"id-slh-dsa-shake-256s", "SLH-DSA-SHAKE-256s", NID_SLH_DSA_SHAKE_256s, 9, &so[9363]},
-    {"id-slh-dsa-shake-256f", "SLH-DSA-SHAKE-256f", NID_SLH_DSA_SHAKE_256f, 9, &so[9372]},
-    {"id-hash-ml-dsa-44-with-sha512", "HASH-ML-DSA-44-WITH-SHA512", NID_HASH_ML_DSA_44_WITH_SHA512, 9, &so[9381]},
-    {"id-hash-ml-dsa-65-with-sha512", "HASH-ML-DSA-65-WITH-SHA512", NID_HASH_ML_DSA_65_WITH_SHA512, 9, &so[9390]},
-    {"id-hash-ml-dsa-87-with-sha512", "HASH-ML-DSA-87-WITH-SHA512", NID_HASH_ML_DSA_87_WITH_SHA512, 9, &so[9399]},
-    {"id-hash-slh-dsa-sha2-128s-with-sha256", "SLH-DSA-SHA2-128s-WITH-SHA256", NID_SLH_DSA_SHA2_128s_WITH_SHA256, 9, &so[9408]},
-    {"id-hash-slh-dsa-sha2-128f-with-sha256", "SLH-DSA-SHA2-128f-WITH-SHA256", NID_SLH_DSA_SHA2_128f_WITH_SHA256, 9, &so[9417]},
-    {"id-hash-slh-dsa-sha2-192s-with-sha512", "SLH-DSA-SHA2-192s-WITH-SHA512", NID_SLH_DSA_SHA2_192s_WITH_SHA512, 9, &so[9426]},
-    {"id-hash-slh-dsa-sha2-192f-with-sha512", "SLH-DSA-SHA2-192f-WITH-SHA512", NID_SLH_DSA_SHA2_192f_WITH_SHA512, 9, &so[9435]},
-    {"id-hash-slh-dsa-sha2-256s-with-sha512", "SLH-DSA-SHA2-256s-WITH-SHA512", NID_SLH_DSA_SHA2_256s_WITH_SHA512, 9, &so[9444]},
-    {"id-hash-slh-dsa-sha2-256f-with-sha512", "SLH-DSA-SHA2-256f-WITH-SHA512", NID_SLH_DSA_SHA2_256f_WITH_SHA512, 9, &so[9453]},
-    {"id-hash-slh-dsa-shake-128s-with-shake128", "SLH-DSA-SHAKE-128s-WITH-SHAKE128", NID_SLH_DSA_SHAKE_128s_WITH_SHAKE128, 9, &so[9462]},
-    {"id-hash-slh-dsa-shake-128f-with-shake128", "SLH-DSA-SHAKE-128f-WITH-SHAKE128", NID_SLH_DSA_SHAKE_128f_WITH_SHAKE128, 9, &so[9471]},
-    {"id-hash-slh-dsa-shake-192s-with-shake256", "SLH-DSA-SHAKE-192s-WITH-SHAKE256", NID_SLH_DSA_SHAKE_192s_WITH_SHAKE256, 9, &so[9480]},
-    {"id-hash-slh-dsa-shake-192f-with-shake256", "SLH-DSA-SHAKE-192f-WITH-SHAKE256", NID_SLH_DSA_SHAKE_192f_WITH_SHAKE256, 9, &so[9489]},
-    {"id-hash-slh-dsa-shake-256s-with-shake256", "SLH-DSA-SHAKE-256s-WITH-SHAKE256", NID_SLH_DSA_SHAKE_256s_WITH_SHAKE256, 9, &so[9498]},
-    {"id-hash-slh-dsa-shake-256f-with-shake256", "SLH-DSA-SHAKE-256f-WITH-SHAKE256", NID_SLH_DSA_SHAKE_256f_WITH_SHAKE256, 9, &so[9507]},
 };
 
-#define NUM_SN 1478
+#define NUM_SN 1311
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3363,6 +3030,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      812,    /* "gost94" */
      850,    /* "gost94cc" */
     1310,    /* "groupAC" */
+    1322,    /* "hkdfWithSHA256" */
     1156,    /* "hmacWithDstu34311" */
      797,    /* "hmacWithMD5" */
      163,    /* "hmacWithSHA1" */
@@ -3423,6 +3091,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      808,    /* "id-GostR3411-94-with-GostR3410-94" */
      852,    /* "id-GostR3411-94-with-GostR3410-94-cc" */
      810,    /* "id-HMACGostR3411-94" */
+    1321,    /* "id-KemBasedMac" */
      782,    /* "id-PasswordBasedMAC" */
     1272,    /* "id-aa-ATSHashIndex" */
     1277,    /* "id-aa-ATSHashIndex-v2" */
@@ -3541,6 +3210,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1104,    /* "id-hmacWithSHA3-384" */
     1105,    /* "id-hmacWithSHA3-512" */
      260,    /* "id-it" */
+    1320,    /* "id-it-KemCiphertextInfo" */
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
@@ -3564,6 +3234,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      306,    /* "id-it-subscriptionResponse" */
      784,    /* "id-it-suppLangTags" */
      304,    /* "id-it-unsupportedOIDs" */
+    1324,    /* "id-kdf-kdf2" */
+    1323,    /* "id-kem-rsa" */
      128,    /* "id-kp" */
     1221,    /* "id-kp-BrandIndicatorforMessageIdentification" */
     1220,    /* "id-kp-bgpsec-router" */
@@ -4323,7 +3995,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1478
+#define NUM_LN 1311
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4446,10 +4118,6 @@ static const unsigned int ln_objs[NUM_LN] = {
      808,    /* "GOST R 34.11-94 with GOST R 34.10-94" */
      852,    /* "GOST R 34.11-94 with GOST R 34.10-94 Cryptocom" */
      854,    /* "GOST R 3410-2001 Parameter Set Cryptocom" */
-    1440,    /* "Generic Certificate Trait Category" */
-    1472,    /* "HASH-ML-DSA-44-WITH-SHA512" */
-    1473,    /* "HASH-ML-DSA-65-WITH-SHA512" */
-    1474,    /* "HASH-ML-DSA-87-WITH-SHA512" */
     1156,    /* "HMAC DSTU Gost 34311-95" */
      988,    /* "HMAC GOST 34.11-2012 256 bit" */
      989,    /* "HMAC GOST 34.11-2012 512 bit" */
@@ -4479,6 +4147,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      647,    /* "International Organizations" */
     1388,    /* "Internet Engineering Task Force Registry" */
      142,    /* "Invalidity Date" */
+    1321,    /* "KEM based MAC" */
      504,    /* "MIME MHS" */
     1457,    /* "ML-DSA-44" */
     1458,    /* "ML-DSA-65" */
@@ -5187,6 +4856,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      508,    /* "id-hex-multipart-message" */
      507,    /* "id-hex-partial-message" */
      260,    /* "id-it" */
+    1320,    /* "id-it-KemCiphertextInfo" */
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
@@ -5210,6 +4880,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      306,    /* "id-it-subscriptionResponse" */
      784,    /* "id-it-suppLangTags" */
      304,    /* "id-it-unsupportedOIDs" */
+    1324,    /* "id-kdf-kdf2" */
+    1323,    /* "id-kem-rsa" */
      128,    /* "id-kp" */
      280,    /* "id-mod-attribute-cert" */
      274,    /* "id-mod-cmc" */
@@ -5805,7 +5477,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1344
+#define NUM_OBJ 1177
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -6346,6 +6018,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1278,    /* OBJ_id_aa_ATSHashIndex_v3        0 4 0 19122 1 5 */
     1279,    /* OBJ_signedAssertion              0 4 0 19122 1 6 */
      436,    /* OBJ_ucl                          0 9 2342 19200300 */
+    1323,    /* OBJ_id_kem_rsa                   1 0 18033 2 2 4 */
+    1324,    /* OBJ_id_kdf_kdf2                  1 0 18033 2 5 2 */
      820,    /* OBJ_id_Gost28147_89_None_KeyMeshing 1 2 643 2 2 14 0 */
      819,    /* OBJ_id_Gost28147_89_CryptoPro_KeyMeshing 1 2 643 2 2 14 1 */
      845,    /* OBJ_id_GostR3410_94_a            1 2 643 2 2 20 1 */
@@ -6628,6 +6302,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1255,    /* OBJ_id_it_certProfile            1 3 6 1 5 5 7 4 21 */
     1256,    /* OBJ_id_it_crlStatusList          1 3 6 1 5 5 7 4 22 */
     1257,    /* OBJ_id_it_crls                   1 3 6 1 5 5 7 4 23 */
+    1320,    /* OBJ_id_it_KemCiphertextInfo      1 3 6 1 5 5 7 4 24 */
      313,    /* OBJ_id_regCtrl                   1 3 6 1 5 5 7 5 1 */
      314,    /* OBJ_id_regInfo                   1 3 6 1 5 5 7 5 2 */
      323,    /* OBJ_id_alg_des40                 1 3 6 1 5 5 7 6 1 */
@@ -6738,6 +6413,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      108,    /* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
      112,    /* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
      782,    /* OBJ_id_PasswordBasedMAC          1 2 840 113533 7 66 13 */
+    1321,    /* OBJ_id_KemBasedMac               1 2 840 113533 7 66 16 */
      783,    /* OBJ_id_DHBasedMac                1 2 840 113533 7 66 30 */
        6,    /* OBJ_rsaEncryption                1 2 840 113549 1 1 1 */
        7,    /* OBJ_md2WithRSAEncryption         1 2 840 113549 1 1 2 */
@@ -7118,6 +6794,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      247,    /* OBJ_id_smime_alg_CMSRC2wrap      1 2 840 113549 1 9 16 3 7 */
      125,    /* OBJ_zlib_compression             1 2 840 113549 1 9 16 3 8 */
      893,    /* OBJ_id_alg_PWRI_KEK              1 2 840 113549 1 9 16 3 9 */
+    1322,    /* OBJ_hkdfWithSHA256               1 2 840 113549 1 9 16 3 28 */
      248,    /* OBJ_id_smime_cd_ldap             1 2 840 113549 1 9 16 4 1 */
      249,    /* OBJ_id_smime_spq_ets_sqt_uri     1 2 840 113549 1 9 16 5 1 */
      250,    /* OBJ_id_smime_spq_ets_sqt_unotice 1 2 840 113549 1 9 16 5 2 */

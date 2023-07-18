@@ -262,6 +262,7 @@ typedef struct ossl_cmp_certresponse_st OSSL_CMP_CERTRESPONSE;
     generate_stack_macros("OSSL_CMP_CERTRESPONSE");
 -}
 typedef STACK_OF(ASN1_UTF8STRING) OSSL_CMP_PKIFREETEXT;
+typedef struct ossl_cmp_KemOtherInfo_st OSSL_CMP_KEMOTHERINFO;
 
 /*
  * function DECLARATIONS
@@ -276,7 +277,6 @@ ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav);
 int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **sk_p,
                                    OSSL_CMP_ITAV *itav);
 void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
-
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING)
                                               *certProfile);
 int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
@@ -360,6 +360,9 @@ const char *OSSL_CMP_CTX_get0_propq(const OSSL_CMP_CTX *ctx);
 #  define OSSL_CMP_OPT_IGNORE_KEYUSAGE 35
 #  define OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR 36
 #  define OSSL_CMP_OPT_NO_CACHE_EXTRACERTS 37
+#  define OSSL_CMP_OPT_SSK_LEN 38
+#  define OSSL_CMP_OPT_KEM_MAC_ALGNID 39
+#  define OSSL_CMP_OPT_KEM_STATUS 40
 int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val);
 int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt);
 /* CMP-specific callback for logging and outputting the error queue: */
@@ -466,6 +469,7 @@ STACK_OF(OSSL_CMP_ITAV)
 OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg);
 int OSSL_CMP_MSG_get_bodytype(const OSSL_CMP_MSG *msg);
 X509_PUBKEY *OSSL_CMP_MSG_get0_certreq_publickey(const OSSL_CMP_MSG *msg);
+STACK_OF(X509)* OSSL_CMP_MSG_get_extraCerts(const OSSL_CMP_MSG *msg);
 int OSSL_CMP_MSG_update_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
 int OSSL_CMP_MSG_update_recipNonce(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
 OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid);
@@ -542,6 +546,8 @@ int OSSL_CMP_SRV_CTX_set_accept_unprotected(OSSL_CMP_SRV_CTX *srv_ctx, int val);
 int OSSL_CMP_SRV_CTX_set_accept_raverified(OSSL_CMP_SRV_CTX *srv_ctx, int val);
 int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
                                                 int val);
+OSSL_CMP_ITAV *OSSL_CMP_SRV_kem_get_ss(OSSL_CMP_SRV_CTX *srv_ctx,
+                                       const EVP_PKEY *pubkey);
 
 /* from cmp_client.c */
 X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
@@ -576,6 +582,9 @@ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
 int OSSL_CMP_get1_certReqTemplate(OSSL_CMP_CTX *ctx,
                                   OSSL_CRMF_CERTTEMPLATE **certTemplate,
                                   OSSL_CMP_ATAVS **keySpec);
+
+/* from cmp_kem.c */
+int OSSL_CMP_get_ssk(OSSL_CMP_CTX *ctx);
 
 #  ifdef  __cplusplus
 }
