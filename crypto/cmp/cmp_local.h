@@ -777,6 +777,9 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
 
 /* from cmp_asn.c */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);
+OSSL_CMP_ITAV *ossl_cmp_itav_new_KemCiphertext(X509_ALGOR *kem,
+                                               unsigned char *in_ct,
+                                               int len);
 
 /* from cmp_util.c */
 const char *ossl_cmp_log_parse_metadata(const char *buf,

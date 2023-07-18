@@ -206,6 +206,37 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
     return 0;
 }
 
+OSSL_CMP_ITAV *ossl_cmp_itav_new_KemCiphertext(X509_ALGOR *kem,
+                                               unsigned char *in_ct,
+                                               int len)
+{
+    ASN1_OCTET_STRING *ct = NULL;
+    OSSL_CMP_ITAV *itav;
+
+    if (kem == NULL || in_ct == NULL)
+        return NULL;
+
+    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
+        return NULL;
+    itav->infoType = OBJ_nid2obj(NID_id_it_KemCiphertextInfo);
+    itav->infoValue.KemCiphertextInfoValue = OSSL_CMP_KEMCIPHERTEXTINFO_new();
+    if (itav->infoValue.KemCiphertextInfoValue == NULL)
+        goto err;
+
+    itav->infoValue.KemCiphertextInfoValue->kem = kem;
+    if (itav->infoValue.KemCiphertextInfoValue->kem == NULL)
+        goto err;
+
+    if (!ossl_cmp_asn1_octet_string_set1_bytes(&ct, in_ct, len))
+        goto err;
+    itav->infoValue.KemCiphertextInfoValue->ct = ct;
+    return itav;
+
+ err:
+    OSSL_CMP_ITAV_free(itav);
+    return NULL;
+}
+
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts)
 {
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new();
