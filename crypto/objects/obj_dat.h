@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8476] = {
+static const unsigned char so[8484] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1182,9 +1182,10 @@ static const unsigned char so[8476] = {
     0x55,0x1D,0x49,                                /* [ 8466] OBJ_alt_signature_algorithm */
     0x55,0x1D,0x4A,                                /* [ 8469] OBJ_alt_signature_value */
     0x55,0x1D,0x4B,                                /* [ 8472] OBJ_associated_information */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x18,       /* [ 8475] OBJ_id_it_KemCiphertextInfo */
 };
 
-#define NUM_NID 1320
+#define NUM_NID 1321
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2506,9 +2507,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureAlgorithm", "X509v3 Alternative Signature Algorithm", NID_alt_signature_algorithm, 3, &so[8466]},
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
+    {"id-it-KemCiphertextInfo", "id-it-KemCiphertextInfo", NID_id_it_KemCiphertextInfo, 8, &so[8475]},
 };
 
-#define NUM_SN 1311
+#define NUM_SN 1312
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3188,6 +3190,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1104,    /* "id-hmacWithSHA3-384" */
     1105,    /* "id-hmacWithSHA3-512" */
      260,    /* "id-it" */
+    1320,    /* "id-it-KemCiphertextInfo" */
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
@@ -3823,7 +3826,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1311
+#define NUM_LN 1312
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4521,6 +4524,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      508,    /* "id-hex-multipart-message" */
      507,    /* "id-hex-partial-message" */
      260,    /* "id-it" */
+    1320,    /* "id-it-KemCiphertextInfo" */
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
@@ -5138,7 +5142,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1177
+#define NUM_OBJ 1178
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5830,6 +5834,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1255,    /* OBJ_id_it_certProfile            1 3 6 1 5 5 7 4 21 */
     1256,    /* OBJ_id_it_crlStatusList          1 3 6 1 5 5 7 4 22 */
     1257,    /* OBJ_id_it_crls                   1 3 6 1 5 5 7 4 23 */
+    1320,    /* OBJ_id_it_KemCiphertextInfo      1 3 6 1 5 5 7 4 24 */
      313,    /* OBJ_id_regCtrl                   1 3 6 1 5 5 7 5 1 */
      314,    /* OBJ_id_regInfo                   1 3 6 1 5 5 7 5 2 */
      323,    /* OBJ_id_alg_des40                 1 3 6 1 5 5 7 6 1 */

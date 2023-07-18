@@ -602,6 +602,8 @@ id-it 20		: id-it-rootCaCert
 id-it 21		: id-it-certProfile
 id-it 22		: id-it-crlStatusList
 id-it 23		: id-it-crls
+# preliminary value for prototyping (TBD by IANA)
+id-it 24		: id-it-KemCiphertextInfo
 
 # CRMF registration
 id-pkip 1		: id-regCtrl

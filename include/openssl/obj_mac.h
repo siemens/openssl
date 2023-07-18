@@ -1861,6 +1861,10 @@
 #define NID_id_it_crls          1257
 #define OBJ_id_it_crls          OBJ_id_it,23L
 
+#define SN_id_it_KemCiphertextInfo              "id-it-KemCiphertextInfo"
+#define NID_id_it_KemCiphertextInfo             1320
+#define OBJ_id_it_KemCiphertextInfo             OBJ_id_it,24L
+
 #define SN_id_regCtrl           "id-regCtrl"
 #define NID_id_regCtrl          313
 #define OBJ_id_regCtrl          OBJ_id_pkip,1L
