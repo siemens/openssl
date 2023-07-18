@@ -56,6 +56,7 @@
 #  define CMP_R_ERROR_VALIDATING_PROTECTION                140
 #  define CMP_R_ERROR_VALIDATING_SIGNATURE                 171
 #  define CMP_R_EXPECTED_POLLREQ                           104
+#  define CMP_R_ERROR_DERIVING_KBM_SSK                     196
 #  define CMP_R_FAILED_BUILDING_OWN_CHAIN                  164
 #  define CMP_R_FAILED_EXTRACTING_CENTRAL_GEN_KEY          203
 #  define CMP_R_FAILED_EXTRACTING_PUBKEY                   141
@@ -127,6 +128,7 @@
 #  define CMP_R_WRONG_CERTID                               189
 #  define CMP_R_WRONG_CERTID_IN_RP                         187
 #  define CMP_R_WRONG_PBM_VALUE                            155
+#  define CMP_R_WRONG_KBM_VALUE                            197
 #  define CMP_R_WRONG_RP_COMPONENT_COUNT                   188
 #  define CMP_R_WRONG_SERIAL_IN_RP                         173
 

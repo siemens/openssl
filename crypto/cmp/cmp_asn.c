@@ -56,6 +56,36 @@ ASN1_SEQUENCE(OSSL_CMP_CAKEYUPDANNCONTENT) = {
 } ASN1_SEQUENCE_END(OSSL_CMP_CAKEYUPDANNCONTENT)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_CAKEYUPDANNCONTENT)
 
+ASN1_SEQUENCE(OSSL_CMP_RSAKEMPARAMETERS) = {
+    ASN1_SIMPLE(OSSL_CMP_RSAKEMPARAMETERS, KeyDerivationFunction, X509_ALGOR),
+    ASN1_SIMPLE(OSSL_CMP_RSAKEMPARAMETERS, KeyLength, ASN1_INTEGER)
+} ASN1_SEQUENCE_END(OSSL_CMP_RSAKEMPARAMETERS)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_RSAKEMPARAMETERS)
+
+ASN1_SEQUENCE(OSSL_CMP_KEMCIPHERTEXTINFO) = {
+    ASN1_SIMPLE(OSSL_CMP_KEMCIPHERTEXTINFO, kem, X509_ALGOR),
+    ASN1_SIMPLE(OSSL_CMP_KEMCIPHERTEXTINFO, ct, ASN1_OCTET_STRING)
+} ASN1_SEQUENCE_END(OSSL_CMP_KEMCIPHERTEXTINFO)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_KEMCIPHERTEXTINFO)
+
+ASN1_SEQUENCE(OSSL_CMP_KEMOTHERINFO) = {
+    ASN1_SEQUENCE_OF(OSSL_CMP_KEMOTHERINFO, staticString, ASN1_UTF8STRING),
+    ASN1_EXP_OPT(OSSL_CMP_KEMOTHERINFO, transactionID, ASN1_OCTET_STRING, 0),
+    ASN1_EXP_OPT(OSSL_CMP_KEMOTHERINFO, senderNonce, ASN1_OCTET_STRING, 1),
+    ASN1_EXP_OPT(OSSL_CMP_KEMOTHERINFO, recipNonce, ASN1_OCTET_STRING, 2),
+    ASN1_SIMPLE(OSSL_CMP_KEMOTHERINFO, len, ASN1_INTEGER),
+    ASN1_SIMPLE(OSSL_CMP_KEMOTHERINFO, mac, X509_ALGOR),
+    ASN1_SIMPLE(OSSL_CMP_KEMOTHERINFO, ct, ASN1_OCTET_STRING)
+} ASN1_SEQUENCE_END(OSSL_CMP_KEMOTHERINFO)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_KEMOTHERINFO)
+
+ASN1_SEQUENCE(OSSL_CMP_KEMBMPARAMETER) = {
+    ASN1_SIMPLE(OSSL_CMP_KEMBMPARAMETER, kdf, X509_ALGOR),
+    ASN1_SIMPLE(OSSL_CMP_KEMBMPARAMETER, len, ASN1_INTEGER),
+    ASN1_SIMPLE(OSSL_CMP_KEMBMPARAMETER, mac, X509_ALGOR)
+} ASN1_SEQUENCE_END(OSSL_CMP_KEMBMPARAMETER)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_KEMBMPARAMETER)
+
 ASN1_SEQUENCE(OSSL_CMP_ERRORMSGCONTENT) = {
     ASN1_SIMPLE(OSSL_CMP_ERRORMSGCONTENT, pKIStatusInfo, OSSL_CMP_PKISI),
     ASN1_OPT(OSSL_CMP_ERRORMSGCONTENT, errorCode, ASN1_INTEGER),
@@ -128,7 +158,10 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.crlStatusList,
                                    OSSL_CMP_CRLSTATUS)),
     ADB_ENTRY(NID_id_it_crls,
-              ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.crls, X509_CRL))
+              ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.crls, X509_CRL)),
+    ADB_ENTRY(NID_id_it_KemCiphertextInfo,
+              ASN1_OPT(OSSL_CMP_ITAV, infoValue.KemCiphertextInfoValue,
+                       OSSL_CMP_KEMCIPHERTEXTINFO)),
 } ASN1_ADB_END(OSSL_CMP_ITAV, 0, infoType, 0,
                &infotypeandvalue_default_tt, NULL);
 
@@ -257,6 +290,37 @@ int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
     }
     *out = itav->infoValue.certProfile;
     return 1;
+}
+
+OSSL_CMP_ITAV *ossl_cmp_itav_new_KemCiphertext(X509_ALGOR *kem,
+                                               unsigned char *in_ct,
+                                               int len)
+{
+    ASN1_OCTET_STRING *ct = NULL;
+    OSSL_CMP_ITAV *itav;
+
+    if (kem == NULL || in_ct == NULL)
+        return NULL;
+
+    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
+        return NULL;
+    itav->infoType = OBJ_nid2obj(NID_id_it_KemCiphertextInfo);
+    itav->infoValue.KemCiphertextInfoValue = OSSL_CMP_KEMCIPHERTEXTINFO_new();
+    if (itav->infoValue.KemCiphertextInfoValue == NULL)
+        goto err;
+
+    itav->infoValue.KemCiphertextInfoValue->kem = kem;
+    if (itav->infoValue.KemCiphertextInfoValue->kem == NULL)
+        goto err;
+
+    if (!ossl_cmp_asn1_octet_string_set1_bytes(&ct, in_ct, len))
+        goto err;
+    itav->infoValue.KemCiphertextInfoValue->ct = ct;
+    return itav;
+
+ err:
+    OSSL_CMP_ITAV_free(itav);
+    return NULL;
 }
 
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts)

@@ -131,6 +131,14 @@ X509_PUBKEY *OSSL_CMP_MSG_get0_certreq_publickey(const OSSL_CMP_MSG *msg)
     }
 }
 
+STACK_OF(X509)* OSSL_CMP_MSG_get_extraCerts(const OSSL_CMP_MSG *msg)
+{
+    if (!ossl_assert(msg != NULL))
+        return NULL;
+
+    return msg->extraCerts;
+}
+
 /* Add an extension to the referenced extension stack, which may be NULL */
 static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
 {

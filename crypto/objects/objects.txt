@@ -14,6 +14,10 @@ iso 3			: identified-organization
 # GMAC OID
 iso 0 9797 3 4                          : GMAC          : gmac
 
+# RSA key encapsulation mechanism
+iso 0 18033 2 2 4			: id-kem-rsa
+iso 0 18033 2 5 2			: id-kdf-kdf2
+
 # HMAC OIDs
 identified-organization 6 1 5 5 8 1 1	: HMAC-MD5	: hmac-md5
 identified-organization 6 1 5 5 8 1 2	: HMAC-SHA1	: hmac-sha1
@@ -167,6 +171,8 @@ ISO-US 113533 7 66 12	:			: pbeWithMD5AndCast5CBC
 # Macs for CMP and CRMF
 ISO-US 113533 7 66 13	: id-PasswordBasedMAC	: password based MAC
 ISO-US 113533 7 66 30	: id-DHBasedMac		: Diffie-Hellman based MAC
+# preliminary value for prototyping (TBD4 by IANA)
+ISO-US 113533 7 66 16	: id-KemBasedMac 	: KEM based MAC
 
 ISO-US 113549		: rsadsi		: RSA Data Security, Inc.
 
@@ -604,6 +610,8 @@ id-it 20		: id-it-rootCaCert
 id-it 21		: id-it-certProfile
 id-it 22		: id-it-crlStatusList
 id-it 23		: id-it-crls
+# preliminary value for prototyping (TBD by IANA)
+id-it 24		: id-it-KemCiphertextInfo
 
 # CRMF registration
 id-pkip 1		: id-regCtrl
@@ -1794,6 +1802,8 @@ ms-corp 60 2 1 3	: jurisdictionC		: jurisdictionCountryName
 
 # NID for SSHKDF
                             : SSHKDF            : sshkdf
+# NID for hkdf with sha256
+id-smime-alg 28				: hkdfWithSHA256        : HKDF with SHA256
 
 # NID for SSKDF
                             : SSKDF              : sskdf

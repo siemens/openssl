@@ -18,6 +18,7 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
+#include "internal/sizes.h"
 
 /*
  * This function is also used by the internal verify_PBMAC() in cmp_vfy.c.
@@ -37,7 +38,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
     OSSL_CMP_PROTECTEDPART prot_part;
     const ASN1_OBJECT *algorOID = NULL;
     const void *ppval = NULL;
-    int pptype = 0;
+    int pptype = 0, nid;
 
     if (!ossl_assert(ctx != NULL && msg != NULL))
         return NULL;
@@ -52,17 +53,21 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
     }
     X509_ALGOR_get0(&algorOID, &pptype, &ppval, msg->header->protectionAlg);
 
-    if (OBJ_obj2nid(algorOID) == NID_id_PasswordBasedMAC) {
-        int len;
-        size_t prot_part_der_len;
+    nid = OBJ_obj2nid(algorOID);
+    if (nid == NID_id_PasswordBasedMAC
+        || nid == NID_id_KemBasedMac) {
+        int len, hmac_md_nid;
+        size_t prot_part_der_len, sig_len;
         unsigned char *prot_part_der = NULL;
-        size_t sig_len;
         unsigned char *protection = NULL;
+        char hmac_mdname[OSSL_MAX_NAME_SIZE];
         OSSL_CRMF_PBMPARAMETER *pbm = NULL;
-        ASN1_STRING *pbm_str = NULL;
-        const unsigned char *pbm_str_uc = NULL;
+        OSSL_CMP_KEMBMPARAMETER *kbm = NULL;
+        ASN1_STRING *param_str = NULL;
+        const unsigned char *param_str_uc = NULL;
 
-        if (ctx->secretValue == NULL) {
+        if (ctx->secretValue == NULL
+                && ctx->ssk == NULL) {
             ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PBM_SECRET);
             return NULL;
         }
@@ -70,6 +75,8 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
             ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CALCULATING_PROTECTION);
             return NULL;
         }
+        param_str = (ASN1_STRING *)ppval;
+        param_str_uc = param_str->data;
 
         len = i2d_OSSL_CMP_PROTECTEDPART(&prot_part, &prot_part_der);
         if (len < 0 || prot_part_der == NULL) {
@@ -78,19 +85,47 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         }
         prot_part_der_len = (size_t)len;
 
-        pbm_str = (ASN1_STRING *)ppval;
-        pbm_str_uc = pbm_str->data;
-        pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, pbm_str->length);
-        if (pbm == NULL) {
-            ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_ALGORITHM_OID);
-            goto end;
-        }
+        if (nid == NID_id_PasswordBasedMAC) {
 
-        if (!OSSL_CRMF_pbm_new(ctx->libctx, ctx->propq,
-                               pbm, prot_part_der, prot_part_der_len,
-                               ctx->secretValue->data, ctx->secretValue->length,
-                               &protection, &sig_len))
-            goto end;
+            pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &param_str_uc,
+                                             param_str->length);
+            if (pbm == NULL) {
+                ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_ALGORITHM_OID);
+                goto end;
+            }
+
+            if (!OSSL_CRMF_pbm_new(ctx->libctx, ctx->propq,
+                                   pbm, prot_part_der, prot_part_der_len,
+                                   ctx->secretValue->data,
+                                   ctx->secretValue->length,
+                                   &protection, &sig_len))
+                goto end;
+        } else {
+            int mac_nid;
+
+            kbm = d2i_OSSL_CMP_KEMBMPARAMETER(NULL, &param_str_uc,
+                                              param_str->length);
+            if (kbm == NULL) {
+                ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_ALGORITHM_OID);
+                goto end;
+            }
+            /* TODO - set digest name depeding on mac algorithm */
+            mac_nid = OBJ_obj2nid(kbm->mac->algorithm);
+
+            if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL)
+                || OBJ_obj2txt(hmac_mdname, sizeof(hmac_mdname),
+                               OBJ_nid2obj(hmac_md_nid), 0) <= 0) {
+                ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_ALGORITHM);
+                goto end;
+            }
+            protection = EVP_Q_mac(ctx->libctx, "HMAC", ctx->propq,
+                                   hmac_mdname, NULL,
+                                   ctx->ssk->data, ctx->ssk->length,
+                                   prot_part_der, prot_part_der_len,
+                                   NULL, 0, &sig_len);
+            if (protection == NULL)
+                goto end;
+        }
 
         if ((prot = ASN1_BIT_STRING_new()) == NULL)
             goto end;
@@ -102,9 +137,11 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         }
     end:
         OSSL_CRMF_PBMPARAMETER_free(pbm);
+        OSSL_CMP_KEMBMPARAMETER_free(kbm);
         OPENSSL_free(protection);
         OPENSSL_free(prot_part_der);
         return prot;
+
     } else {
         const EVP_MD *md = ctx->digest;
         char name[80] = "";
@@ -157,6 +194,7 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
     /* Add first ctx->cert and its chain if using signature-based protection */
     if (!ctx->unprotectedSend && ctx->secretValue == NULL
+            && ctx->kem != KBM_SSK_ESTABLISHED_USING_CLIENT
             && ctx->cert != NULL && ctx->pkey != NULL) {
         int prepend = X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
             | X509_ADD_FLAG_PREPEND | X509_ADD_FLAG_NO_SS;
@@ -244,7 +282,13 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     ASN1_BIT_STRING_free(msg->protection);
     msg->protection = NULL;
 
-    if (ctx->unprotectedSend) {
+    if (ctx->kem == KBM_SSK_USING_SERVER_KEM_KEY) {
+        if (!ossl_cmp_kem_get_ss_using_srvcert(ctx, msg))
+            goto err;
+    }
+
+    if (ctx->unprotectedSend
+            || ctx->kem == KBM_SSK_USING_CLINET_KEM_KEY) {
         if (!set_senderKID(ctx, msg, NULL))
             goto err;
     } else if (ctx->secretValue != NULL) {
@@ -259,6 +303,15 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
          * while not needed to validate the protection certificate,
          * the option to do this might be handy for certain use cases
          */
+    } else if (ctx->ssk != NULL
+               && ctx->kem == KBM_SSK_ESTABLISHED_USING_CLIENT) {
+        /* use KemBasedMac */
+        if ((msg->header->protectionAlg = ossl_cmp_kem_BasedMac_algor(ctx))
+            == NULL)
+            goto err;
+        if (!set_senderKID(ctx, msg, NULL))
+            goto err;
+
     } else if (ctx->cert != NULL && ctx->pkey != NULL) {
         /* use MSG_SIG_ALG according to 5.1.3.3 if client cert and key given */
 
@@ -285,6 +338,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     }
     if (!ctx->unprotectedSend
         /* protect according to msg->header->protectionAlg partly set above */
+            && ctx->kem != KBM_SSK_USING_CLINET_KEM_KEY
             && ((msg->protection = ossl_cmp_calc_protection(ctx, msg)) == NULL))
         goto err;
 

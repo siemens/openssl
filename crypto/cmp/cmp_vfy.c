@@ -96,6 +96,28 @@ static int verify_PBMAC(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     return valid;
 }
 
+/* Verify a message protected with KBMAC */
+static int verify_KBMAC(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
+{
+    ASN1_BIT_STRING *protection = NULL;
+    int valid = 0;
+
+    /* generate expected protection for the message */
+    if ((protection = ossl_cmp_calc_protection(ctx, msg)) == NULL)
+        return 0; /* failed to generate protection string! */
+
+    valid = msg->protection != NULL && msg->protection->length >= 0
+            && msg->protection->type == protection->type
+            && msg->protection->length == protection->length
+            && CRYPTO_memcmp(msg->protection->data, protection->data,
+                             protection->length) == 0;
+    ASN1_BIT_STRING_free(protection);
+    if (!valid)
+        ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_PBM_VALUE);
+
+    return valid;
+}
+
 /*-
  * Attempt to validate certificate and path using any given store with trusted
  * certs (possibly including CRLs and a cert verification callback function)
@@ -578,6 +600,20 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     }
 
     switch (ossl_cmp_hdr_get_protection_nid(msg->header)) {
+    /* TODO: merge it with pbm as most code are same */
+    case NID_id_KemBasedMac:
+        if (ctx->kem_ssk == NULL
+            && !ossl_cmp_kem_derive_ssk_using_srvcert(ctx, msg)) {
+            ossl_cmp_info(ctx, "no ssk available for verifying KEM-based CMP message protection");
+            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SECRET);
+            return 0;
+        }
+
+        if (ctx->kem_status == KBM_SSK_ESTABLISHED_USING_SERVER
+            && verify_KBMAC(ctx, msg)) {
+            return 1;
+        }
+        return 0;
         /* 5.1.3.1.  Shared Secret Information */
     case NID_id_PasswordBasedMAC:
         if (ctx->secretValue == NULL) {

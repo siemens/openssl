@@ -3363,6 +3363,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      812,    /* "gost94" */
      850,    /* "gost94cc" */
     1310,    /* "groupAC" */
+    1322,    /* "hkdfWithSHA256" */
     1156,    /* "hmacWithDstu34311" */
      797,    /* "hmacWithMD5" */
      163,    /* "hmacWithSHA1" */
@@ -3423,6 +3424,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      808,    /* "id-GostR3411-94-with-GostR3410-94" */
      852,    /* "id-GostR3411-94-with-GostR3410-94-cc" */
      810,    /* "id-HMACGostR3411-94" */
+    1321,    /* "id-KemBasedMac" */
      782,    /* "id-PasswordBasedMAC" */
     1272,    /* "id-aa-ATSHashIndex" */
     1277,    /* "id-aa-ATSHashIndex-v2" */
@@ -3541,6 +3543,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1104,    /* "id-hmacWithSHA3-384" */
     1105,    /* "id-hmacWithSHA3-512" */
      260,    /* "id-it" */
+    1320,    /* "id-it-KemCiphertextInfo" */
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
@@ -3564,6 +3567,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      306,    /* "id-it-subscriptionResponse" */
      784,    /* "id-it-suppLangTags" */
      304,    /* "id-it-unsupportedOIDs" */
+    1324,    /* "id-kdf-kdf2" */
+    1323,    /* "id-kem-rsa" */
      128,    /* "id-kp" */
     1221,    /* "id-kp-BrandIndicatorforMessageIdentification" */
     1220,    /* "id-kp-bgpsec-router" */
@@ -4479,6 +4484,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      647,    /* "International Organizations" */
     1388,    /* "Internet Engineering Task Force Registry" */
      142,    /* "Invalidity Date" */
+    1321,    /* "KEM based MAC" */
      504,    /* "MIME MHS" */
     1457,    /* "ML-DSA-44" */
     1458,    /* "ML-DSA-65" */
@@ -5187,6 +5193,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      508,    /* "id-hex-multipart-message" */
      507,    /* "id-hex-partial-message" */
      260,    /* "id-it" */
+    1320,    /* "id-it-KemCiphertextInfo" */
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
@@ -5210,6 +5217,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      306,    /* "id-it-subscriptionResponse" */
      784,    /* "id-it-suppLangTags" */
      304,    /* "id-it-unsupportedOIDs" */
+    1324,    /* "id-kdf-kdf2" */
+    1323,    /* "id-kem-rsa" */
      128,    /* "id-kp" */
      280,    /* "id-mod-attribute-cert" */
      274,    /* "id-mod-cmc" */
@@ -6346,6 +6355,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1278,    /* OBJ_id_aa_ATSHashIndex_v3        0 4 0 19122 1 5 */
     1279,    /* OBJ_signedAssertion              0 4 0 19122 1 6 */
      436,    /* OBJ_ucl                          0 9 2342 19200300 */
+    1323,    /* OBJ_id_kem_rsa                   1 0 18033 2 2 4 */
+    1324,    /* OBJ_id_kdf_kdf2                  1 0 18033 2 5 2 */
      820,    /* OBJ_id_Gost28147_89_None_KeyMeshing 1 2 643 2 2 14 0 */
      819,    /* OBJ_id_Gost28147_89_CryptoPro_KeyMeshing 1 2 643 2 2 14 1 */
      845,    /* OBJ_id_GostR3410_94_a            1 2 643 2 2 20 1 */
@@ -6628,6 +6639,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1255,    /* OBJ_id_it_certProfile            1 3 6 1 5 5 7 4 21 */
     1256,    /* OBJ_id_it_crlStatusList          1 3 6 1 5 5 7 4 22 */
     1257,    /* OBJ_id_it_crls                   1 3 6 1 5 5 7 4 23 */
+    1320,    /* OBJ_id_it_KemCiphertextInfo      1 3 6 1 5 5 7 4 24 */
      313,    /* OBJ_id_regCtrl                   1 3 6 1 5 5 7 5 1 */
      314,    /* OBJ_id_regInfo                   1 3 6 1 5 5 7 5 2 */
      323,    /* OBJ_id_alg_des40                 1 3 6 1 5 5 7 6 1 */
@@ -6738,6 +6750,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      108,    /* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
      112,    /* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
      782,    /* OBJ_id_PasswordBasedMAC          1 2 840 113533 7 66 13 */
+    1321,    /* OBJ_id_KemBasedMac               1 2 840 113533 7 66 16 */
      783,    /* OBJ_id_DHBasedMac                1 2 840 113533 7 66 30 */
        6,    /* OBJ_rsaEncryption                1 2 840 113549 1 1 1 */
        7,    /* OBJ_md2WithRSAEncryption         1 2 840 113549 1 1 2 */
@@ -7118,6 +7131,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      247,    /* OBJ_id_smime_alg_CMSRC2wrap      1 2 840 113549 1 9 16 3 7 */
      125,    /* OBJ_zlib_compression             1 2 840 113549 1 9 16 3 8 */
      893,    /* OBJ_id_alg_PWRI_KEK              1 2 840 113549 1 9 16 3 9 */
+    1322,    /* OBJ_hkdfWithSHA256               1 2 840 113549 1 9 16 3 28 */
      248,    /* OBJ_id_smime_cd_ldap             1 2 840 113549 1 9 16 4 1 */
      249,    /* OBJ_id_smime_spq_ets_sqt_uri     1 2 840 113549 1 9 16 5 1 */
      250,    /* OBJ_id_smime_spq_ets_sqt_unotice 1 2 840 113549 1 9 16 5 2 */

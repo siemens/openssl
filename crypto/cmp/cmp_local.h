@@ -136,6 +136,17 @@ struct ossl_cmp_ctx_st {
     /* certificate confirmation */
     OSSL_CMP_certConf_cb_t certConf_cb; /* callback for app checking new cert */
     void *certConf_cb_arg; /* allows to store an argument individual to cb */
+
+    /* Key Encapsulation */
+    int kem; /* KEM status */
+    ASN1_OCTET_STRING *kemSenderNonce; /* senderNonce for kemOtherInfo */
+    ASN1_OCTET_STRING *kemRecipNonce; /* recipNonce for kemOtherInfo */
+    ASN1_OCTET_STRING *ct; /* ciphertext for kemOtherInfo */
+    int ssklen; /* shared secret key length, default 32  */
+    ASN1_OCTET_STRING *ssk; /* TODO: can use secretValue field */
+    ASN1_OCTET_STRING *kem_secret; /* secret to be used with KDF */
+    int kem_mac; /* TODO: cam use pbm_mac field , default to HMAC-SHA256 */
+    int kem_kdf; /* Key derivation function */
 } /* OSSL_CMP_CTX */;
 
 /*
@@ -241,6 +252,68 @@ struct ossl_cmp_crlstatus_st {
 }; /* OSSL_CMP_CRLSTATUS */
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CRLSTATUS)
 
+/*
+ * RsaKemParameters ::= SEQUENCE {
+ *              keyDerivationFunction  KeyDerivationFunction,
+ *              keyLength              KeyLength
+ *           }
+ * KeyDerivationFunction ::=
+ *                 AlgorithmIdentifier {{KDFAlgorithms}}
+ * KeyLength ::= INTEGER (1..MAX)
+ */
+typedef struct ossl_cmp_RsaKemParameters_st {
+    X509_ALGOR *KeyDerivationFunction;
+    ASN1_INTEGER *KeyLength;
+} OSSL_CMP_RSAKEMPARAMETERS;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_RSAKEMPARAMETERS)
+/*
+ * KemCiphertextInfoValue :== KemCiphertextInfo
+ * KemCiphertextInfo ::= SEQUENCE {
+ *      kem       AlgorithmIdentifier{KEM-ALGORITHM, {...}},
+ *      ct        OCTET STRING}
+ */
+typedef struct ossl_cmp_KemCiphertextInfo_st {
+    X509_ALGOR *kem;
+    ASN1_OCTET_STRING *ct;
+} OSSL_CMP_KEMCIPHERTEXTINFO;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMCIPHERTEXTINFO)
+
+/*
+ * KemOtherInfo ::= SEQUENCE {
+ *    staticString      PKIFreeText,
+ *    transactionID [0] OCTET STRING     OPTIONAL,
+ *    senderNonce   [1] OCTET STRING     OPTIONAL,
+ *    recipNonce    [2] OCTET STRING     OPTIONAL,
+ *    len               INTEGER (1..MAX),
+ *    mac               AlgorithmIdentifier{MAC-ALGORITHM, {...}}
+ *    ct                OCTET STRING
+ * }
+ */
+struct ossl_cmp_KemOtherInfo_st {
+    OSSL_CMP_PKIFREETEXT *staticString;
+    ASN1_OCTET_STRING *transactionID;
+    ASN1_OCTET_STRING *senderNonce;
+    ASN1_OCTET_STRING *recipNonce;
+    ASN1_INTEGER *len;
+    X509_ALGOR *mac;
+    ASN1_OCTET_STRING *ct;
+} /* OSSL_CMP_KEMOTHERINFO */;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMOTHERINFO)
+
+/*
+ * KemBMParameter ::= SEQUENCE {
+ *    kdf      AlgorithmIdentifier{KEY-DERIVATION, {...}},
+ *    len      INTEGER (1..MAX),
+ *    mac      AlgorithmIdentifier{MAC-ALGORITHM, {...}}
+ * }
+ */
+typedef struct ossl_cmp_KemBMParameter_st {
+    X509_ALGOR *kdf;
+    ASN1_INTEGER *len;
+    X509_ALGOR *mac;
+} OSSL_CMP_KEMBMPARAMETER;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMBMPARAMETER)
+
 /*-
  * declared already here as it will be used in OSSL_CMP_MSG (nested) and
  * infoType and infoValue
@@ -301,6 +374,8 @@ struct ossl_cmp_itav_st {
         /* NID_id_it_crls - Certificate Status Lists */
         STACK_OF(X509_CRL) *crls;
 
+        /* NID_id_it_KemCiphertextInfo -  KEM ciphertext */
+        OSSL_CMP_KEMCIPHERTEXTINFO *KemCiphertextInfoValue;
         /* this is to be used for so far undeclared objects */
         ASN1_TYPE *other;
     } infoValue;
@@ -815,6 +890,9 @@ struct ossl_cmp_certreqtemplate_st {
 
 /* from cmp_asn.c */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);
+OSSL_CMP_ITAV *ossl_cmp_itav_new_KemCiphertext(X509_ALGOR *kem,
+                                               unsigned char *in_ct,
+                                               int len);
 
 /* from cmp_util.c */
 const char *ossl_cmp_log_parse_metadata(const char *buf,
@@ -834,6 +912,12 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
                                           const unsigned char *bytes, int len);
 
 /* from cmp_ctx.c */
+# define KBM_SSK_USING_CLINET_KEM_KEY       1
+# define KBM_SSK_USING_SERVER_KEM_KEY       2
+# define KBM_SSK_USING_SERVER_KEM_KEY_1     3
+# define KBM_SSK_ESTABLISHED_USING_CLIENT   4
+# define KBM_SSK_ESTABLISHED_USING_SERVER   5
+
 int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
                        const char *func, const char *file, int line,
                        const char *level_str, const char *format, ...);
@@ -872,9 +956,23 @@ int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
                                    STACK_OF(X509) *extraCertsIn);
 int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
                                  const ASN1_OCTET_STRING *nonce);
+int ossl_cmp_ctx_set1_kemRecipNonce(OSSL_CMP_CTX *ctx,
+                                    const ASN1_OCTET_STRING *nonce);
+int ossl_cmp_ctx_set1_kemSenderNonce(OSSL_CMP_CTX *ctx,
+                                     const ASN1_OCTET_STRING *nonce);
+int ossl_cmp_ctx_set1_ct(OSSL_CMP_CTX *ctx,
+                         const ASN1_OCTET_STRING *ct);
 EVP_PKEY *ossl_cmp_ctx_get0_newPubkey(const OSSL_CMP_CTX *ctx);
 int ossl_cmp_ctx_set1_first_senderNonce(OSSL_CMP_CTX *ctx,
                                         const ASN1_OCTET_STRING *nonce);
+ASN1_OCTET_STRING *ossl_cmp_ctx_get0_transactionID(const OSSL_CMP_CTX *ctx);
+ASN1_OCTET_STRING *ossl_cmp_ctx_get_kemRecipNonce(const OSSL_CMP_CTX *ctx);
+ASN1_OCTET_STRING *ossl_cmp_ctx_get_kemSenderNonce(const OSSL_CMP_CTX *ctx);
+ASN1_OCTET_STRING *ossl_cmp_ctx_get_ct(const OSSL_CMP_CTX *ctx);
+int ossl_cmp_ctx_set1_ssk(OSSL_CMP_CTX *ctx, const unsigned char *sec,
+                          int len);
+int ossl_cmp_ctx_set1_kem_secret(OSSL_CMP_CTX *ctx,
+                                 const unsigned char *sec, int len);
 
 /* from cmp_status.c */
 int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si);
@@ -902,6 +1000,8 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
                                          const STACK_OF(OSSL_CMP_ITAV) *itavs);
 int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_hdr_has_KemCiphertextInfo(const OSSL_CMP_PKIHEADER *hdr,
+                                       OSSL_CMP_ITAV **kemctinfo);
 # define OSSL_CMP_TRANSACTIONID_LENGTH 16
 # define OSSL_CMP_SENDERNONCE_LENGTH 16
 int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
@@ -1019,5 +1119,27 @@ int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int certReqId,
                                int fail_info, const char *txt);
 int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
                             const char *txt, int errorCode, const char *detail);
+
+/* from cmp_kem.c */
+int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
+                                  unsigned char **out, int *len);
+X509_ALGOR *ossl_cmp_kem_BasedMac_algor(const OSSL_CMP_CTX *ctx);
+int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx);
+int ossl_cmp_kem_derivessk(OSSL_CMP_CTX *ctx,
+                           unsigned char *secret, int secret_len,
+                           unsigned char **out, int *len);
+int ossl_cmp_kem_derivessk_using_kemctinfo(OSSL_CMP_CTX *ctx,
+                                           OSSL_CMP_ITAV *KemCiphertextInfo,
+                                           EVP_PKEY *pkey);
+int ossl_cmp_kem_get_ss_using_srvcert(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
+int ossl_cmp_kem_derive_ssk_using_srvcert(OSSL_CMP_CTX *ctx,
+                                          const OSSL_CMP_MSG *msg);
+OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
+                                              const EVP_PKEY *pubkey);
+
+/* from cmp_genm.c */
+OSSL_CMP_ITAV *ossl_cmp_genm_get_itav(OSSL_CMP_CTX *ctx,
+                                      OSSL_CMP_ITAV *req, /* gets consumed */
+                                      int expected, const char *desc);
 
 #endif /* !defined(OSSL_CRYPTO_CMP_LOCAL_H) */

@@ -39,6 +39,19 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
     if (!ossl_assert(ctx != NULL && rep != NULL))
         return -1;
 
+    /* unprotected response with cipher text */
+    if (rcvd_type == OSSL_CMP_PKIBODY_GENP
+        && ctx->kem == KBM_SSK_USING_CLINET_KEM_KEY
+        && sk_OSSL_CMP_ITAV_num(rep->body->value.genm) == 1) {
+        OSSL_CMP_ITAV *req_itav = sk_OSSL_CMP_ITAV_value(rep->body->value.genm,
+                                                         0);
+        ASN1_OBJECT *obj = OSSL_CMP_ITAV_get0_type(req_itav);
+
+        if (OBJ_obj2nid(obj) == NID_id_it_KemCiphertextInfo
+                && OSSL_CMP_ITAV_get0_value(req_itav) != NULL)
+            return 1;
+    }
+
     if (!ctx->unprotectedErrors)
         return 0;
 
@@ -872,10 +885,19 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
     int rid = is_p10 ? OSSL_CMP_CERTREQID_NONE : OSSL_CMP_CERTREQID;
     int rep_type = is_p10 ? OSSL_CMP_PKIBODY_CP : req_type + 1;
     X509 *result = NULL;
+    int kembasedmac;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
+    }
+    kembasedmac = ossl_cmp_kem_BasedMac_required(ctx);
+    if (kembasedmac == -1) {
+        goto err;
+    } else if (kembasedmac == 1
+               && ctx->kem == KBM_SSK_USING_CLINET_KEM_KEY) {
+        if (!OSSL_CMP_get_ssk(ctx))
+            goto err;
     }
 
     if (!initial_certreq(ctx, req_type, crm, &rep, rep_type))
@@ -1052,6 +1074,12 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
     /* received stack of itavs not to be freed with the genp */
     genp->body->value.genp = NULL;
 
+    if (ctx->kem == KBM_SSK_USING_CLINET_KEM_KEY) {
+        ossl_cmp_ctx_set1_kemSenderNonce(ctx,
+                                         ossl_cmp_hdr_get0_senderNonce(genp->header));
+        ossl_cmp_ctx_set1_kemRecipNonce(ctx,
+                                        OSSL_CMP_HDR_get0_recipNonce(genp->header));
+    }
  err:
     OSSL_CMP_MSG_free(genm);
     OSSL_CMP_MSG_free(genp);

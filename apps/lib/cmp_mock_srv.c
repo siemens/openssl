@@ -481,10 +481,30 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
         || ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) < 0;
 }
 
-static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
-                                        const OSSL_CMP_ITAV *req)
+static X509 *extracert_withKEM(STACK_OF(X509) *certs)
+{
+    int i;
+
+    if (certs == NULL)
+        return NULL;
+
+    for (i = 0; i < sk_X509_num(certs); i++) {
+        X509 *cert = sk_X509_value(certs, i);
+
+        if ((X509_get_key_usage(cert) & X509v3_KU_KEY_ENCIPHERMENT)) {
+            return cert;
+        }
+    }
+    return NULL;
+}
+
+static OSSL_CMP_ITAV *process_genm_itav(OSSL_CMP_SRV_CTX *srv_ctx,
+                                        int req_nid,
+                                        const OSSL_CMP_ITAV *req,
+                                        const OSSL_CMP_MSG *genm)
 {
     OSSL_CMP_ITAV *rsp = NULL;
+    mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     switch (req_nid) {
     case NID_id_it_caCerts:
@@ -565,6 +585,17 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
             return NULL;
         }
         break;
+    case NID_id_it_KemCiphertextInfo:
+        if (OSSL_CMP_ITAV_get0_value(req) == NULL) {
+            X509 *kemcert;
+
+            kemcert = extracert_withKEM(OSSL_CMP_MSG_get_extraCerts(genm));
+            if (kemcert == NULL)
+                break;
+            rsp = OSSL_CMP_SRV_kem_get_ss(srv_ctx, X509_get0_pubkey(kemcert));
+            break;
+        }
+    /* fall through */
     default:
         rsp = OSSL_CMP_ITAV_dup(req);
     }
@@ -594,7 +625,7 @@ static int process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
 
         if ((*out = sk_OSSL_CMP_ITAV_new_reserve(NULL, 1)) == NULL)
             return 0;
-        rsp = process_genm_itav(ctx, OBJ_obj2nid(obj), req);
+        rsp = process_genm_itav(srv_ctx, OBJ_obj2nid(obj), req, genm);
         if (rsp != NULL && sk_OSSL_CMP_ITAV_push(*out, rsp))
             return 1;
         sk_OSSL_CMP_ITAV_free(*out);
