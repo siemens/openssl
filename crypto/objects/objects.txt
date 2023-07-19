@@ -167,6 +167,8 @@ ISO-US 113533 7 66 12	:			: pbeWithMD5AndCast5CBC
 # Macs for CMP and CRMF
 ISO-US 113533 7 66 13	: id-PasswordBasedMAC	: password based MAC
 ISO-US 113533 7 66 30	: id-DHBasedMac		: Diffie-Hellman based MAC
+# preliminary value for prototyping (TBD4 by IANA)
+ISO-US 113533 7 66 16	: id-KemBasedMac 	: KEM based MAC
 
 ISO-US 113549		: rsadsi		: RSA Data Security, Inc.
 

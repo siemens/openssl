@@ -525,6 +525,11 @@
 #define NID_id_DHBasedMac               783
 #define OBJ_id_DHBasedMac               OBJ_ISO_US,113533L,7L,66L,30L
 
+#define SN_id_KemBasedMac               "id-KemBasedMac"
+#define LN_id_KemBasedMac               "KEM based MAC"
+#define NID_id_KemBasedMac              1321
+#define OBJ_id_KemBasedMac              OBJ_ISO_US,113533L,7L,66L,16L
+
 #define SN_rsadsi               "rsadsi"
 #define LN_rsadsi               "RSA Data Security, Inc."
 #define NID_rsadsi              1

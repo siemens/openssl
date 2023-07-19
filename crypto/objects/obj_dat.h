@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8484] = {
+static const unsigned char so[8493] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1183,9 +1183,10 @@ static const unsigned char so[8484] = {
     0x55,0x1D,0x4A,                                /* [ 8469] OBJ_alt_signature_value */
     0x55,0x1D,0x4B,                                /* [ 8472] OBJ_associated_information */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x18,       /* [ 8475] OBJ_id_it_KemCiphertextInfo */
+    0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x10,  /* [ 8483] OBJ_id_KemBasedMac */
 };
 
-#define NUM_NID 1321
+#define NUM_NID 1322
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2508,9 +2509,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
     {"id-it-KemCiphertextInfo", "id-it-KemCiphertextInfo", NID_id_it_KemCiphertextInfo, 8, &so[8475]},
+    {"id-KemBasedMac", "KEM based MAC", NID_id_KemBasedMac, 9, &so[8483]},
 };
 
-#define NUM_SN 1312
+#define NUM_SN 1313
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3091,6 +3093,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      808,    /* "id-GostR3411-94-with-GostR3410-94" */
      852,    /* "id-GostR3411-94-with-GostR3410-94-cc" */
      810,    /* "id-HMACGostR3411-94" */
+    1321,    /* "id-KemBasedMac" */
      782,    /* "id-PasswordBasedMAC" */
     1272,    /* "id-aa-ATSHashIndex" */
     1277,    /* "id-aa-ATSHashIndex-v2" */
@@ -3826,7 +3829,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1312
+#define NUM_LN 1313
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3939,6 +3942,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      665,    /* "Inherit all" */
      647,    /* "International Organizations" */
      142,    /* "Invalidity Date" */
+    1321,    /* "KEM based MAC" */
      504,    /* "MIME MHS" */
      388,    /* "Mail" */
      383,    /* "Management" */
@@ -5142,7 +5146,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1178
+#define NUM_OBJ 1179
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5944,6 +5948,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      108,    /* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
      112,    /* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
      782,    /* OBJ_id_PasswordBasedMAC          1 2 840 113533 7 66 13 */
+    1321,    /* OBJ_id_KemBasedMac               1 2 840 113533 7 66 16 */
      783,    /* OBJ_id_DHBasedMac                1 2 840 113533 7 66 30 */
        6,    /* OBJ_rsaEncryption                1 2 840 113549 1 1 1 */
        7,    /* OBJ_md2WithRSAEncryption         1 2 840 113549 1 1 2 */

@@ -245,6 +245,20 @@ struct ossl_cmp_KemOtherInfo_st {
 } /* OSSL_CMP_KEMOTHERINFO */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMOTHERINFO)
 
+/*
+ * KemBMParameter ::= SEQUENCE {
+ *    kdf      AlgorithmIdentifier{KEY-DERIVATION, {...}},
+ *    len      INTEGER (1..MAX),
+ *    mac      AlgorithmIdentifier{MAC-ALGORITHM, {...}}
+ * }
+ */
+typedef struct ossl_cmp_KemBMParameter_st {
+    X509_ALGOR *kdf;
+    ASN1_INTEGER *len;
+    X509_ALGOR *mac;
+} OSSL_CMP_KEMBMPARAMETER;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMBMPARAMETER)
+
 /*-
  * declared already here as it will be used in OSSL_CMP_MSG (nested) and
  * infoType and infoValue
