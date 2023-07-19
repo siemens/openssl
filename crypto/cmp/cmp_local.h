@@ -135,7 +135,15 @@ struct ossl_cmp_ctx_st {
     void *certConf_cb_arg; /* allows to store an argument individual to cb */
 
     /* Key Encapsulation */
-    OSSL_CMP_KEMOTHERINFO *kemOtherInfo;
+    int kem; /* KEM status */
+    ASN1_OCTET_STRING *kemSenderNonce; /* senderNonce for kemOtherInfo */
+    ASN1_OCTET_STRING *kemRecipNonce; /* recipNonce for kemOtherInfo */
+    ASN1_OCTET_STRING *ct; /* ciphertext for kemOtherInfo */
+    int ssklen; /* shared secret key length, default 32  */
+    ASN1_OCTET_STRING *ssk; /* TODO: can use secretValue field */
+    ASN1_OCTET_STRING *kem_secret; /* secret to be used with KDF */
+    int kem_mac; /* TODO: cam use pbm_mac field , default to HMAC-SHA256 */
+    int kem_kdf; /* Key derivation function */
 } /* OSSL_CMP_CTX */;
 
 /*
@@ -837,6 +845,12 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
                                           const unsigned char *bytes, int len);
 
 /* from cmp_ctx.c */
+# define KBM_SSK_USING_CLINET_KEM_KEY       1
+# define KBM_SSK_USING_SERVER_KEM_KEY       2
+# define KBM_SSK_USING_SERVER_KEM_KEY_1     3
+# define KBM_SSK_ESTABLISHED_USING_CLIENT   4
+# define KBM_SSK_ESTABLISHED_USING_SERVER   5
+
 int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
                        const char *func, const char *file, int line,
                        const char *level_str, const char *format, ...);
@@ -875,7 +889,21 @@ int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
                                    STACK_OF(X509) *extraCertsIn);
 int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
                                  const ASN1_OCTET_STRING *nonce);
+int ossl_cmp_ctx_set1_kemRecipNonce(OSSL_CMP_CTX *ctx,
+                                    const ASN1_OCTET_STRING *nonce);
+int ossl_cmp_ctx_set1_kemSenderNonce(OSSL_CMP_CTX *ctx,
+                                     const ASN1_OCTET_STRING *nonce);
+int ossl_cmp_ctx_set1_ct(OSSL_CMP_CTX *ctx,
+                         const ASN1_OCTET_STRING *ct);
 EVP_PKEY *ossl_cmp_ctx_get0_newPubkey(const OSSL_CMP_CTX *ctx);
+ASN1_OCTET_STRING *ossl_cmp_ctx_get0_transactionID(const OSSL_CMP_CTX *ctx);
+ASN1_OCTET_STRING *ossl_cmp_ctx_get_kemRecipNonce(const OSSL_CMP_CTX *ctx);
+ASN1_OCTET_STRING *ossl_cmp_ctx_get_kemSenderNonce(const OSSL_CMP_CTX *ctx);
+ASN1_OCTET_STRING *ossl_cmp_ctx_get_ct(const OSSL_CMP_CTX *ctx);
+int ossl_cmp_ctx_set1_ssk(OSSL_CMP_CTX *ctx, const unsigned char *sec,
+                          int len);
+int ossl_cmp_ctx_set1_kem_secret(OSSL_CMP_CTX *ctx,
+                                 const unsigned char *sec, int len);
 
 /* from cmp_status.c */
 int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si);

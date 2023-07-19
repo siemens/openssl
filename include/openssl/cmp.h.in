@@ -305,6 +305,9 @@ const char *OSSL_CMP_CTX_get0_propq(const OSSL_CMP_CTX *ctx);
 #  define OSSL_CMP_OPT_DIGEST_ALGNID 34
 #  define OSSL_CMP_OPT_IGNORE_KEYUSAGE 35
 #  define OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR 36
+#  define OSSL_CMP_OPT_SSK_LEN 37
+#  define OSSL_CMP_OPT_KEM_MAC_ALGNID 38
+#  define OSSL_CMP_OPT_KEM_STATUS 39
 int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val);
 int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt);
 /* CMP-specific callback for logging and outputting the error queue: */

@@ -918,6 +918,12 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
     /* received stack of itavs not to be freed with the genp */
     genp->body->value.genp = NULL;
 
+    if (ctx->kem == 1) {
+        ossl_cmp_ctx_set1_kemSenderNonce(ctx,
+                                         ossl_cmp_hdr_get0_senderNonce(genp->header));
+        ossl_cmp_ctx_set1_kemRecipNonce(ctx,
+                                        OSSL_CMP_HDR_get0_recipNonce(genp->header));
+    }
  err:
     OSSL_CMP_MSG_free(genm);
     OSSL_CMP_MSG_free(genp);
