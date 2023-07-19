@@ -133,6 +133,9 @@ struct ossl_cmp_ctx_st {
     /* certificate confirmation */
     OSSL_CMP_certConf_cb_t certConf_cb; /* callback for app checking new cert */
     void *certConf_cb_arg; /* allows to store an argument individual to cb */
+
+    /* Key Encapsulation */
+    OSSL_CMP_KEMOTHERINFO *kemOtherInfo;
 } /* OSSL_CMP_CTX */;
 
 /*
@@ -214,12 +217,33 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
  *      kem       AlgorithmIdentifier{KEM-ALGORITHM, {...}},
  *      ct        OCTET STRING}
  */
-
 typedef struct ossl_cmp_KemCiphertextInfo_st {
     X509_ALGOR *kem;
     ASN1_OCTET_STRING *ct;
 } OSSL_CMP_KEMCIPHERTEXTINFO;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMCIPHERTEXTINFO)
+
+/*
+ * KemOtherInfo ::= SEQUENCE {
+ *    staticString      PKIFreeText,
+ *    transactionID [0] OCTET STRING     OPTIONAL,
+ *    senderNonce   [1] OCTET STRING     OPTIONAL,
+ *    recipNonce    [2] OCTET STRING     OPTIONAL,
+ *    len               INTEGER (1..MAX),
+ *    mac               AlgorithmIdentifier{MAC-ALGORITHM, {...}}
+ *    ct                OCTET STRING
+ * }
+ */
+struct ossl_cmp_KemOtherInfo_st {
+    OSSL_CMP_PKIFREETEXT *staticString;
+    ASN1_OCTET_STRING *transactionID;
+    ASN1_OCTET_STRING *senderNonce;
+    ASN1_OCTET_STRING *recipNonce;
+    ASN1_INTEGER *len;
+    X509_ALGOR *mac;
+    ASN1_OCTET_STRING *ct;
+} /* OSSL_CMP_KEMOTHERINFO */;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMOTHERINFO)
 
 /*-
  * declared already here as it will be used in OSSL_CMP_MSG (nested) and

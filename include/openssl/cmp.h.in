@@ -246,6 +246,7 @@ typedef struct ossl_cmp_certresponse_st OSSL_CMP_CERTRESPONSE;
     generate_stack_macros("OSSL_CMP_CERTRESPONSE");
 -}
 typedef STACK_OF(ASN1_UTF8STRING) OSSL_CMP_PKIFREETEXT;
+typedef struct ossl_cmp_KemOtherInfo_st OSSL_CMP_KEMOTHERINFO;
 
 /*
  * function DECLARATIONS
