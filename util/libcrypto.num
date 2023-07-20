@@ -5924,3 +5924,13 @@ OSSL_AA_DIST_POINT_free                 6051	3_5_0	EXIST::FUNCTION:
 OSSL_AA_DIST_POINT_new                  6052	3_5_0	EXIST::FUNCTION:
 OSSL_AA_DIST_POINT_it                   6053	3_5_0	EXIST::FUNCTION:
 PEM_ASN1_write_bio_ctx                  6054	3_5_0	EXIST::FUNCTION:
+OSSL_CMP_CTX_get0_geninfo_ITAVs         ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_HDR_get0_geninfo_ITAVs         ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_new0_certProfile          ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_get0_certProfile          ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_SRV_CTX_init_trans             ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_MSG_get_extraCerts             ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_get_ssk                        ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_SRV_kem_get_ss                 ?	3_6_0	EXIST::FUNCTION:CMP
+EVP_DigestSqueeze                       ?	3_6_0	EXIST::FUNCTION:
+ERR_pop                                 ?	3_6_0	EXIST::FUNCTION:
