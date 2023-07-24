@@ -5471,6 +5471,11 @@
 #define LN_sshkdf               "sshkdf"
 #define NID_sshkdf              1203
 
+#define SN_hkdfWithSHA256               "hkdfWithSHA256"
+#define LN_hkdfWithSHA256               "HKDF with SHA256"
+#define NID_hkdfWithSHA256              1322
+#define OBJ_hkdfWithSHA256              OBJ_id_smime_alg,28L
+
 #define SN_sskdf                "SSKDF"
 #define LN_sskdf                "sskdf"
 #define NID_sskdf               1205
