@@ -479,6 +479,8 @@ int OSSL_CMP_SRV_CTX_set_accept_unprotected(OSSL_CMP_SRV_CTX *srv_ctx, int val);
 int OSSL_CMP_SRV_CTX_set_accept_raverified(OSSL_CMP_SRV_CTX *srv_ctx, int val);
 int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
                                                 int val);
+OSSL_CMP_ITAV *OSSL_CMP_SRV_kem_get_ss(OSSL_CMP_SRV_CTX *srv_ctx,
+                                       const EVP_PKEY *pubkey);
 
 /* from cmp_client.c */
 X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,

@@ -216,7 +216,22 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         if (si == NULL)
             return NULL;
     } else {
+        OSSL_CMP_ITAV *kemctinfo = NULL;
         OSSL_CMP_PKIHEADER *hdr = OSSL_CMP_MSG_get0_header(req);
+
+        if (ossl_cmp_hdr_has_KemCiphertextInfo(hdr, &kemctinfo)) {
+            ossl_cmp_ctx_set1_kemSenderNonce(srv_ctx->ctx,
+                                             hdr->senderNonce);
+            ossl_cmp_ctx_set1_kemRecipNonce(srv_ctx->ctx,
+                                            hdr->recipNonce);
+            if (!ossl_cmp_kem_derivessk_using_kemctinfo(srv_ctx->ctx, kemctinfo,
+                                                        srv_ctx->ctx->pkey)) {
+                ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_DERIVING_KBM_SSK);
+                goto err;
+            }
+            OSSL_CMP_CTX_set_option(srv_ctx->ctx, OSSL_CMP_OPT_KEM_STATUS,
+                                    KBM_SSK_ESTABLISHED_USING_CLIENT);
+        }
 
         si = srv_ctx->process_cert_request(srv_ctx, req, certReqId, crm, p10cr,
                                            &certOut, &chainOut, &caPubs);
@@ -291,6 +306,27 @@ static OSSL_CMP_MSG *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     return msg;
 }
 
+OSSL_CMP_ITAV *OSSL_CMP_SRV_kem_get_ss(OSSL_CMP_SRV_CTX *srv_ctx,
+                                       const EVP_PKEY *pubkey)
+{
+    OSSL_CMP_ITAV *kem_itav = NULL;
+    OSSL_CMP_CTX *ctx;
+
+    if (srv_ctx == NULL || pubkey == NULL)
+        return NULL;
+
+    ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx);
+    if ((kem_itav = ossl_cmp_kem_get_KemCiphertext(ctx, pubkey))
+        == NULL)
+        return NULL;
+
+    OSSL_CMP_CTX_set_option(ctx,
+                            OSSL_CMP_OPT_KEM_STATUS,
+                            KBM_SSK_USING_SERVER_KEM_KEY_1);
+
+    return kem_itav;
+
+}
 /*
  * Processes genm and creates a genp message mirroring the contents of the
  * incoming message
@@ -308,6 +344,14 @@ static OSSL_CMP_MSG *process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
 
     msg = ossl_cmp_genp_new(srv_ctx->ctx, itavs);
+
+    if (msg != NULL && msg->header != NULL
+        && srv_ctx->ctx->kem == KBM_SSK_USING_SERVER_KEM_KEY_1) {
+        ossl_cmp_ctx_set1_kemSenderNonce(srv_ctx->ctx,
+                                         msg->header->senderNonce);
+        ossl_cmp_ctx_set1_kemRecipNonce(srv_ctx->ctx,
+                                        msg->header->recipNonce);
+    }
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
     return msg;
 }
@@ -508,6 +552,8 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     case OSSL_CMP_PKIBODY_RR:
     case OSSL_CMP_PKIBODY_GENM:
     case OSSL_CMP_PKIBODY_ERROR:
+        if (ctx->kem == KBM_SSK_USING_SERVER_KEM_KEY_1)
+            break;
         if (ctx->transactionID != NULL) {
             char *tid = i2s_ASN1_OCTET_STRING(NULL, ctx->transactionID);
 
@@ -521,6 +567,10 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         if (!OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
                 || !OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
             goto err;
+
+        OSSL_CMP_CTX_set_option(ctx,
+                                OSSL_CMP_OPT_KEM_STATUS,
+                                0);
         break;
     default:
         /* transactionID should be already initialized */
@@ -638,15 +688,22 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 0)
             break;
         /* fall through */
-
+    case OSSL_CMP_PKIBODY_GENP:
+        if (rsp_type == OSSL_CMP_PKIBODY_GENP
+            && ctx->kem == KBM_SSK_USING_SERVER_KEM_KEY_1)
+            break;
+        /* fall through */
     case OSSL_CMP_PKIBODY_RP:
     case OSSL_CMP_PKIBODY_PKICONF:
-    case OSSL_CMP_PKIBODY_GENP:
     case OSSL_CMP_PKIBODY_ERROR:
         /* Other terminating response message types are not supported */
         /* Prepare for next transaction, ignoring any errors here: */
         (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
         (void)OSSL_CMP_CTX_set1_senderNonce(ctx, NULL);
+        (void)OSSL_CMP_CTX_reinit(ctx);
+        OSSL_CMP_CTX_set_option(ctx,
+                                OSSL_CMP_OPT_KEM_STATUS,
+                                0);
         ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
 
     default: /* not closing transaction in other cases */
