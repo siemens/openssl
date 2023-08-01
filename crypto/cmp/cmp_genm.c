@@ -72,9 +72,9 @@ static int ossl_X509_check_all(OSSL_CMP_CTX *ctx, const char *source,
     return ret;
 }
 
-static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
-                                    OSSL_CMP_ITAV *req, /* gets consumed */
-                                    int expected, const char *desc)
+OSSL_CMP_ITAV *ossl_cmp_genm_get_itav(OSSL_CMP_CTX *ctx,
+                                      OSSL_CMP_ITAV *req, /* gets consumed */
+                                      int expected, const char *desc)
 {
     STACK_OF(OSSL_CMP_ITAV) *itavs = NULL;
     int i, n;
@@ -152,7 +152,8 @@ int OSSL_CMP_get1_caCerts(OSSL_CMP_CTX *ctx, STACK_OF(X509) **out)
 
     if ((req = OSSL_CMP_ITAV_new_caCerts(NULL)) == NULL)
         return 0;
-    if ((itav = get_genm_itav(ctx, req, NID_id_it_caCerts, "caCerts")) == NULL)
+    if ((itav = ossl_cmp_genm_get_itav(ctx, req,
+                                       NID_id_it_caCerts, "caCerts")) == NULL)
         return 0;
     if (!OSSL_CMP_ITAV_get0_caCerts(itav, &certs))
         goto end;
@@ -300,7 +301,8 @@ int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
 
     if ((req = OSSL_CMP_ITAV_new_rootCaCert(oldWithOld)) == NULL)
         return 0;
-    itav = get_genm_itav(ctx, req, NID_id_it_rootCaKeyUpdate, "rootCaKeyUpdate");
+    itav = ossl_cmp_genm_get_itav(ctx, req, NID_id_it_rootCaKeyUpdate,
+                                  "rootCaKeyUpdate");
     if (itav == NULL)
         return 0;
 

@@ -1056,4 +1056,9 @@ int ossl_cmp_kem_derivessk_using_kemctinfo(OSSL_CMP_CTX *ctx,
                                            OSSL_CMP_ITAV *KemCiphertextInfo,
                                            EVP_PKEY *pkey);
 
+/* from cmp_genm.c */
+OSSL_CMP_ITAV *ossl_cmp_genm_get_itav(OSSL_CMP_CTX *ctx,
+                                      OSSL_CMP_ITAV *req, /* gets consumed */
+                                      int expected, const char *desc);
+
 #endif /* !defined(OSSL_CRYPTO_CMP_LOCAL_H) */
