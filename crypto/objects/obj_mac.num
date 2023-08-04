@@ -1320,3 +1320,5 @@ associated_information		1319
 id_it_KemCiphertextInfo		1320
 id_KemBasedMac		1321
 hkdfWithSHA256		1322
+id_kem_rsa		1323
+id_kdf_kdf2		1324

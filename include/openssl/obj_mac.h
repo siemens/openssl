@@ -53,6 +53,14 @@
 #define NID_gmac                1195
 #define OBJ_gmac                OBJ_iso,0L,9797L,3L,4L
 
+#define SN_id_kem_rsa           "id-kem-rsa"
+#define NID_id_kem_rsa          1323
+#define OBJ_id_kem_rsa          OBJ_iso,0L,18033L,2L,2L,4L
+
+#define SN_id_kdf_kdf2          "id-kdf-kdf2"
+#define NID_id_kdf_kdf2         1324
+#define OBJ_id_kdf_kdf2         OBJ_iso,0L,18033L,2L,5L,2L
+
 #define SN_hmac_md5             "HMAC-MD5"
 #define LN_hmac_md5             "hmac-md5"
 #define NID_hmac_md5            780
