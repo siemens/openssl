@@ -220,6 +220,20 @@ typedef struct ossl_cmp_rootcakeyupdate_st OSSL_CMP_ROOTCAKEYUPDATE;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
 
 /*
+ * RsaKemParameters ::= SEQUENCE {
+ *              keyDerivationFunction  KeyDerivationFunction,
+ *              keyLength              KeyLength
+ *           }
+ * KeyDerivationFunction ::=
+ *                 AlgorithmIdentifier {{KDFAlgorithms}}
+ * KeyLength ::= INTEGER (1..MAX)
+ */
+typedef struct ossl_cmp_RsaKemParameters_st {
+    X509_ALGOR *KeyDerivationFunction;
+    ASN1_INTEGER *KeyLength;
+} OSSL_CMP_RSAKEMPARAMETERS;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_RSAKEMPARAMETERS)
+/*
  * KemCiphertextInfoValue :== KemCiphertextInfo
  * KemCiphertextInfo ::= SEQUENCE {
  *      kem       AlgorithmIdentifier{KEM-ALGORITHM, {...}},
