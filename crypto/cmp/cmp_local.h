@@ -1071,6 +1071,11 @@ int ossl_cmp_kem_derivessk(OSSL_CMP_CTX *ctx,
 int ossl_cmp_kem_derivessk_using_kemctinfo(OSSL_CMP_CTX *ctx,
                                            OSSL_CMP_ITAV *KemCiphertextInfo,
                                            EVP_PKEY *pkey);
+int ossl_cmp_kem_get_ss_using_srvcert(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
+int ossl_cmp_kem_derive_ssk_using_srvcert(OSSL_CMP_CTX *ctx,
+                                          const OSSL_CMP_MSG *msg);
+OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
+                                              const EVP_PKEY *pubkey);
 
 /* from cmp_genm.c */
 OSSL_CMP_ITAV *ossl_cmp_genm_get_itav(OSSL_CMP_CTX *ctx,

@@ -437,3 +437,204 @@ int OSSL_CMP_get_ssk(OSSL_CMP_CTX *ctx)
                             KBM_SSK_ESTABLISHED_USING_CLIENT);
     return 1;
 }
+
+static int performKemEncapsulation(OSSL_CMP_CTX *ctx,
+                                   const EVP_PKEY *pubkey,
+                                   size_t *secret_len, unsigned char **secret,
+                                   size_t *ct_len, unsigned char **ct)
+{
+    int pktype, ret = 0;
+    EVP_PKEY_CTX *kem_encaps_ctx = NULL;
+    size_t sec_len;
+    unsigned char *sec;
+
+    if (secret_len == NULL || secret == NULL
+        || ct_len == NULL || ct == NULL)
+        return 0;
+
+    pktype = EVP_PKEY_get_base_id(pubkey);
+    if (!(pktype == EVP_PKEY_RSA
+          || pktype == EVP_PKEY_EC
+          || pktype == EVP_PKEY_X25519
+          || pktype == EVP_PKEY_X448))
+        goto err;
+
+    kem_encaps_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx,
+                                                (EVP_PKEY *)pubkey,
+                                                ctx->propq);
+
+    if (kem_encaps_ctx == NULL
+        || EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0
+        || (pktype == EVP_PKEY_RSA
+            && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0)
+        || ((pktype == EVP_PKEY_EC
+             || pktype == EVP_PKEY_X25519
+             || pktype == EVP_PKEY_X448)
+            && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0)
+        || EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, ct_len,
+                                NULL, &sec_len) <= 0) {
+        goto err;
+    }
+
+    *ct = OPENSSL_malloc(*ct_len);
+    if (*ct == NULL)
+        goto err;
+
+    sec = OPENSSL_malloc(sec_len);
+    if (sec == NULL) {
+        OPENSSL_free(*ct);
+        goto err;
+    }
+
+    if (EVP_PKEY_encapsulate(kem_encaps_ctx, *ct, ct_len,
+                             sec, &sec_len) <= 0) {
+        OPENSSL_free(*ct);
+        OPENSSL_free(sec);
+        goto err;
+    }
+
+    if (pktype == EVP_PKEY_RSA) {
+        *secret_len = 32; /* TODO- remove hardcoded */
+        *secret = OPENSSL_malloc(*secret_len);
+        if (*secret == NULL) {
+            OPENSSL_clear_free(sec, sec_len);
+            goto err;
+        }
+
+        if (!kdf2(ctx, sec, sec_len, *secret, *secret_len)) {
+            OPENSSL_clear_free(sec, sec_len);
+            OPENSSL_clear_free(*secret, *secret_len);
+            OPENSSL_clear_free(*ct, *ct_len);
+            goto err;
+        }
+        OPENSSL_clear_free(sec, sec_len);
+
+    } else {
+        *secret_len = sec_len;
+        *secret = sec;
+    }
+    ret = 1;
+
+ err:
+    EVP_PKEY_CTX_free(kem_encaps_ctx);
+    return ret;
+}
+
+OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
+                                              const EVP_PKEY *pubkey)
+{
+    size_t secret_len, ct_len;
+    unsigned char *secret = NULL, *ct = NULL;
+    OSSL_CMP_ITAV *kem_itav = NULL;
+    ASN1_OCTET_STRING *asn1ct = NULL;
+    X509_ALGOR *kem_algo;
+
+    if (ctx == NULL || pubkey == NULL)
+        return NULL;
+
+    if (!performKemEncapsulation(ctx, pubkey, &secret_len, &secret,
+                                 &ct_len, &ct))
+        return NULL;
+
+    if (!ossl_cmp_ctx_set1_kem_secret(ctx, secret, secret_len))
+        goto err;
+    if (!ossl_cmp_asn1_octet_string_set1_bytes(&asn1ct, ct, ct_len))
+        goto err;
+    if (!ossl_cmp_ctx_set1_ct(ctx, asn1ct))
+        goto err;
+
+    kem_algo = kem_algor(ctx, pubkey);
+    kem_itav = ossl_cmp_itav_new_KemCiphertext(kem_algo,
+                                               ct, ct_len);
+    if (kem_itav == NULL)
+        goto err;
+
+ err:
+    if (secret != NULL)
+        OPENSSL_clear_free(secret, secret_len);
+    if (ct != NULL)
+        OPENSSL_clear_free(ct, ct_len);
+    ASN1_OCTET_STRING_free(asn1ct);
+    return kem_itav;
+}
+
+int ossl_cmp_kem_get_ss_using_srvcert(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
+{
+    OSSL_CMP_ITAV *kem_itav = NULL;
+    int ret = 0;
+    EVP_PKEY *pubkey = X509_get0_pubkey(ctx->srvCert);
+
+    if ((kem_itav = ossl_cmp_kem_get_KemCiphertext(ctx, pubkey))
+        == NULL)
+        goto err;
+
+    if (!ossl_cmp_hdr_generalInfo_push0_item(msg->header, kem_itav)) {
+        OSSL_CMP_ITAV_free(kem_itav);
+        goto err;
+    }
+
+    ossl_cmp_ctx_set1_kemSenderNonce(ctx,
+                                     ossl_cmp_hdr_get0_senderNonce(msg->header));
+    ossl_cmp_ctx_set1_kemRecipNonce(ctx,
+                                    OSSL_CMP_HDR_get0_recipNonce(msg->header));
+
+    OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_KEM_STATUS,
+                            KBM_SSK_USING_SERVER_KEM_KEY_1);
+    ret = 1;
+ err:
+    return ret;
+}
+
+static OSSL_CMP_KEMBMPARAMETER *decode_KEMBMPARAMETER(X509_ALGOR *protectionAlg)
+{
+    const ASN1_OBJECT *algorOID = NULL;
+    const void *ppval = NULL;
+    int pptype = 0;
+    ASN1_STRING *param_str = NULL;
+    const unsigned char *param_str_uc = NULL;
+
+    X509_ALGOR_get0(&algorOID, &pptype, &ppval, protectionAlg);
+    if (NID_id_KemBasedMac != OBJ_obj2nid(algorOID)
+        || ppval == NULL)
+        return NULL;
+
+    param_str = (ASN1_STRING *)ppval;
+    param_str_uc = param_str->data;
+    return d2i_OSSL_CMP_KEMBMPARAMETER(NULL, &param_str_uc,
+                                       param_str->length);
+}
+
+int ossl_cmp_kem_derive_ssk_using_srvcert(OSSL_CMP_CTX *ctx,
+                                          const OSSL_CMP_MSG *msg)
+{
+    unsigned char *ssk;
+    int len;
+    OSSL_CMP_KEMBMPARAMETER *param = NULL;
+
+    if (ctx == NULL || msg == NULL)
+        return 0;
+
+    param = decode_KEMBMPARAMETER(msg->header->protectionAlg);
+    if (param == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_ALGORITHM_OID);
+        return 0;
+    }
+    ctx->kem_kdf = OBJ_obj2nid(param->kdf->algorithm);
+    ctx->kem_mac = OBJ_obj2nid(param->mac->algorithm);
+    ctx->ssklen = ASN1_INTEGER_get(param->len);
+
+    if (ctx->kem != KBM_SSK_USING_SERVER_KEM_KEY_1
+        || ctx->kem_secret == NULL
+        || !ossl_cmp_kem_derivessk(ctx,
+                                   (unsigned char *)
+                                   ASN1_STRING_get0_data(ctx->kem_secret),
+                                   ASN1_STRING_length(ctx->kem_secret),
+                                   &ssk, &len))
+        return 0;
+    ossl_cmp_ctx_set1_ssk(ctx, ssk, len);
+    OSSL_CMP_CTX_set_option(ctx,
+                            OSSL_CMP_OPT_KEM_STATUS,
+                            KBM_SSK_ESTABLISHED_USING_SERVER);
+    OPENSSL_free(ssk);
+    return 1;
+}
