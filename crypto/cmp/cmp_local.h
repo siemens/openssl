@@ -1044,4 +1044,16 @@ int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int certReqId,
 int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
                             const char *txt, int errorCode, const char *detail);
 
+/* from cmp_kem.c */
+int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
+                                  unsigned char **out, int *len);
+X509_ALGOR *ossl_cmp_kem_BasedMac_algor(const OSSL_CMP_CTX *ctx);
+int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx);
+int ossl_cmp_kem_derivessk(OSSL_CMP_CTX *ctx,
+                           unsigned char *secret, int secret_len,
+                           unsigned char **out, int *len);
+int ossl_cmp_kem_derivessk_using_kemctinfo(OSSL_CMP_CTX *ctx,
+                                           OSSL_CMP_ITAV *KemCiphertextInfo,
+                                           EVP_PKEY *pkey);
+
 #endif /* !defined(OSSL_CRYPTO_CMP_LOCAL_H) */

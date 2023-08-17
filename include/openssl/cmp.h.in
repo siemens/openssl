@@ -506,6 +506,9 @@ int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
                                   const X509 *oldWithOld, X509 **newWithNew,
                                   X509 **newWithOld, X509 **oldWithNew);
 
+/* from cmp_kem.c */
+int OSSL_CMP_get_ssk(OSSL_CMP_CTX *ctx);
+
 #  ifdef  __cplusplus
 }
 #  endif
