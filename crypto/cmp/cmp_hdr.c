@@ -259,6 +259,30 @@ int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
     return 0;
 }
 
+/* return 1 if KemCiphertextInfo in the generalInfo field is set */
+int ossl_cmp_hdr_has_KemCiphertextInfo(const OSSL_CMP_PKIHEADER *hdr,
+                                       OSSL_CMP_ITAV **kemctinfo)
+{
+    int itavCount;
+    int i;
+    OSSL_CMP_ITAV *itav;
+
+    if (!ossl_assert(hdr != NULL && kemctinfo != NULL))
+        return 0;
+
+    *kemctinfo = NULL;
+    itavCount = sk_OSSL_CMP_ITAV_num(hdr->generalInfo);
+    for (i = 0; i < itavCount; i++) {
+        itav = sk_OSSL_CMP_ITAV_value(hdr->generalInfo, i);
+        if (itav != NULL
+            && OBJ_obj2nid(itav->infoType) == NID_id_it_KemCiphertextInfo) {
+            *kemctinfo = itav;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /*
  * set ctx->transactionID in CMP header
  * if ctx->transactionID is NULL, a random one is created with 128 bit

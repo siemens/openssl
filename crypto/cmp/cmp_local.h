@@ -931,6 +931,8 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
                                          const STACK_OF(OSSL_CMP_ITAV) *itavs);
 int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_hdr_has_KemCiphertextInfo(const OSSL_CMP_PKIHEADER *hdr,
+                                       OSSL_CMP_ITAV **kemctinfo);
 # define OSSL_CMP_TRANSACTIONID_LENGTH 16
 # define OSSL_CMP_SENDERNONCE_LENGTH 16
 int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
