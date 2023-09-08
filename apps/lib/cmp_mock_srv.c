@@ -521,6 +521,87 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
         || ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) < 0;
 }
 
+/* return -1 for error, 0 for no update available */
+static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
+                            const X509_CRL *crl)
+{
+    OSSL_CMP_CRLSTATUS *crlstatus;
+    DIST_POINT_NAME *dpn = NULL;
+    GENERAL_NAMES *issuer = NULL;
+    ASN1_TIME *thisupd = NULL;
+
+    if (sk_OSSL_CMP_CRLSTATUS_num(crlStatusList) != 1) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_CRLSTATUSLIST);
+        return -1;
+    }
+    if (crl == NULL)
+        return 0;
+
+    crlstatus = sk_OSSL_CMP_CRLSTATUS_value(crlStatusList, 0);
+    if (!OSSL_CMP_CRLSTATUS_get0(crlstatus, &dpn, &issuer, &thisupd))
+        return -1;
+
+    if (issuer != NULL) {
+        GENERAL_NAME *gn = sk_GENERAL_NAME_value(issuer, 0);
+
+        if (gn != NULL && gn->type == GEN_DIRNAME) {
+            X509_NAME *gen_name = gn->d.dirn;
+
+            if (X509_NAME_cmp(gen_name, X509_CRL_get_issuer(crl)) != 0) {
+                ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_CRL_ISSUER);
+                return -1;
+            }
+        } else {  
+            ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);  
+            return -1; /* error according to RFC 9483 section 4.3.4 */  
+        }
+    }
+
+    return thisupd == NULL
+        || ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) < 0;
+}
+
+/* return -1 for error, 0 for no update available */
+static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
+                            const X509_CRL *crl)
+{
+    OSSL_CMP_CRLSTATUS *crlstatus;
+    DIST_POINT_NAME *dpn = NULL;
+    GENERAL_NAMES *issuer = NULL;
+    ASN1_TIME *thisupd = NULL;
+
+    if (sk_OSSL_CMP_CRLSTATUS_num(crlStatusList) != 1) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_CRLSTATUSLIST);
+        return -1;
+    }
+    if (crl == NULL)
+        return 0;
+
+    crlstatus = sk_OSSL_CMP_CRLSTATUS_value(crlStatusList, 0);
+    if (!OSSL_CMP_CRLSTATUS_get0(crlstatus, &dpn, &issuer, &thisupd))
+        return -1;
+
+    if (issuer != NULL) {
+        GENERAL_NAME *gn = sk_GENERAL_NAME_value(issuer, 0);
+
+        if (gn != NULL && gn->type == GEN_DIRNAME) {
+            X509_NAME *gen_name = gn->d.dirn;
+
+            if (X509_NAME_cmp(gen_name, X509_CRL_get_issuer(crl)) != 0) {
+                ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_CRL_ISSUER);
+                return -1;
+            }
+        } else {  
+            ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);  
+            return -1; /* error according to RFC 9483 section 4.3.4 */  
+        }
+    }
+
+    return thisupd == NULL
+        || ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) < 0;
+}
+
+/* TODO: extend it to check for certificate with KEM key (PQ keys) */
 static X509 *extracert_withKEM(STACK_OF(X509) *certs)
 {
     int i;
@@ -629,6 +710,7 @@ static OSSL_CMP_ITAV *process_genm_itav(OSSL_CMP_SRV_CTX *srv_ctx,
         if (OSSL_CMP_ITAV_get0_value(req) == NULL) {
             X509 *kemcert;
 
+            /* TODO: add certificate path validation */
             kemcert = extracert_withKEM(OSSL_CMP_MSG_get_extraCerts(genm));
             if (kemcert == NULL)
                 break;
