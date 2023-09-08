@@ -141,6 +141,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     ctx->popoMethod = OSSL_CRMF_POPO_SIGNATURE;
     ctx->revocationReason = CRL_REASON_NONE;
 
+    /* TODO: default values for kem need to be generalized */
     ctx->ssklen = 32;
     ctx->kem_mac = NID_hmacWithSHA256;
     ctx->kem_kdf = NID_hkdfWithSHA256;
