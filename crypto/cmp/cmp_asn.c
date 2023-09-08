@@ -323,6 +323,49 @@ OSSL_CMP_ITAV *ossl_cmp_itav_new_KemCiphertext(X509_ALGOR *kem,
     return NULL;
 }
 
+#define KEMCMP_STATICSTRING "CMP-KEM"
+int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
+                                  unsigned char **out, int *len)
+{
+    int ret = 0;
+    OSSL_CMP_KEMOTHERINFO *kemOtherInfo;
+
+    if (out == NULL || len == NULL)
+        return 0;
+
+    if ((kemOtherInfo = OSSL_CMP_KEMOTHERINFO_new()) == NULL)
+        return 0;
+
+    if ((kemOtherInfo->staticString = sk_ASN1_UTF8STRING_new_null()) == NULL
+        || !ossl_cmp_sk_ASN1_UTF8STRING_push_str(kemOtherInfo->staticString,
+                                                 KEMCMP_STATICSTRING, -1))
+        goto err;
+
+    kemOtherInfo->transactionID = ctx->transactionID;
+    kemOtherInfo->senderNonce = ossl_cmp_ctx_get_kem_senderNonce(ctx);
+    kemOtherInfo->recipNonce = ossl_cmp_ctx_get_kem_recipNonce(ctx);
+
+    if (!ASN1_INTEGER_set(kemOtherInfo->len, ctx->kem_ssklen)
+        || !X509_ALGOR_set0(kemOtherInfo->mac, OBJ_nid2obj(NID_hmacWithSHA256),
+                            V_ASN1_UNDEF, NULL))
+        goto err;
+
+    kemOtherInfo->ct = ossl_cmp_ctx_get_kem_ct(ctx);
+    *out = NULL;
+    if ((*len = i2d_OSSL_CMP_KEMOTHERINFO(kemOtherInfo, out)) <= 0)
+        goto err;
+
+    ret = 1;
+
+ err:
+    kemOtherInfo->transactionID = NULL;
+    kemOtherInfo->senderNonce = NULL;
+    kemOtherInfo->recipNonce = NULL;
+    kemOtherInfo->ct = NULL;
+    OSSL_CMP_KEMOTHERINFO_free(kemOtherInfo);
+    return ret;
+}
+
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts)
 {
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new();

@@ -893,6 +893,8 @@ int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);
 OSSL_CMP_ITAV *ossl_cmp_itav_new_KemCiphertext(X509_ALGOR *kem,
                                                unsigned char *in_ct,
                                                int len);
+int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
+                                  unsigned char **out, int *len);
 
 /* from cmp_util.c */
 const char *ossl_cmp_log_parse_metadata(const char *buf,
@@ -1121,8 +1123,6 @@ int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
                             const char *txt, int errorCode, const char *detail);
 
 /* from cmp_kem.c */
-int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
-                                  unsigned char **out, int *len);
 X509_ALGOR *ossl_cmp_kem_BasedMac_algor(const OSSL_CMP_CTX *ctx);
 int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx);
 int ossl_cmp_kem_derivessk(OSSL_CMP_CTX *ctx,

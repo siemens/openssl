@@ -15,44 +15,7 @@
 #include <openssl/core_names.h>
 #include <openssl/cmp_util.h>
 
-#define RSAKEM_KEYLENGTH        32
-#define KEMCMP_STATICSTRING     "CMP-KEM"
-int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
-                                  unsigned char **out, int *len)
-{
-    OSSL_CMP_KEMOTHERINFO *kemOtherInfo;
-
-    if (out == NULL || len == NULL)
-        return 0;
-
-    if ((kemOtherInfo = OSSL_CMP_KEMOTHERINFO_new()) == NULL)
-        return 0;
-
-    if ((kemOtherInfo->staticString = sk_ASN1_UTF8STRING_new_null()) == NULL
-        || !ossl_cmp_sk_ASN1_UTF8STRING_push_str(kemOtherInfo->staticString,
-                                                 KEMCMP_STATICSTRING, -1))
-        goto err;
-
-    kemOtherInfo->transactionID = ossl_cmp_ctx_get0_transactionID(ctx);
-    kemOtherInfo->senderNonce = ossl_cmp_ctx_get_kemSenderNonce(ctx);
-    kemOtherInfo->recipNonce = ossl_cmp_ctx_get_kemRecipNonce(ctx);
-
-    if (!ASN1_INTEGER_set(kemOtherInfo->len, ctx->ssklen)
-        || !X509_ALGOR_set0(kemOtherInfo->mac, OBJ_nid2obj(NID_hmacWithSHA256),
-                            V_ASN1_UNDEF, NULL))
-        goto err;
-
-    kemOtherInfo->ct = ossl_cmp_ctx_get_ct(ctx);
-    *out = NULL;
-    if ((*len = i2d_OSSL_CMP_KEMOTHERINFO(kemOtherInfo, out)) <= 0)
-        goto err;
-
-    return 1;
-
- err:
-    OSSL_CMP_KEMOTHERINFO_free(kemOtherInfo);
-    return 0;
-}
+#define RSAKEM_KEYLENGTH 32
 
 /* using X963KDF without info */
 static int kdf2(OSSL_CMP_CTX *ctx, unsigned char *secret, size_t secret_len,
