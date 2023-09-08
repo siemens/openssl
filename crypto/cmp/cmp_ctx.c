@@ -821,14 +821,7 @@ EVP_PKEY *ossl_cmp_ctx_get0_newPubkey(const OSSL_CMP_CTX *ctx)
         return X509_get0_pubkey(ctx->cert);
     return ctx->pkey;
 }
-ASN1_OCTET_STRING *ossl_cmp_ctx_get0_transactionID(const OSSL_CMP_CTX *ctx)
-{
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return NULL;
-    }
-    return ctx->transactionID;
-}
+
 
 #define DEFINE_set1_ASN1_OCTET_STRING(PREFIX, FIELD) \
 int PREFIX##_set1_##FIELD(OSSL_CMP_CTX *ctx, const ASN1_OCTET_STRING *id) \
