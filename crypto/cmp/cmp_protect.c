@@ -67,7 +67,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         const unsigned char *param_str_uc = NULL;
 
         if (ctx->secretValue == NULL
-                && ctx->ssk == NULL) {
+                && ctx->kem_ssk == NULL) {
             ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PBM_SECRET);
             return NULL;
         }
@@ -120,7 +120,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
             }
             protection = EVP_Q_mac(ctx->libctx, "HMAC", ctx->propq,
                                    hmac_mdname, NULL,
-                                   ctx->ssk->data, ctx->ssk->length,
+                                   ctx->kem_ssk->data, ctx->kem_ssk->length,
                                    prot_part_der, prot_part_der_len,
                                    NULL, 0, &sig_len);
             if (protection == NULL)
@@ -194,7 +194,7 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
     /* Add first ctx->cert and its chain if using signature-based protection */
     if (!ctx->unprotectedSend && ctx->secretValue == NULL
-            && ctx->kem != KBM_SSK_ESTABLISHED_USING_CLIENT
+            && ctx->kem_status != KBM_SSK_ESTABLISHED_USING_CLIENT
             && ctx->cert != NULL && ctx->pkey != NULL) {
         int prepend = X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
             | X509_ADD_FLAG_PREPEND | X509_ADD_FLAG_NO_SS;
@@ -282,13 +282,13 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     ASN1_BIT_STRING_free(msg->protection);
     msg->protection = NULL;
 
-    if (ctx->kem == KBM_SSK_USING_SERVER_KEM_KEY) {
+    if (ctx->kem_status == KBM_SSK_USING_SERVER_KEM_KEY) {
         if (!ossl_cmp_kem_get_ss_using_srvcert(ctx, msg))
             goto err;
     }
 
     if (ctx->unprotectedSend
-            || ctx->kem == KBM_SSK_USING_CLINET_KEM_KEY) {
+            || ctx->kem_status == KBM_SSK_USING_CLIENT_KEM_KEY) {
         if (!set_senderKID(ctx, msg, NULL))
             goto err;
     } else if (ctx->secretValue != NULL) {
@@ -303,8 +303,8 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
          * while not needed to validate the protection certificate,
          * the option to do this might be handy for certain use cases
          */
-    } else if (ctx->ssk != NULL
-               && ctx->kem == KBM_SSK_ESTABLISHED_USING_CLIENT) {
+    } else if (ctx->kem_ssk != NULL
+               && ctx->kem_status == KBM_SSK_ESTABLISHED_USING_CLIENT) {
         /* use KemBasedMac */
         if ((msg->header->protectionAlg = ossl_cmp_kem_BasedMac_algor(ctx))
             == NULL)
@@ -338,7 +338,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     }
     if (!ctx->unprotectedSend
         /* protect according to msg->header->protectionAlg partly set above */
-            && ctx->kem != KBM_SSK_USING_CLINET_KEM_KEY
+            && ctx->kem_status != KBM_SSK_USING_CLIENT_KEM_KEY
             && ((msg->protection = ossl_cmp_calc_protection(ctx, msg)) == NULL))
         goto err;
 
