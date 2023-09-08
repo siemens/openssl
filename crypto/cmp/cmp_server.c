@@ -278,12 +278,16 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     } else {
         OSSL_CMP_ITAV *kemctinfo = NULL;
         OSSL_CMP_PKIHEADER *hdr = OSSL_CMP_MSG_get0_header(req);
+        int ret;
 
-        if (ossl_cmp_hdr_has_KemCiphertextInfo(hdr, &kemctinfo)) {
-            ossl_cmp_ctx_set1_kemSenderNonce(srv_ctx->ctx,
-                                             hdr->senderNonce);
-            ossl_cmp_ctx_set1_kemRecipNonce(srv_ctx->ctx,
-                                            hdr->recipNonce);
+        ret = ossl_cmp_hdr_has_KemCiphertextInfo(hdr, &kemctinfo);
+        if (ret == -1) {
+            goto err;
+        } else if (ret == 1) {
+            ossl_cmp_ctx_set1_kem_senderNonce(srv_ctx->ctx,
+                                              hdr->senderNonce);
+            ossl_cmp_ctx_set1_kem_recipNonce(srv_ctx->ctx,
+                                             hdr->recipNonce);
             if (!ossl_cmp_kem_derivessk_using_kemctinfo(srv_ctx->ctx, kemctinfo,
                                                         srv_ctx->ctx->pkey)) {
                 ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_DERIVING_KBM_SSK);
@@ -411,11 +415,11 @@ static OSSL_CMP_MSG *process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
     msg = ossl_cmp_genp_new(srv_ctx->ctx, itavs);
 
     if (msg != NULL && msg->header != NULL
-        && srv_ctx->ctx->kem == KBM_SSK_USING_SERVER_KEM_KEY_1) {
-        ossl_cmp_ctx_set1_kemSenderNonce(srv_ctx->ctx,
-                                         msg->header->senderNonce);
-        ossl_cmp_ctx_set1_kemRecipNonce(srv_ctx->ctx,
-                                        msg->header->recipNonce);
+        && srv_ctx->ctx->kem_status == KBM_SSK_USING_SERVER_KEM_KEY_1) {
+        ossl_cmp_ctx_set1_kem_senderNonce(srv_ctx->ctx,
+                                          msg->header->senderNonce);
+        ossl_cmp_ctx_set1_kem_recipNonce(srv_ctx->ctx,
+                                         msg->header->recipNonce);
     }
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
     return msg;
@@ -681,7 +685,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     case OSSL_CMP_PKIBODY_RR:
     case OSSL_CMP_PKIBODY_GENM:
     case OSSL_CMP_PKIBODY_ERROR:
-        if (ctx->kem == KBM_SSK_USING_SERVER_KEM_KEY_1)
+        if (ctx->kem_status == KBM_SSK_USING_SERVER_KEM_KEY_1)
             break;
         if (ctx->transactionID != NULL) {
             char *tid = i2s_ASN1_OCTET_STRING(NULL, ctx->transactionID);
@@ -797,7 +801,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         /* fall through */
     case OSSL_CMP_PKIBODY_GENP:
         if (rsp_type == OSSL_CMP_PKIBODY_GENP
-            && ctx->kem == KBM_SSK_USING_SERVER_KEM_KEY_1)
+            && ctx->kem_status == KBM_SSK_USING_SERVER_KEM_KEY_1)
             break;
         /* fall through */
 
