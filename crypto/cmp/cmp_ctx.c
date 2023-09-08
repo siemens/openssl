@@ -447,65 +447,34 @@ int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
         ossl_cmp_asn1_octet_string_set1_bytes(&ctx->referenceValue, ref, len);
 }
 
-/* Set or clear the password to be used for protecting messages with PBMAC */
-int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx,
-                                  const unsigned char *sec, int len)
-{
-    ASN1_OCTET_STRING *secretValue = NULL;
-
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-    if (ossl_cmp_asn1_octet_string_set1_bytes(&secretValue, sec, len) != 1)
-        return 0;
-    if (ctx->secretValue != NULL) {
-        OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
-        ASN1_OCTET_STRING_free(ctx->secretValue);
-    }
-    ctx->secretValue = secretValue;
-    return 1;
+#define DEFINE_OSSL_set1_octetsecret(PREFIX, FIELD) \
+int PREFIX##_set1_##FIELD(OSSL_CMP_CTX *ctx, \
+                          const unsigned char *sec, int len) \
+{ \
+    ASN1_OCTET_STRING *secret = NULL; \
+    \
+    if (ctx == NULL) { \
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT); \
+        return 0; \
+    } \
+    if (ossl_cmp_asn1_octet_string_set1_bytes(&secret, sec, len) != 1) \
+        return 0; \
+    if (ctx->FIELD != NULL) { \
+        OPENSSL_cleanse(ctx->FIELD->data, ctx->FIELD->length); \
+        ASN1_OCTET_STRING_free(ctx->FIELD); \
+    } \
+    ctx->FIELD = secret; \
+    return 1; \
 }
+
+/* Set or clear the password to be used for protecting messages with PBMAC */
+DEFINE_OSSL_set1_octetsecret(OSSL_CMP_CTX, secretValue)
 
 /* Set or clear the ssk to be used for protecting messages with KEM-MAC */
-int ossl_cmp_ctx_set1_ssk(OSSL_CMP_CTX *ctx,
-                          const unsigned char *sec, int len)
-{
-    ASN1_OCTET_STRING *ssk = NULL;
+DEFINE_OSSL_set1_octetsecret(ossl_cmp_ctx, ssk)
 
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-    if (ossl_cmp_asn1_octet_string_set1_bytes(&ssk, sec, len) != 1)
-        return 0;
-    if (ctx->ssk != NULL) {
-        OPENSSL_cleanse(ctx->ssk->data, ctx->ssk->length);
-        ASN1_OCTET_STRING_free(ctx->ssk);
-    }
-    ctx->ssk = ssk;
-    return 1;
-}
-
-/* Set or clear the secret to be used for protecting messages with KEM-MAC */
-int ossl_cmp_ctx_set1_kem_secret(OSSL_CMP_CTX *ctx,
-                                 const unsigned char *sec, int len)
-{
-    ASN1_OCTET_STRING *secret = NULL;
-
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-    if (ossl_cmp_asn1_octet_string_set1_bytes(&secret, sec, len) != 1)
-        return 0;
-    if (ctx->kem_secret != NULL) {
-        OPENSSL_cleanse(ctx->kem_secret->data, ctx->kem_secret->length);
-        ASN1_OCTET_STRING_free(ctx->kem_secret);
-    }
-    ctx->kem_secret = secret;
-    return 1;
-}
+/* Set or clear the secret to be used for deriving ssk */
+DEFINE_OSSL_set1_octetsecret(ossl_cmp_ctx, kem_secret)
 
 #define DEFINE_OSSL_CMP_CTX_get1_certs(FIELD) \
 STACK_OF(X509) *OSSL_CMP_CTX_get1_##FIELD(const OSSL_CMP_CTX *ctx) \
