@@ -585,14 +585,14 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     switch (ossl_cmp_hdr_get_protection_nid(msg->header)) {
     /* TODO: merge it with pbm as most code are same */
     case NID_id_KemBasedMac:
-        if (ctx->ssk == NULL
+        if (ctx->kem_ssk == NULL
             && !ossl_cmp_kem_derive_ssk_using_srvcert(ctx, msg)) {
             ossl_cmp_info(ctx, "no ssk available for verifying KEM-based CMP message protection");
             ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SECRET);
             return 0;
         }
 
-        if (ctx->kem == KBM_SSK_ESTABLISHED_USING_SERVER
+        if (ctx->kem_status == KBM_SSK_ESTABLISHED_USING_SERVER
             && verify_KBMAC(ctx, msg)) {
             return 1;
         }
