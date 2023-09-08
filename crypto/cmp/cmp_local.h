@@ -912,7 +912,6 @@ int ossl_cmp_ctx_set1_kemSenderNonce(OSSL_CMP_CTX *ctx,
 int ossl_cmp_ctx_set1_ct(OSSL_CMP_CTX *ctx,
                          const ASN1_OCTET_STRING *ct);
 EVP_PKEY *ossl_cmp_ctx_get0_newPubkey(const OSSL_CMP_CTX *ctx);
-ASN1_OCTET_STRING *ossl_cmp_ctx_get0_transactionID(const OSSL_CMP_CTX *ctx);
 ASN1_OCTET_STRING *ossl_cmp_ctx_get_kemRecipNonce(const OSSL_CMP_CTX *ctx);
 ASN1_OCTET_STRING *ossl_cmp_ctx_get_kemSenderNonce(const OSSL_CMP_CTX *ctx);
 ASN1_OCTET_STRING *ossl_cmp_ctx_get_ct(const OSSL_CMP_CTX *ctx);
