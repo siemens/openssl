@@ -278,16 +278,16 @@ int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
                                                  KEMCMP_STATICSTRING, -1))
         goto err;
 
-    kemOtherInfo->transactionID = ossl_cmp_ctx_get0_transactionID(ctx);
-    kemOtherInfo->senderNonce = ossl_cmp_ctx_get_kemSenderNonce(ctx);
-    kemOtherInfo->recipNonce = ossl_cmp_ctx_get_kemRecipNonce(ctx);
+    kemOtherInfo->transactionID = ctx->transactionID;
+    kemOtherInfo->senderNonce = ossl_cmp_ctx_get_kem_senderNonce(ctx);
+    kemOtherInfo->recipNonce = ossl_cmp_ctx_get_kem_recipNonce(ctx);
 
-    if (!ASN1_INTEGER_set(kemOtherInfo->len, ctx->ssklen)
+    if (!ASN1_INTEGER_set(kemOtherInfo->len, ctx->kem_ssklen)
         || !X509_ALGOR_set0(kemOtherInfo->mac, OBJ_nid2obj(NID_hmacWithSHA256),
                             V_ASN1_UNDEF, NULL))
         goto err;
 
-    kemOtherInfo->ct = ossl_cmp_ctx_get_ct(ctx);
+    kemOtherInfo->ct = ossl_cmp_ctx_get_kem_ct(ctx);
     *out = NULL;
     if ((*len = i2d_OSSL_CMP_KEMOTHERINFO(kemOtherInfo, out)) <= 0)
         goto err;
