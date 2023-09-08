@@ -44,6 +44,7 @@ static int kdf2(OSSL_CMP_CTX *ctx, unsigned char *secret, size_t secret_len,
     return 1;
 }
 
+/* TODO: look for existing OpenSSL solution */
 static int x509_algor_from_nid_with_md(int nid, X509_ALGOR **palg,
                                        const EVP_MD *md)
 {
@@ -159,7 +160,7 @@ X509_ALGOR *ossl_cmp_kem_BasedMac_algor(const OSSL_CMP_CTX *ctx)
     if ((param = OSSL_CMP_KEMBMPARAMETER_new()) == NULL
         || (param->kdf = kdf_algor(ctx, ctx->kem_kdf)) == NULL
         || (param->mac = mac_algor(ctx)) == NULL
-        || !ASN1_INTEGER_set(param->len, ctx->ssklen))
+        || !ASN1_INTEGER_set(param->len, ctx->kem_ssklen))
         goto err;
 
     if ((param_str = ASN1_STRING_new()) == NULL)
@@ -186,8 +187,9 @@ int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx)
     uint32_t ex_kusage = 0;
 
     /* Secret is provided for PBM or unprotected msg is allowed */
-    if (ctx == NULL
-        || ctx->unprotectedSend
+    if (ctx == NULL)
+        return -1;
+    if (ctx->unprotectedSend
         || ctx->secretValue != NULL)
         return 0;
 
@@ -205,7 +207,7 @@ int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx)
             return 0;
         } else if (ex_kusage & X509v3_KU_KEY_ENCIPHERMENT) {
             OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_KEM_STATUS,
-                                    KBM_SSK_USING_CLINET_KEM_KEY);
+                                    KBM_SSK_USING_CLIENT_KEM_KEY);
             return 1;
         }
     }
@@ -215,7 +217,7 @@ int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx)
 
         if (ex_kusage == UINT32_MAX) {
             ossl_cmp_debug(ctx,
-                           "key usage absent in serever cert");
+                           "key usage absent in server cert");
         } else if (ex_kusage & X509v3_KU_KEY_ENCIPHERMENT) {
             OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_KEM_STATUS,
                                     KBM_SSK_USING_SERVER_KEM_KEY);
@@ -300,7 +302,7 @@ static int derive_ssk_HKDF(OSSL_CMP_CTX *ctx,
         || key == NULL || info == NULL)
         return 0;
 
-    *ssklen = ctx->ssklen;
+    *ssklen = ctx->kem_ssklen;
     *ssk = OPENSSL_zalloc(*ssklen);
     if (*ssk == NULL
         || (kdf = EVP_KDF_fetch(ctx->libctx, "HKDF", ctx->propq)) == NULL)
@@ -362,7 +364,7 @@ int ossl_cmp_kem_derivessk_using_kemctinfo(OSSL_CMP_CTX *ctx,
         return 0;
 
     ct = KemCiphertextInfo->infoValue.KemCiphertextInfoValue->ct;
-    if (!ossl_cmp_ctx_set1_ct(ctx, ct))
+    if (!ossl_cmp_ctx_set1_kem_ct(ctx, ct))
         return 0;
 
     if (!performKemDecapsulation(ctx, pkey,
@@ -374,7 +376,7 @@ int ossl_cmp_kem_derivessk_using_kemctinfo(OSSL_CMP_CTX *ctx,
     if (!ossl_cmp_kem_derivessk(ctx, secret, secret_len, &ssk, &ssk_len))
         return 0;
 
-    ossl_cmp_ctx_set1_ssk(ctx, ssk, ssk_len);
+    ossl_cmp_ctx_set1_kem_ssk(ctx, ssk, ssk_len);
     return 1;
 }
 
@@ -503,7 +505,7 @@ OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
         goto err;
     if (!ossl_cmp_asn1_octet_string_set1_bytes(&asn1ct, ct, ct_len))
         goto err;
-    if (!ossl_cmp_ctx_set1_ct(ctx, asn1ct))
+    if (!ossl_cmp_ctx_set1_kem_ct(ctx, asn1ct))
         goto err;
 
     kem_algo = kem_algor(ctx, pubkey);
@@ -531,15 +533,16 @@ int ossl_cmp_kem_get_ss_using_srvcert(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         == NULL)
         goto err;
 
-    if (!ossl_cmp_hdr_generalInfo_push0_item(msg->header, kem_itav)) {
+    if (msg->header == NULL
+        || !ossl_cmp_hdr_generalInfo_push0_item(msg->header, kem_itav)) {
         OSSL_CMP_ITAV_free(kem_itav);
         goto err;
     }
 
-    ossl_cmp_ctx_set1_kemSenderNonce(ctx,
-                                     ossl_cmp_hdr_get0_senderNonce(msg->header));
-    ossl_cmp_ctx_set1_kemRecipNonce(ctx,
-                                    OSSL_CMP_HDR_get0_recipNonce(msg->header));
+    ossl_cmp_ctx_set1_kem_senderNonce(ctx,
+                                      msg->header->senderNonce);
+    ossl_cmp_ctx_set1_kem_recipNonce(ctx,
+                                     msg->header->recipNonce);
 
     OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_KEM_STATUS,
                             KBM_SSK_USING_SERVER_KEM_KEY_1);
@@ -584,9 +587,9 @@ int ossl_cmp_kem_derive_ssk_using_srvcert(OSSL_CMP_CTX *ctx,
     }
     ctx->kem_kdf = OBJ_obj2nid(param->kdf->algorithm);
     ctx->kem_mac = OBJ_obj2nid(param->mac->algorithm);
-    ctx->ssklen = ASN1_INTEGER_get(param->len);
+    ctx->kem_ssklen = ASN1_INTEGER_get(param->len);
 
-    if (ctx->kem != KBM_SSK_USING_SERVER_KEM_KEY_1
+    if (ctx->kem_status != KBM_SSK_USING_SERVER_KEM_KEY_1
         || ctx->kem_secret == NULL
         || !ossl_cmp_kem_derivessk(ctx,
                                    (unsigned char *)
@@ -594,7 +597,7 @@ int ossl_cmp_kem_derive_ssk_using_srvcert(OSSL_CMP_CTX *ctx,
                                    ASN1_STRING_length(ctx->kem_secret),
                                    &ssk, &len))
         return 0;
-    ossl_cmp_ctx_set1_ssk(ctx, ssk, len);
+    ossl_cmp_ctx_set1_kem_ssk(ctx, ssk, len);
     OSSL_CMP_CTX_set_option(ctx,
                             OSSL_CMP_OPT_KEM_STATUS,
                             KBM_SSK_ESTABLISHED_USING_SERVER);
