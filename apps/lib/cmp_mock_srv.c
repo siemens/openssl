@@ -391,6 +391,7 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     return OSSL_CMP_PKISI_dup(ctx->statusOut);
 }
 
+/* TODO: extend it to check for certificate with KEM key (PQ keys) */
 static X509 *extracert_withKEM(STACK_OF(X509) *certs)
 {
     int i;
@@ -429,6 +430,7 @@ static OSSL_CMP_ITAV *process_genm_itav(OSSL_CMP_SRV_CTX *srv_ctx,
         if (OSSL_CMP_ITAV_get0_value(req) == NULL) {
             X509 *kemcert;
 
+            /* TODO: add certificate path validation */
             kemcert = extracert_withKEM(OSSL_CMP_MSG_get_extraCerts(genm));
             if (kemcert == NULL)
                 break;
