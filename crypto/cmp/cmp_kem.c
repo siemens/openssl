@@ -53,7 +53,7 @@ static int x509_algor_from_nid_with_md(int nid, X509_ALGOR **palg,
 
     *palg = NULL;
     if (md == NULL)
-        return 1;
+        return 0;
     /* need to embed algorithm ID inside another */
     if (!ossl_x509_algor_new_from_md(&algtmp, md))
         goto err;
