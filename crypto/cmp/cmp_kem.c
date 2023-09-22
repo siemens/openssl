@@ -14,35 +14,9 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include <openssl/cmp_util.h>
+#include "crypto/asn1.h"
 
 #define RSAKEM_KEYLENGTH 32
-
-/* using X963KDF without info */
-static int kdf2(OSSL_CMP_CTX *ctx, unsigned char *secret, size_t secret_len,
-                unsigned char *out, int out_len)
-{
-    EVP_KDF *kdf;
-    EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[4], *p = params;
-
-    if (out == NULL)
-        return 0;
-
-    kdf = EVP_KDF_fetch(ctx->libctx, "X963KDF", ctx->propq);
-    kctx = EVP_KDF_CTX_new(kdf);
-    EVP_KDF_free(kdf);
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            SN_sha256, strlen(SN_sha256));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
-                                             secret, (size_t)secret_len);
-    *p = OSSL_PARAM_construct_end();
-    if (EVP_KDF_derive(kctx, out, out_len, params) <= 0) {
-        return 0;
-    }
-    EVP_KDF_CTX_free(kctx);
-    return 1;
-}
 
 /* TODO: look for existing OpenSSL solution */
 static int x509_algor_from_nid_with_md(int nid, X509_ALGOR **palg,
@@ -69,7 +43,7 @@ static int x509_algor_from_nid_with_md(int nid, X509_ALGOR **palg,
     return *palg != NULL;
 }
 
-static X509_ALGOR *kdf_algor(const OSSL_CMP_CTX *ctx, int nid_kdf)
+X509_ALGOR *ossl_cmp_kem_kdf_algor(const OSSL_CMP_CTX *ctx, int nid_kdf)
 {
     X509_ALGOR *alg = NULL;
 
@@ -99,32 +73,6 @@ static X509_ALGOR *mac_algor(const OSSL_CMP_CTX *ctx)
     return alg;
 }
 
-static X509_ALGOR *kem_rsa_algor(OSSL_CMP_CTX *ctx)
-{
-    X509_ALGOR *kemrsa_algo = NULL;
-    OSSL_CMP_RSAKEMPARAMETERS *param = NULL;
-    ASN1_STRING *stmp = NULL;
-
-    if ((param = OSSL_CMP_RSAKEMPARAMETERS_new()) == NULL
-        || (param->KeyDerivationFunction = kdf_algor(ctx,
-                                                     NID_id_kdf_kdf2)) == NULL
-        || !ASN1_INTEGER_set(param->KeyLength, RSAKEM_KEYLENGTH))
-        goto err;
-
-    if (ASN1_item_pack(param, ASN1_ITEM_rptr(OSSL_CMP_RSAKEMPARAMETERS),
-                       &stmp) == NULL)
-        goto err;
-    kemrsa_algo = ossl_X509_ALGOR_from_nid(NID_id_kem_rsa,
-                                           V_ASN1_SEQUENCE, stmp);
-    if (kemrsa_algo == NULL)
-        goto err;
-    stmp = NULL;
- err:
-    OSSL_CMP_RSAKEMPARAMETERS_free(param);
-    ASN1_STRING_free(stmp);
-    return kemrsa_algo;
-}
-
 static X509_ALGOR *kem_algor(OSSL_CMP_CTX *ctx,
                              const EVP_PKEY *pubkey)
 {
@@ -133,7 +81,7 @@ static X509_ALGOR *kem_algor(OSSL_CMP_CTX *ctx,
     switch (EVP_PKEY_get_base_id(pubkey)) {
     case EVP_PKEY_RSA:
         /* kem rsa */
-        kem = kem_rsa_algor(ctx);
+        kem = ossl_cmp_rsakem_algor(ctx);
         break;
     case EVP_PKEY_EC:
     case EVP_PKEY_X25519:
@@ -158,7 +106,7 @@ X509_ALGOR *ossl_cmp_kem_BasedMac_algor(const OSSL_CMP_CTX *ctx)
     ASN1_STRING *param_str = NULL;
 
     if ((param = OSSL_CMP_KEMBMPARAMETER_new()) == NULL
-        || (param->kdf = kdf_algor(ctx, ctx->kem_kdf)) == NULL
+        || (param->kdf = ossl_cmp_kem_kdf_algor(ctx, ctx->kem_kdf)) == NULL
         || (param->mac = mac_algor(ctx)) == NULL
         || !ASN1_INTEGER_set(param->len, ctx->kem_ssklen))
         goto err;
@@ -227,64 +175,60 @@ int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx)
     return 0;
 }
 
-static int performKemDecapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
-                                   const unsigned char *ct, size_t ct_len,
-                                   unsigned char **secret, size_t *secret_len)
+static int EC_kem_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
+                                const unsigned char *ct, size_t ct_len,
+                                unsigned char **secret, size_t *secret_len)
 {
     int ret = 0;
-    size_t sec_len;
-    unsigned char *sec;
-    int pktype = EVP_PKEY_get_base_id(pkey);
+
+    if (ctx == NULL || pkey == NULL
+        || ct == NULL
+        || secret == NULL || secret_len == NULL)
+        return 0;
+
     EVP_PKEY_CTX *kem_decaps_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx,
                                                               pkey,
                                                               ctx->propq);
 
     if (kem_decaps_ctx == NULL
         || EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0
-        || (pktype == EVP_PKEY_RSA
-            && EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "RSASVE") <= 0)
-        || ((pktype == EVP_PKEY_EC
-             || pktype == EVP_PKEY_X25519
-             || pktype == EVP_PKEY_X448)
-            && EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0)
-        || EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, &sec_len,
+        || EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0
+        || EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, secret_len,
                                 ct, ct_len) <= 0) {
         goto err;
     }
 
-    sec = OPENSSL_malloc(sec_len);
-    if (sec == NULL)
+    *secret = OPENSSL_malloc(*secret_len);
+    if (*secret == NULL)
         goto err;
 
     if (EVP_PKEY_decapsulate(kem_decaps_ctx,
-                             sec, &sec_len,
+                             *secret, secret_len,
                              ct, ct_len) <= 0) {
-        OPENSSL_free(sec);
+        OPENSSL_free(*secret);
         goto err;
-    }
-    if (pktype == EVP_PKEY_RSA) {
-        *secret_len = RSAKEM_KEYLENGTH;
-        *secret = OPENSSL_malloc(*secret_len);
-        if (*secret == NULL) {
-            OPENSSL_clear_free(sec, sec_len);
-            goto err;
-        }
-
-        if (!kdf2(ctx, sec, sec_len, *secret, *secret_len)) {
-            OPENSSL_clear_free(sec, sec_len);
-            OPENSSL_clear_free(*secret, *secret_len);
-            goto err;
-        }
-        OPENSSL_clear_free(sec, sec_len);
-
-    } else {
-        *secret_len = sec_len;
-        *secret = sec;
     }
     ret = 1;
  err:
     EVP_PKEY_CTX_free(kem_decaps_ctx);
     return ret;
+}
+
+static int performKemDecapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
+                                   const unsigned char *ct, size_t ct_len,
+                                   unsigned char **secret, size_t *secret_len)
+{
+    int pktype = EVP_PKEY_get_base_id(pkey);
+
+    if (pktype == EVP_PKEY_EC
+        || pktype == EVP_PKEY_X25519
+        || pktype == EVP_PKEY_X448) {
+        return EC_kem_decapsulation(ctx, pkey, ct, ct_len, secret, secret_len);
+    } else if (pktype == EVP_PKEY_RSA) {
+        return ossl_cmp_kemrsa_decapsulation(ctx, pkey,
+                                             ct, ct_len, secret, secret_len);
+    }
+    return 0;
 }
 
 static int derive_ssk_HKDF(OSSL_CMP_CTX *ctx,
@@ -403,26 +347,18 @@ int OSSL_CMP_get_ssk(OSSL_CMP_CTX *ctx)
     return 1;
 }
 
-static int performKemEncapsulation(OSSL_CMP_CTX *ctx,
-                                   const EVP_PKEY *pubkey,
-                                   size_t *secret_len, unsigned char **secret,
-                                   size_t *ct_len, unsigned char **ct)
+static int EC_kem_encapsulation(OSSL_CMP_CTX *ctx,
+                                const EVP_PKEY *pubkey,
+                                size_t *secret_len, unsigned char **secret,
+                                size_t *ct_len, unsigned char **ct)
 {
-    int pktype, ret = 0;
+    int ret = 0;
     EVP_PKEY_CTX *kem_encaps_ctx = NULL;
-    size_t sec_len;
-    unsigned char *sec;
 
-    if (secret_len == NULL || secret == NULL
-        || ct_len == NULL || ct == NULL)
+    if (ctx == NULL || pubkey == NULL
+        || ct == NULL
+        || secret == NULL || secret_len == NULL)
         return 0;
-
-    pktype = EVP_PKEY_get_base_id(pubkey);
-    if (!(pktype == EVP_PKEY_RSA
-          || pktype == EVP_PKEY_EC
-          || pktype == EVP_PKEY_X25519
-          || pktype == EVP_PKEY_X448))
-        goto err;
 
     kem_encaps_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx,
                                                 (EVP_PKEY *)pubkey,
@@ -430,14 +366,9 @@ static int performKemEncapsulation(OSSL_CMP_CTX *ctx,
 
     if (kem_encaps_ctx == NULL
         || EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0
-        || (pktype == EVP_PKEY_RSA
-            && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0)
-        || ((pktype == EVP_PKEY_EC
-             || pktype == EVP_PKEY_X25519
-             || pktype == EVP_PKEY_X448)
-            && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0)
+        || EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0
         || EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, ct_len,
-                                NULL, &sec_len) <= 0) {
+                                NULL, secret_len) <= 0) {
         goto err;
     }
 
@@ -445,44 +376,48 @@ static int performKemEncapsulation(OSSL_CMP_CTX *ctx,
     if (*ct == NULL)
         goto err;
 
-    sec = OPENSSL_malloc(sec_len);
-    if (sec == NULL) {
+    *secret = OPENSSL_malloc(*secret_len);
+    if (*secret == NULL) {
         OPENSSL_free(*ct);
         goto err;
     }
 
     if (EVP_PKEY_encapsulate(kem_encaps_ctx, *ct, ct_len,
-                             sec, &sec_len) <= 0) {
+                             *secret, secret_len) <= 0) {
         OPENSSL_free(*ct);
-        OPENSSL_free(sec);
+        OPENSSL_free(*secret);
         goto err;
     }
 
-    if (pktype == EVP_PKEY_RSA) {
-        *secret_len = 32; /* TODO- remove hardcoded */
-        *secret = OPENSSL_malloc(*secret_len);
-        if (*secret == NULL) {
-            OPENSSL_clear_free(sec, sec_len);
-            goto err;
-        }
-
-        if (!kdf2(ctx, sec, sec_len, *secret, *secret_len)) {
-            OPENSSL_clear_free(sec, sec_len);
-            OPENSSL_clear_free(*secret, *secret_len);
-            OPENSSL_clear_free(*ct, *ct_len);
-            goto err;
-        }
-        OPENSSL_clear_free(sec, sec_len);
-
-    } else {
-        *secret_len = sec_len;
-        *secret = sec;
-    }
     ret = 1;
-
  err:
     EVP_PKEY_CTX_free(kem_encaps_ctx);
     return ret;
+}
+
+static int performKemEncapsulation(OSSL_CMP_CTX *ctx,
+                                   const EVP_PKEY *pubkey,
+                                   size_t *secret_len, unsigned char **secret,
+                                   size_t *ct_len, unsigned char **ct)
+{
+    int pktype;
+
+    if (secret_len == NULL || secret == NULL
+        || ct_len == NULL || ct == NULL
+        || pubkey == NULL)
+        return 0;
+
+    pktype = EVP_PKEY_get_base_id(pubkey);
+    if (pktype == EVP_PKEY_EC
+        || pktype == EVP_PKEY_X25519
+        || pktype == EVP_PKEY_X448) {
+        return EC_kem_encapsulation(ctx, pubkey, secret_len,
+                                    secret, ct_len, ct);
+    } else if (pktype == EVP_PKEY_RSA) {
+        return ossl_cmp_kemrsa_encapsulation(ctx, pubkey, secret_len,
+                                             secret, ct_len, ct);
+    }
+    return 0;
 }
 
 OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
