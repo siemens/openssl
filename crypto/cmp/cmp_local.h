@@ -1124,6 +1124,7 @@ int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
 
 /* from cmp_kem.c */
 X509_ALGOR *ossl_cmp_kem_BasedMac_algor(const OSSL_CMP_CTX *ctx);
+X509_ALGOR *ossl_cmp_kem_kdf_algor(const OSSL_CMP_CTX *ctx, int nid_kdf);
 int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx);
 int ossl_cmp_kem_derivessk(OSSL_CMP_CTX *ctx,
                            unsigned char *secret, int secret_len,
@@ -1136,6 +1137,16 @@ int ossl_cmp_kem_derive_ssk_using_srvcert(OSSL_CMP_CTX *ctx,
                                           const OSSL_CMP_MSG *msg);
 OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
                                               const EVP_PKEY *pubkey);
+
+/* from cmp_kemrsa.c */
+X509_ALGOR *ossl_cmp_rsakem_algor(OSSL_CMP_CTX *ctx);
+int ossl_cmp_kemrsa_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
+                                  const unsigned char *ct, size_t ct_len,
+                                  unsigned char **secret, size_t *secret_len);
+int ossl_cmp_kemrsa_encapsulation(OSSL_CMP_CTX *ctx,
+                                  const EVP_PKEY *pubkey,
+                                  size_t *secret_len, unsigned char **secret,
+                                  size_t *ct_len, unsigned char **ct);
 
 /* from cmp_genm.c */
 OSSL_CMP_ITAV *ossl_cmp_genm_get_itav(OSSL_CMP_CTX *ctx,
