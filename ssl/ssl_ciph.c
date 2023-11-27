@@ -55,6 +55,10 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_ARIA256GCM, NID_aria_256_gcm}, /* SSL_ENC_ARIA256GCM_IDX 21 */
     {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX */
     {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX */
+    /* SSL_ENC_eNULL_HMAC_SHA256_IDX 24 */
+    {SSL_eNULL_HMAC_SHA256, NID_enull_hmac_sha256},
+    /* SSL_ENC_eNULL_HMAC_SHA384_IDX 25 */
+    {SSL_eNULL_HMAC_SHA384, NID_enull_hmac_sha384},
 };
 
 #define SSL_COMP_NULL_IDX       0
