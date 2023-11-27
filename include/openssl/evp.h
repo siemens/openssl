@@ -479,6 +479,11 @@ typedef struct {
 
 /* Length of tag for TLS */
 # define EVP_CHACHAPOLY_TLS_TAG_LEN                      16
+/* Length of HMAC_SHA256 for TLS */
+# define EVP_HMACSHA256_TLS_TAG_LEN                      32
+/* Length of HMAC_SHA384 for TLS */
+# define EVP_HMACSHA384_TLS_TAG_LEN                      48
+
 
 typedef struct evp_cipher_info_st {
     const EVP_CIPHER *cipher;
