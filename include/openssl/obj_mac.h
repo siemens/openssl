@@ -5290,6 +5290,14 @@
 #define LN_chacha20             "chacha20"
 #define NID_chacha20            1019
 
+#define SN_enull_hmac_sha256            "eNULL-HMAC-SHA256"
+#define LN_enull_hmac_sha256            "enull-hmac-sha256"
+#define NID_enull_hmac_sha256           1320
+
+#define SN_enull_hmac_sha384            "eNULL-HMAC-SHA384"
+#define LN_enull_hmac_sha384            "enull-hmac-sha384"
+#define NID_enull_hmac_sha384           1321
+
 #define SN_dhpublicnumber               "dhpublicnumber"
 #define LN_dhpublicnumber               "X9.42 DH"
 #define NID_dhpublicnumber              920
