@@ -9,32 +9,62 @@
 
 /* hmac_sha256 cipher implementation */
 
+/*
+ * HMAC low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include "cipher_hmac_sha256.h"
 
 static int hmac_sha256_initkey(PROV_CIPHER_CTX *bctx, const uint8_t *key,
-                            size_t keylen)
+                               size_t keylen)
 {
     PROV_HMAC_SHA256_CTX *ctx = (PROV_HMAC_SHA256_CTX *)bctx;
-    unsigned int i;
+
+    if (key == NULL || keylen != HMAC_SHA256_KEYLEN)
+        return 0;
+
+    memcpy(ctx->key, key, keylen);
+    ctx->keylen = keylen;
     return 1;
 }
 
-static int hmac_sha256_initiv(PROV_CIPHER_CTX *bctx)
+static int hmac_sha256_initiv(PROV_CIPHER_CTX *bctx,
+                              const unsigned char *iv, size_t ivlen)
 {
     PROV_HMAC_SHA256_CTX *ctx = (PROV_HMAC_SHA256_CTX *)bctx;
-    unsigned int i;
 
-    return 1;
+    if (iv == NULL || ivlen != HMAC_SHA256_IVLEN)
+        return 0;
+    if (!HMAC_Init_ex(ctx->hmac, ctx->key, ctx->keylen, ctx->evp_md, NULL))
+        return 0;
+
+    return HMAC_Update(ctx->hmac, iv, ivlen);
 }
 
 static int hmac_sha256_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
-                           const unsigned char *in, size_t inl)
+                              const unsigned char *in, size_t inl)
 {
     PROV_HMAC_SHA256_CTX *ctx = (PROV_HMAC_SHA256_CTX *)bctx;
-    //unsigned int n, rem, ctr32;
-    if( out != NULL)
-        memcpy(out, in, inl);
+    unsigned char ltag[HMAC_SHA256_TAGLEN];
+    unsigned int ltag_len;
 
+    if (in != NULL) {
+        if (!HMAC_Update(ctx->hmac, in, inl))
+            return 0;
+    } else {
+        if (!HMAC_Final(ctx->hmac,
+                        bctx->enc ? ctx->tag : ltag,
+                        bctx->enc ? &ctx->tag_len : &ltag_len))
+            return 0;
+
+        if (!bctx->enc) {
+            if (CRYPTO_memcmp(ltag, ctx->tag, ctx->tag_len) != 0)
+                return 0;
+        }
+    }
     return 1;
 }
 
@@ -47,4 +77,3 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_hmac_sha256(size_t keybits)
 {
     return (PROV_CIPHER_HW *)&hmac_sha256_hw;
 }
-

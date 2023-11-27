@@ -9,20 +9,26 @@
 
 #include "prov/ciphercommon.h"
 
-#define HMAC_SHA256_KEYLEN 32
+#define HMAC_SHA256_KEYLEN 32 /* == SHA256_OUTLEN */
+#define HMAC_SHA256_BLKLEN 1
+#define HMAC_SHA256_TAGLEN 32
+#define HMAC_SHA256_IVLEN 32
+#define HMAC_SHA256_MODE 0
+#define HMAC_SHA256_FLAGS (PROV_CIPHER_FLAG_AEAD | PROV_CIPHER_FLAG_CUSTOM_IV)
 
 typedef struct {
     PROV_CIPHER_CTX base;     /* must be first */
-    union {
-        OSSL_UNION_ALIGN;
-        unsigned int d[HMAC_SHA256_KEYLEN / 4];
-    } key;
+    HMAC_CTX *hmac;
+    EVP_MD *evp_md;
+    unsigned char key[HMAC_SHA256_KEYLEN];
+    unsigned int keylen;
+    unsigned char tag[HMAC_SHA256_TAGLEN];
+    unsigned int tag_len;
 } PROV_HMAC_SHA256_CTX;
 
 typedef struct prov_cipher_hw_hmac_sha256_st {
     PROV_CIPHER_HW base; /* must be first */
-    int (*initiv)(PROV_CIPHER_CTX *ctx);
-
+    int (*initiv)(PROV_CIPHER_CTX *ctx, const unsigned char *iv, size_t ivlen);
 } PROV_CIPHER_HW_HMAC_SHA256;
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_hmac_sha256(size_t keybits);
