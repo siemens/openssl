@@ -45,6 +45,7 @@ extern const OSSL_DISPATCH ossl_nullmd_functions[];
 
 /* Ciphers */
 extern const OSSL_DISPATCH ossl_null_functions[];
+extern const OSSL_DISPATCH ossl_enull_hmac_sha256_functions[];
 extern const OSSL_DISPATCH ossl_aes256ecb_functions[];
 extern const OSSL_DISPATCH ossl_aes192ecb_functions[];
 extern const OSSL_DISPATCH ossl_aes128ecb_functions[];
