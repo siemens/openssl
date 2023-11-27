@@ -164,6 +164,10 @@ static const OSSL_ALGORITHM deflt_digests[] = {
 
 static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
     ALG(PROV_NAMES_NULL, ossl_null_functions),
+#ifndef OPENSSL_NO_MACCIPHERS
+    ALG(PROV_NAMES_MACCIPHER_SHA256, ossl_hmac_sha256_functions),
+    ALG(PROV_NAMES_MACCIPHER_SHA384, ossl_null_functions),
+#endif
     ALG(PROV_NAMES_AES_256_ECB, ossl_aes256ecb_functions),
     ALG(PROV_NAMES_AES_192_ECB, ossl_aes192ecb_functions),
     ALG(PROV_NAMES_AES_128_ECB, ossl_aes128ecb_functions),
