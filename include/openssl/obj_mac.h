@@ -3047,11 +3047,11 @@
 
 #define SN_maccipher_sha256             "MACCIPHER-SHA256"
 #define LN_maccipher_sha256             "maccipher-sha256"
-#define NID_maccipher_sha256            1261
+#define NID_maccipher_sha256            1320
 
 #define SN_maccipher_sha384             "MACCIPHER-SHA384"
 #define LN_maccipher_sha384             "maccipher-sha384"
-#define NID_maccipher_sha384            1262
+#define NID_maccipher_sha384            1321
 
 #define OBJ_csor                2L,16L,840L,1L,101L,3L
 

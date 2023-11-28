@@ -1184,7 +1184,7 @@ static const unsigned char so[8476] = {
     0x55,0x1D,0x4B,                                /* [ 8472] OBJ_associated_information */
 };
 
-#define NUM_NID 1263
+#define NUM_NID 1322
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2447,9 +2447,70 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-regCtrl-altCertTemplate", "id-regCtrl-altCertTemplate", NID_id_regCtrl_altCertTemplate, 9, &so[8158]},
     {"id-regCtrl-algId", "id-regCtrl-algId", NID_id_regCtrl_algId, 9, &so[8167]},
     {"id-regCtrl-rsaKeyLen", "id-regCtrl-rsaKeyLen", NID_id_regCtrl_rsaKeyLen, 9, &so[8176]},
+    {"id-aa-ets-attrCertificateRefs", "id-aa-ets-attrCertificateRefs", NID_id_aa_ets_attrCertificateRefs, 11, &so[8185]},
+    {"id-aa-ets-attrRevocationRefs", "id-aa-ets-attrRevocationRefs", NID_id_aa_ets_attrRevocationRefs, 11, &so[8196]},
+    {"id-aa-CMSAlgorithmProtection", "id-aa-CMSAlgorithmProtection", NID_id_aa_CMSAlgorithmProtection, 9, &so[8207]},
+    {"itu-t-identified-organization", "itu-t-identified-organization", NID_itu_t_identified_organization, 1, &so[8216]},
+    {"etsi", "etsi", NID_etsi, 2, &so[8217]},
+    {"electronic-signature-standard", "electronic-signature-standard", NID_electronic_signature_standard, 4, &so[8219]},
+    {"ess-attributes", "ess-attributes", NID_ess_attributes, 5, &so[8223]},
+    {"id-aa-ets-mimeType", "id-aa-ets-mimeType", NID_id_aa_ets_mimeType, 6, &so[8228]},
+    {"id-aa-ets-longTermValidation", "id-aa-ets-longTermValidation", NID_id_aa_ets_longTermValidation, 6, &so[8234]},
+    {"id-aa-ets-SignaturePolicyDocument", "id-aa-ets-SignaturePolicyDocument", NID_id_aa_ets_SignaturePolicyDocument, 6, &so[8240]},
+    {"id-aa-ets-archiveTimestampV3", "id-aa-ets-archiveTimestampV3", NID_id_aa_ets_archiveTimestampV3, 6, &so[8246]},
+    {"id-aa-ATSHashIndex", "id-aa-ATSHashIndex", NID_id_aa_ATSHashIndex, 6, &so[8252]},
+    {"cades", "cades", NID_cades, 5, &so[8258]},
+    {"cades-attributes", "cades-attributes", NID_cades_attributes, 6, &so[8263]},
+    {"id-aa-ets-signerAttrV2", "id-aa-ets-signerAttrV2", NID_id_aa_ets_signerAttrV2, 7, &so[8269]},
+    {"id-aa-ets-sigPolicyStore", "id-aa-ets-sigPolicyStore", NID_id_aa_ets_sigPolicyStore, 7, &so[8276]},
+    {"id-aa-ATSHashIndex-v2", "id-aa-ATSHashIndex-v2", NID_id_aa_ATSHashIndex_v2, 7, &so[8283]},
+    {"id-aa-ATSHashIndex-v3", "id-aa-ATSHashIndex-v3", NID_id_aa_ATSHashIndex_v3, 7, &so[8290]},
+    {"signedAssertion", "signedAssertion", NID_signedAssertion, 7, &so[8297]},
+    {"id-aa-ets-archiveTimestampV2", "id-aa-ets-archiveTimestampV2", NID_id_aa_ets_archiveTimestampV2, 11, &so[8304]},
+    {"hmacWithSM3", "hmacWithSM3", NID_hmacWithSM3, 10, &so[8315]},
+    {"oracle-organization", "Oracle organization", NID_oracle, 7, &so[8325]},
+    {"oracle-jdk-trustedkeyusage", "Trusted key usage (Oracle)", NID_oracle_jdk_trustedkeyusage, 12, &so[8332]},
+    {"id-ct-signedTAL", "id-ct-signedTAL", NID_id_ct_signedTAL, 11, &so[8344]},
+    {"brainpoolP256r1tls13", "brainpoolP256r1tls13", NID_brainpoolP256r1tls13},
+    {"brainpoolP384r1tls13", "brainpoolP384r1tls13", NID_brainpoolP384r1tls13},
+    {"brainpoolP512r1tls13", "brainpoolP512r1tls13", NID_brainpoolP512r1tls13},
+    {"brotli", "Brotli compression", NID_brotli},
+    {"zstd", "Zstandard compression", NID_zstd},
+    {"SM4-XTS", "sm4-xts", NID_sm4_xts, 8, &so[8355]},
+    {"ms-ntds-obj-sid", "Microsoft NTDS AD objectSid", NID_ms_ntds_obj_sid, 10, &so[8363]},
+    {"ms-ntds-sec-ext", "Microsoft NTDS CA Extension", NID_ms_ntds_sec_ext, 9, &so[8373]},
+    {"ms-cert-templ", "Microsoft certificate template", NID_ms_cert_templ, 9, &so[8382]},
+    {"ms-app-policies", "Microsoft Application Policies Extension", NID_ms_app_policies, 9, &so[8391]},
+    {"authorityAttributeIdentifier", "X509v3 Authority Attribute Identifier", NID_authority_attribute_identifier, 3, &so[8400]},
+    {"roleSpecCertIdentifier", "X509v3 Role Specification Certificate Identifier", NID_role_spec_cert_identifier, 3, &so[8403]},
+    {"basicAttConstraints", "X509v3 Basic Attribute Certificate Constraints", NID_basic_att_constraints, 3, &so[8406]},
+    {"delegatedNameConstraints", "X509v3 Delegated Name Constraints", NID_delegated_name_constraints, 3, &so[8409]},
+    {"timeSpecification", "X509v3 Time Specification", NID_time_specification, 3, &so[8412]},
+    {"attributeDescriptor", "X509v3 Attribute Descriptor", NID_attribute_descriptor, 3, &so[8415]},
+    {"userNotice", "X509v3 User Notice", NID_user_notice, 3, &so[8418]},
+    {"sOAIdentifier", "X509v3 Source of Authority Identifier", NID_soa_identifier, 3, &so[8421]},
+    {"acceptableCertPolicies", "X509v3 Acceptable Certification Policies", NID_acceptable_cert_policies, 3, &so[8424]},
+    {"acceptablePrivPolicies", "X509v3 Acceptable Privilege Policies", NID_acceptable_privilege_policies, 3, &so[8427]},
+    {"indirectIssuer", "X509v3 Indirect Issuer", NID_indirect_issuer, 3, &so[8430]},
+    {"noAssertion", "X509v3 No Assertion", NID_no_assertion, 3, &so[8433]},
+    {"aAissuingDistributionPoint", "X509v3 Attribute Authority Issuing Distribution Point", NID_id_aa_issuing_distribution_point, 3, &so[8436]},
+    {"issuedOnBehalfOf", "X509v3 Issued On Behalf Of", NID_issued_on_behalf_of, 3, &so[8439]},
+    {"singleUse", "X509v3 Single Use", NID_single_use, 3, &so[8442]},
+    {"groupAC", "X509v3 Group Attribute Certificate", NID_group_ac, 3, &so[8445]},
+    {"allowedAttributeAssignments", "X509v3 Allowed Attribute Assignments", NID_allowed_attribute_assignments, 3, &so[8448]},
+    {"attributeMappings", "X509v3 Attribute Mappings", NID_attribute_mappings, 3, &so[8451]},
+    {"holderNameConstraints", "X509v3 Holder Name Constraints", NID_holder_name_constraints, 3, &so[8454]},
+    {"authorizationValidation", "X509v3 Authorization Validation", NID_authorization_validation, 3, &so[8457]},
+    {"protRestrict", "X509v3 Protocol Restriction", NID_prot_restrict, 3, &so[8460]},
+    {"subjectAltPublicKeyInfo", "X509v3 Subject Alternative Public Key Info", NID_subject_alt_public_key_info, 3, &so[8463]},
+    {"altSignatureAlgorithm", "X509v3 Alternative Signature Algorithm", NID_alt_signature_algorithm, 3, &so[8466]},
+    {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
+    {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
+    {"MACCIPHER-SHA256", "maccipher-sha256", NID_maccipher_sha256},
+    {"MACCIPHER-SHA384", "maccipher-sha384", NID_maccipher_sha384},
 };
 
-#define NUM_SN 1252
+#define NUM_SN 1313
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2635,8 +2696,8 @@ static const unsigned int sn_objs[NUM_SN] = {
     1044,    /* "KxSRP" */
       15,    /* "L" */
      856,    /* "LocalKeySet" */
-    1261,    /* "MACCIPHER-SHA256" */
-    1262,    /* "MACCIPHER-SHA384" */
+    1320,    /* "MACCIPHER-SHA256" */
+    1321,    /* "MACCIPHER-SHA384" */
        3,    /* "MD2" */
      257,    /* "MD4" */
        4,    /* "MD5" */
@@ -3766,7 +3827,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1311
+#define NUM_LN 1313
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4682,8 +4743,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      157,    /* "localKeyID" */
       15,    /* "localityName" */
      480,    /* "mXRecord" */
-    1261,    /* "maccipher-sha256" */
-    1262,    /* "maccipher-sha384" */
+    1320,    /* "maccipher-sha256" */
+    1321,    /* "maccipher-sha384" */
     1190,    /* "magma-cbc" */
     1191,    /* "magma-cfb" */
     1188,    /* "magma-ctr" */
