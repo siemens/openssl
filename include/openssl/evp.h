@@ -1138,6 +1138,9 @@ const EVP_CIPHER *EVP_chacha20(void);
 const EVP_CIPHER *EVP_chacha20_poly1305(void);
 #  endif
 # endif
+# ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHER
+const EVP_CIPHER *EVP_enc_null_hmac_sha256(void);
+# endif
 
 # ifndef OPENSSL_NO_SEED
 const EVP_CIPHER *EVP_seed_ecb(void);
