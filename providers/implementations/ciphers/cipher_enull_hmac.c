@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Dispatch functions for hmac sha256 cipher */
+/* Dispatch functions for enull_hmac cipher */
 
 /*
  * HMAC low level APIs are deprecated for public use, but still ok for internal
@@ -22,12 +22,10 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-static OSSL_FUNC_cipher_newctx_fn hmac_sha256_newctx;
 static OSSL_FUNC_cipher_freectx_fn enull_hmac_freectx;
 static OSSL_FUNC_cipher_dupctx_fn enull_hmac_dupctx;
 static OSSL_FUNC_cipher_encrypt_init_fn enull_hmac_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn enull_hmac_dinit;
-static OSSL_FUNC_cipher_get_params_fn hmac_sha256_get_params;
 static OSSL_FUNC_cipher_get_ctx_params_fn enull_hmac_get_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn enull_hmac_set_ctx_params;
 static OSSL_FUNC_cipher_cipher_fn enull_hmac_cipher;
@@ -276,63 +274,66 @@ static int enull_hmac_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static int hmac_sha256_get_params(OSSL_PARAM params[])
-{
-    return ossl_cipher_generic_get_params(params, 0, ENULL_HMAC_SHA256_FLAGS,
-                                          ENULL_HMAC_SHA256_KEYLEN * 8,
-                                          1 * 8,
-                                          ENULL_HMAC_SHA256_IVLEN * 8);
-}
-
-static void *hmac_sha256_newctx(void *provctx)
-{
-    PROV_ENULL_HMAC_CTX *ctx;
-
-    if (!ossl_prov_is_running())
-        return NULL;
-
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
-        return NULL;
-
-    if ((ctx->hmac = HMAC_CTX_new()) == NULL) {
-        OPENSSL_free(ctx);
-        return NULL;
-    }
-    if ((ctx->evp_md = (EVP_MD *)EVP_get_digestbyname("SHA256")) == NULL) {
-        enull_hmac_freectx(ctx);
-        return NULL;
-    }
-    ctx->tag_len = ENULL_HMAC_SHA256_TAGLEN;
-    ossl_cipher_generic_initkey(ctx, ENULL_HMAC_SHA256_KEYLEN * 8,
-                                ENULL_HMAC_SHA256_BLKLEN * 8,
-                                ENULL_HMAC_SHA256_IVLEN * 8,
-                                ENULL_HMAC_SHA256_MODE, ENULL_HMAC_SHA256_FLAGS,
-                                ossl_prov_cipher_hw_enull_hmac(
-                                    ENULL_HMAC_SHA256_KEYLEN * 8),
-                                NULL);
-    return ctx;
-}
-
-/* ossl_enull_hmac_sha256_functions */
-const OSSL_DISPATCH ossl_enull_hmac_sha256_functions[] = {
-    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))hmac_sha256_newctx },
-    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))enull_hmac_freectx },
-    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))enull_hmac_dupctx },
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))enull_hmac_einit },
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))enull_hmac_dinit },
-    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))enull_hmac_update },
-    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))enull_hmac_final },
-    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))enull_hmac_cipher},
-    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))hmac_sha256_get_params },
-    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,
-      (void (*)(void))enull_hmac_gettable_params },
-    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,
-      (void (*)(void))enull_hmac_get_ctx_params },
-    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
-      (void (*)(void))enull_hmac_gettable_ctx_params },
-    { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,
-      (void (*)(void))enull_hmac_set_ctx_params },
-    { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
-      (void (*)(void))enull_hmac_settable_ctx_params },
-    OSSL_DISPATCH_END
+#define IMPLEMENT_cipher(md, UCMD, flags, kbits, blkbits, ivbits)              \
+static OSSL_FUNC_cipher_get_params_fn hmac_##md##_get_params;                  \
+static int hmac_##md##_get_params(OSSL_PARAM params[])                         \
+{                                                                              \
+    return ossl_cipher_generic_get_params(params, 0, flags,                    \
+                                          kbits, blkbits, ivbits);             \
+}                                                                              \
+                                                                               \
+static OSSL_FUNC_cipher_newctx_fn enull_hmac_##md##_newctx;                    \
+static void *enull_hmac_##md##_newctx(void *provctx)                           \
+{                                                                              \
+    PROV_ENULL_HMAC_CTX *ctx;                                                  \
+                                                                               \
+    if (!ossl_prov_is_running())                                               \
+        return NULL;                                                           \
+                                                                               \
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)                          \
+        return NULL;                                                           \
+                                                                               \
+    if ((ctx->hmac = HMAC_CTX_new()) == NULL) {                                \
+        OPENSSL_free(ctx);                                                     \
+        return NULL;                                                           \
+    }                                                                          \
+    if ((ctx->evp_md = (EVP_MD *)EVP_get_digestbyname(#UCMD)) == NULL) {  \
+        enull_hmac_freectx(ctx);                                               \
+        return NULL;                                                           \
+    }                                                                          \
+    ctx->tag_len = ENULL_HMAC_##UCMD##_TAGLEN;                                 \
+    ossl_cipher_generic_initkey(ctx, kbits, blkbits, ivbits, 0, flags,         \
+                                ossl_prov_cipher_hw_enull_hmac(kbits),         \
+                                NULL);                                         \
+    return ctx;                                                                \
+}                                                                              \
+                                                                               \
+const OSSL_DISPATCH ossl_enull_hmac_##md##_functions[] = {                     \
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))enull_hmac_##md##_newctx },     \
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))enull_hmac_freectx },          \
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))enull_hmac_dupctx },            \
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))enull_hmac_einit },       \
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))enull_hmac_dinit },       \
+    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))enull_hmac_update },            \
+    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))enull_hmac_final },              \
+    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))enull_hmac_cipher},             \
+    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))hmac_##md##_get_params },   \
+    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
+      (void (*)(void))enull_hmac_gettable_params },                            \
+    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
+      (void (*)(void))enull_hmac_get_ctx_params },                             \
+    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
+      (void (*)(void))enull_hmac_gettable_ctx_params },                        \
+    { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                         \
+      (void (*)(void))enull_hmac_set_ctx_params },                             \
+    { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
+      (void (*)(void))enull_hmac_settable_ctx_params },                        \
+    OSSL_DISPATCH_END                                                          \
 };
+
+IMPLEMENT_cipher(sha256, SHA256, ENULL_HMAC_SHA256_FLAGS,
+                 ENULL_HMAC_SHA256_KEYLEN * 8, ENULL_HMAC_SHA256_BLKLEN * 8,
+                 ENULL_HMAC_SHA256_IVLEN * 8);
+IMPLEMENT_cipher(sha384, SHA384, ENULL_HMAC_SHA384_FLAGS,
+                 ENULL_HMAC_SHA384_KEYLEN * 8, ENULL_HMAC_SHA384_BLKLEN * 8,
+                 ENULL_HMAC_SHA384_IVLEN * 8);
