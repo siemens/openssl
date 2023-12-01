@@ -313,6 +313,10 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
     ALG(PROV_NAMES_ChaCha20_Poly1305, ossl_chacha20_ossl_poly1305_functions),
 # endif /* OPENSSL_NO_POLY1305 */
 #endif /* OPENSSL_NO_CHACHA */
+#ifndef OPENSSL_NO_TLS1_3_INTEGRITY_ONLY_CIPHERS
+    ALG(PROV_NAMES_NULL_HMAC_SHA256, ossl_null_hmac_sha256_functions),
+    ALG(PROV_NAMES_NULL_HMAC_SHA384, ossl_null_hmac_sha384_functions),
+#endif
     { { NULL, NULL, NULL }, NULL }
 };
 static OSSL_ALGORITHM exported_ciphers[OSSL_NELEM(deflt_ciphers)];

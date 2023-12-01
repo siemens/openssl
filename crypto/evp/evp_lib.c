@@ -330,6 +330,11 @@ int EVP_CIPHER_get_type(const EVP_CIPHER *cipher)
 
         return NID_des_cfb64;
 
+    case NID_null_hmac_sha256:
+        return NID_null_hmac_sha256;
+    case NID_null_hmac_sha384:
+        return NID_null_hmac_sha384;
+
     default:
 #ifdef FIPS_MODULE
         return NID_undef;
