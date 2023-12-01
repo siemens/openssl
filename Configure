@@ -464,6 +464,7 @@ my @disablables = (
     "gost",
     "http",
     "idea",
+    "integrity-only-cipher",
     "ktls",
     "legacy",
     "loadereng",
