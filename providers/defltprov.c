@@ -315,7 +315,7 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
 #endif /* OPENSSL_NO_CHACHA */
 #ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHER
     ALG(PROV_NAMES_ENULL_HMAC_SHA256, ossl_enull_hmac_sha256_functions),
-    ALG(PROV_NAMES_ENULL_HMAC_SHA384, ossl_null_functions),
+    ALG(PROV_NAMES_ENULL_HMAC_SHA384, ossl_enull_hmac_sha384_functions),
 #endif
     { { NULL, NULL, NULL }, NULL }
 };
