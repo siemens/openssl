@@ -16,18 +16,14 @@
 # include "crypto/evp.h"
 # include "evp_local.h"
 
-static EVP_CIPHER n_cipher = {
-    NID_enull_hmac_sha256,
-    0, 0, 0, 0,
-    EVP_ORIG_GLOBAL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+static EVP_CIPHER enull_hmac_sha256_cipher = {
+    NID_enull_hmac_sha256, 0, 0, 0, 0, EVP_ORIG_GLOBAL,
+    NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL
+};
+
+static EVP_CIPHER enull_hmac_sha384_cipher = {
+    NID_enull_hmac_sha384, 0, 0, 0, 0, EVP_ORIG_GLOBAL,
+    NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL
 };
 
 /*
@@ -36,7 +32,12 @@ static EVP_CIPHER n_cipher = {
  */
 const EVP_CIPHER *EVP_enc_null_hmac_sha256(void)
 {
-    return (&n_cipher);
+    return (&enull_hmac_sha256_cipher);
+}
+
+const EVP_CIPHER *EVP_enc_null_hmac_sha384(void)
+{
+    return (&enull_hmac_sha384_cipher);
 }
 
 #endif
