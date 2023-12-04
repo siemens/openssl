@@ -389,9 +389,11 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
 
         if (mode == EVP_CIPH_GCM_MODE) {
             *taglen = EVP_GCM_TLS_TAG_LEN;
-        } else if (EVP_CIPHER_get_nid(ciph) == NID_enull_hmac_sha256) {
+        } else if (strcmp(EVP_CIPHER_get0_name(ciph), SN_enull_hmac_sha256)
+                   == 0) {
             *taglen = EVP_HMACSHA256_TLS_TAG_LEN;
-        } else if (EVP_CIPHER_get_nid(ciph) == NID_enull_hmac_sha384) {
+        } else if (strcmp(EVP_CIPHER_get0_name(ciph), SN_enull_hmac_sha384)
+                   == 0) {
             *taglen = EVP_HMACSHA384_TLS_TAG_LEN;
         } else {
             /* CHACHA20P-POLY1305 */
