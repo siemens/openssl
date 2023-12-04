@@ -265,8 +265,4 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_chacha20_poly1305());
 # endif
 #endif
-
-#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHER
-    EVP_add_cipher(EVP_enc_null_hmac_sha256());
-#endif
 }
