@@ -329,7 +329,7 @@ const OSSL_DISPATCH ossl_enull_hmac_##md##_functions[] = {                     \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
       (void (*)(void))enull_hmac_settable_ctx_params },                        \
     OSSL_DISPATCH_END                                                          \
-};
+}
 
 IMPLEMENT_cipher(sha256, SHA256, ENULL_HMAC_SHA256_FLAGS,
                  ENULL_HMAC_SHA256_KEYLEN * 8, ENULL_HMAC_SHA256_BLKLEN * 8,
