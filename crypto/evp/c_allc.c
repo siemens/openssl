@@ -268,6 +268,5 @@ void openssl_add_all_ciphers_int(void)
 
 #ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHER
     EVP_add_cipher(EVP_enc_null_hmac_sha256());
-    EVP_add_cipher(EVP_enc_null_hmac_sha384());
 #endif
 }
