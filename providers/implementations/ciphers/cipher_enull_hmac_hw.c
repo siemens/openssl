@@ -65,6 +65,10 @@ static int enull_hmac_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
                 return 0;
         }
     }
+
+    if (in != NULL && out != NULL && in != out)
+        memcpy(out, in, inl);
+
     return 1;
 }
 
