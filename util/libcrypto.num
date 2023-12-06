@@ -5538,4 +5538,3 @@ OSSL_STORE_delete                       5665	3_2_0	EXIST::FUNCTION:
 BIO_ADDR_copy                           5666	3_2_0	EXIST::FUNCTION:SOCK
 EVP_DigestSqueeze                       ?	3_3_0	EXIST::FUNCTION:
 EVP_enc_null_hmac_sha256                ?	3_3_0	EXIST::FUNCTION:INTEGRITY_ONLY_CIPHER
-EVP_enc_null_hmac_sha384                ?	3_3_0	EXIST::FUNCTION:INTEGRITY_ONLY_CIPHER
