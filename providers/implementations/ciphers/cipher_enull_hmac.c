@@ -205,7 +205,7 @@ static int enull_hmac_einit(void *vctx,
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
         PROV_CIPHER_HW_ENULL_HMAC *hw = (PROV_CIPHER_HW_ENULL_HMAC *)ctx->hw;
 
-        hw->initiv(ctx, iv, ivlen);
+        ret = hw->initiv(ctx, iv, ivlen);
     }
     if (ret && !enull_hmac_set_ctx_params(vctx, params))
         ret = 0;
