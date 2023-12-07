@@ -113,7 +113,7 @@ static SSL_CIPHER tls13_ciphers[] = {
         64, /* CCM8 uses a short tag, so we have a low security strength */
         128,
     },
-#ifndef OPENSSL_NO_MACCIPHERS
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHER
     {
         1,
         TLS1_3_RFC_SHA256_SHA256,
@@ -122,13 +122,13 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_kANY,
         SSL_aANY,
         SSL_eNULL_HMAC_SHA256,
-        SSL_SHA256,
+        SSL_AEAD,
         TLS1_3_VERSION, TLS1_3_VERSION,
         0, 0,
         SSL_NOT_DEFAULT | SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_SHA256,
-        256,
-        256,
+        256, /* TODO: Need to check */
+        256, /* TODO: Need to check */
     }, {
         1,
         TLS1_3_RFC_SHA384_SHA384,
@@ -137,13 +137,13 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_kANY,
         SSL_aANY,
         SSL_eNULL_HMAC_SHA384,
-        SSL_SHA384,
+        SSL_AEAD,
         TLS1_3_VERSION, TLS1_3_VERSION,
         0, 0,
         SSL_NOT_DEFAULT | SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_SHA384,
-        256,
-        256,
+        256, /* TODO: Need to check */
+        384, /* TODO: Need to check */
     },
 #endif
 };
