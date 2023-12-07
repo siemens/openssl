@@ -38,7 +38,8 @@ static int enull_hmac_initiv(PROV_CIPHER_CTX *bctx,
 
     if (iv == NULL || ivlen > ENULL_HMAC_MAX_IVLEN)
         return 0;
-    if (!HMAC_Init_ex(ctx->hmac, ctx->key, ctx->keylen, ctx->evp_md, NULL))
+    if (!HMAC_Init_ex(ctx->hmac, ctx->key, ctx->keylen,
+                      ossl_prov_digest_md(&ctx->md), NULL))
         return 0;
 
     return HMAC_Update(ctx->hmac, iv, ivlen);

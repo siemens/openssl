@@ -42,7 +42,7 @@ static void enull_hmac_freectx(void *vctx)
     if (ctx != NULL) {
         ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
         HMAC_CTX_free(ctx->hmac);
-        ctx->evp_md = NULL;
+        ossl_prov_digest_reset(&ctx->md);
         OPENSSL_clear_free(ctx, sizeof(*ctx));
     }
 }
@@ -59,6 +59,10 @@ static void *enull_hmac_dupctx(void *vctx)
     if (dupctx == NULL)
         return NULL;
 
+    memset(&dupctx->md, 0, sizeof(dupctx->md));
+    if (!ossl_prov_digest_copy(&dupctx->md, &ctx->md))
+        goto err;
+
     if (dupctx->base.tlsmac != NULL && dupctx->base.alloced) {
         dupctx->base.tlsmac = OPENSSL_memdup(dupctx->base.tlsmac,
                                              dupctx->base.tlsmacsize);
@@ -73,9 +77,7 @@ static void *enull_hmac_dupctx(void *vctx)
 
     return dupctx;
  err:
-    OPENSSL_free(dupctx->base.tlsmac);
-    HMAC_CTX_free(dupctx->hmac);
-    OPENSSL_clear_free(dupctx, sizeof(*dupctx));
+    enull_hmac_freectx(dupctx);
     return NULL;
 }
 
@@ -274,16 +276,16 @@ static int enull_hmac_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-#define IMPLEMENT_cipher(md, UCMD, flags, kbits, blkbits, ivbits)              \
-static OSSL_FUNC_cipher_get_params_fn hmac_##md##_get_params;                  \
-static int hmac_##md##_get_params(OSSL_PARAM params[])                         \
+#define IMPLEMENT_cipher(lcmd, UCMD, flags, kbits, blkbits, ivbits)            \
+static OSSL_FUNC_cipher_get_params_fn hmac_##lcmd##_get_params;                \
+static int hmac_##lcmd##_get_params(OSSL_PARAM params[])                       \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, 0, flags,                    \
                                           kbits, blkbits, ivbits);             \
 }                                                                              \
                                                                                \
-static OSSL_FUNC_cipher_newctx_fn enull_hmac_##md##_newctx;                    \
-static void *enull_hmac_##md##_newctx(void *provctx)                           \
+static OSSL_FUNC_cipher_newctx_fn enull_hmac_##lcmd##_newctx;                  \
+static void *enull_hmac_##lcmd##_newctx(void *provctx)                         \
 {                                                                              \
     PROV_ENULL_HMAC_CTX *ctx;                                                  \
                                                                                \
@@ -297,19 +299,20 @@ static void *enull_hmac_##md##_newctx(void *provctx)                           \
         OPENSSL_free(ctx);                                                     \
         return NULL;                                                           \
     }                                                                          \
-    if ((ctx->evp_md = (EVP_MD *)EVP_get_digestbyname(#UCMD)) == NULL) {  \
+    if (ossl_prov_digest_fetch(&ctx->md, PROV_LIBCTX_OF(provctx),              \
+                               #UCMD, NULL) == NULL) {                         \
         enull_hmac_freectx(ctx);                                               \
         return NULL;                                                           \
     }                                                                          \
     ctx->tag_len = ENULL_HMAC_##UCMD##_TAGLEN;                                 \
     ossl_cipher_generic_initkey(ctx, kbits, blkbits, ivbits, 0, flags,         \
                                 ossl_prov_cipher_hw_enull_hmac(kbits),         \
-                                NULL);                                         \
+                                provctx);                                      \
     return ctx;                                                                \
 }                                                                              \
                                                                                \
-const OSSL_DISPATCH ossl_enull_hmac_##md##_functions[] = {                     \
-    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))enull_hmac_##md##_newctx },     \
+const OSSL_DISPATCH ossl_enull_hmac_##lcmd##_functions[] = {                   \
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))enull_hmac_##lcmd##_newctx },   \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))enull_hmac_freectx },          \
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))enull_hmac_dupctx },            \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))enull_hmac_einit },       \
@@ -317,7 +320,7 @@ const OSSL_DISPATCH ossl_enull_hmac_##md##_functions[] = {                     \
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))enull_hmac_update },            \
     { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))enull_hmac_final },              \
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))enull_hmac_cipher},             \
-    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))hmac_##md##_get_params },   \
+    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))hmac_##lcmd##_get_params }, \
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
       (void (*)(void))enull_hmac_gettable_params },                            \
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \

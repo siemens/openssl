@@ -8,6 +8,9 @@
  */
 
 #include "prov/ciphercommon.h"
+#include "prov/provider_ctx.h"
+#include "prov/implementations.h"
+#include "prov/provider_util.h"
 
 #define ENULL_HMAC_SHA256_KEYLEN 32
 #define ENULL_HMAC_SHA256_BLKLEN 1
@@ -32,7 +35,7 @@
 typedef struct {
     PROV_CIPHER_CTX base;     /* must be first */
     HMAC_CTX *hmac;
-    EVP_MD *evp_md;
+    PROV_DIGEST md;
     unsigned char key[ENULL_HMAC_MAX_KEYLEN];
     unsigned int keylen;
     unsigned char tag[ENULL_HMAC_MAX_TAGLEN];
