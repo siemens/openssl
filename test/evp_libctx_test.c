@@ -317,7 +317,6 @@ static int test_cipher_reinit(int test_id)
     int out1_len = 0, out2_len = 0, out3_len = 0;
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
-    OSSL_LIB_CTX *prev_libctx = NULL;
     unsigned char out1[256];
     unsigned char out2[256];
     unsigned char out3[256];
@@ -369,11 +368,6 @@ static int test_cipher_reinit(int test_id)
     /* DES3-WRAP uses random every update - so it will give a different value */
     diff = EVP_CIPHER_is_a(cipher, "DES3-WRAP");
 
-    /* eNULL-HMAC- use implicit fetching of digest algo */
-    if (EVP_CIPHER_is_a(cipher, "eNULL-HMAC-SHA256")
-        || EVP_CIPHER_is_a(cipher, "eNULL-HMAC-SHA384"))
-        prev_libctx = OSSL_LIB_CTX_set0_default(libctx);
-
     if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
         || !TEST_true(EVP_EncryptUpdate(ctx, out1, &out1_len, in, sizeof(in)))
         || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
@@ -399,9 +393,6 @@ static int test_cipher_reinit(int test_id)
     }
     ret = 1;
 err:
-    /* restore the old libctx */
-    if (prev_libctx != NULL)
-        OSSL_LIB_CTX_set0_default(prev_libctx);
     EVP_CIPHER_free(cipher);
     EVP_CIPHER_CTX_free(ctx);
     return ret;
@@ -419,7 +410,6 @@ static int test_cipher_reinit_partialupdate(int test_id)
     int out1_len = 0, out2_len = 0, out3_len = 0;
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
-    OSSL_LIB_CTX *prev_libctx = NULL;
     unsigned char out1[256];
     unsigned char out2[256];
     unsigned char out3[256];
@@ -456,11 +446,6 @@ static int test_cipher_reinit_partialupdate(int test_id)
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
         goto err;
 
-    /* eNULL-HMAC- use implicit fetching of digest algo */
-    if (EVP_CIPHER_is_a(cipher, "eNULL-HMAC-SHA256")
-        || EVP_CIPHER_is_a(cipher, "eNULL-HMAC-SHA384"))
-        prev_libctx = OSSL_LIB_CTX_set0_default(libctx);
-
     in_len = EVP_CIPHER_get_block_size(cipher) / 2;
 
     /* skip any ciphers that don't allow partial updates */
@@ -492,9 +477,6 @@ static int test_cipher_reinit_partialupdate(int test_id)
     }
     ret = 1;
 err:
-    /* restore the old libctx */
-    if (prev_libctx != NULL)
-        OSSL_LIB_CTX_set0_default(prev_libctx);
     EVP_CIPHER_free(cipher);
     EVP_CIPHER_CTX_free(ctx);
     return ret;
