@@ -735,7 +735,7 @@ Note: the CBC modes mentioned in this RFC are not supported.
  TLS_AES_128_CCM_SHA256                     TLS_AES_128_CCM_SHA256
  TLS_AES_128_CCM_8_SHA256                   TLS_AES_128_CCM_8_SHA256
 
-=head2 Integrity only cipher suites from RFC9150, extending TLS v1.3
+=head2 Integrity-Only cipher suites from RFC9150, extending TLS v1.3
 
  TLS_SHA256_SHA256          TLS_SHA256_SHA256
  TLS_SHA384_SHA384          TLS_SHA384_SHA384
@@ -800,6 +800,8 @@ The B<-stdname> is only available if OpenSSL is built with tracing enabled
 (B<enable-ssl-trace> argument to Configure) before OpenSSL 1.1.1.
 
 The B<-convert> option was added in OpenSSL 1.1.1.
+
+The support for integrity-only cipher suites for TLS v1.3 was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 
