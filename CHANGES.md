@@ -40,6 +40,10 @@ OpenSSL 3.3
 
    *Richard Levitte*
 
+ * Added support for integrity-only cipher suites for TLS v1.3.
+
+   *Rajeev Ranjan, Siemens AG*
+
  * The BLAKE2s hash algorithm matches BLAKE2b's support
    for configurable output length.
 
