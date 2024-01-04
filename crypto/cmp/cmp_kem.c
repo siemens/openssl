@@ -73,12 +73,32 @@ static X509_ALGOR *mac_algor(const OSSL_CMP_CTX *ctx)
     return alg;
 }
 
+static int get_pknid(const EVP_PKEY *pkey)
+{
+    int pknid;
+
+    if (pkey == NULL)
+        return NID_undef;
+    pknid = EVP_PKEY_get_base_id(pkey);
+    if (pknid <= 0) { /* check whether a provider registered a NID */
+        const char *typename = EVP_PKEY_get0_type_name(pkey);
+
+        if (typename != NULL)
+            pknid = OBJ_txt2nid(typename);
+    }
+    return pknid;
+}
+
 static X509_ALGOR *kem_algor(OSSL_CMP_CTX *ctx,
                              const EVP_PKEY *pubkey)
 {
     X509_ALGOR *kem = NULL;
+    int pknid = get_pknid(pubkey);
 
-    switch (EVP_PKEY_get_base_id(pubkey)) {
+    if (pknid <= 0)
+        return NULL;
+
+    switch (pknid) {
     case EVP_PKEY_RSA:
         /* kem rsa */
         kem = ossl_cmp_rsakem_algor(ctx);
@@ -86,14 +106,12 @@ static X509_ALGOR *kem_algor(OSSL_CMP_CTX *ctx,
     case EVP_PKEY_EC:
     case EVP_PKEY_X25519:
     case EVP_PKEY_X448:
-        break;
+        /* TODO: fall through */
     default:
+        /* TODO: Check if any other algorithm need parameter */
+        kem = ossl_X509_ALGOR_from_nid(pknid, V_ASN1_UNDEF, NULL);
         break;
     }
-
-    if (kem == NULL)
-        ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_ALGORITHM);
-
     return kem;
 }
 
@@ -175,24 +193,25 @@ int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx)
     return 0;
 }
 
-static int EC_kem_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
-                                const unsigned char *ct, size_t ct_len,
-                                unsigned char **secret, size_t *secret_len)
+static int kem_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey, int is_EC,
+                             const unsigned char *ct, size_t ct_len,
+                             unsigned char **secret, size_t *secret_len)
 {
     int ret = 0;
+    EVP_PKEY_CTX *kem_decaps_ctx;
 
     if (ctx == NULL || pkey == NULL
         || ct == NULL
         || secret == NULL || secret_len == NULL)
         return 0;
 
-    EVP_PKEY_CTX *kem_decaps_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx,
-                                                              pkey,
-                                                              ctx->propq);
+    kem_decaps_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx,
+                                                pkey,
+                                                ctx->propq);
 
     if (kem_decaps_ctx == NULL
         || EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0
-        || EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0
+        || (is_EC && EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0)
         || EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, secret_len,
                                 ct, ct_len) <= 0) {
         goto err;
@@ -218,15 +237,20 @@ static int performKemDecapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
                                    const unsigned char *ct, size_t ct_len,
                                    unsigned char **secret, size_t *secret_len)
 {
-    int pktype = EVP_PKEY_get_base_id(pkey);
+    int pknid = get_pknid(pkey);
 
-    if (pktype == EVP_PKEY_EC
-        || pktype == EVP_PKEY_X25519
-        || pktype == EVP_PKEY_X448) {
-        return EC_kem_decapsulation(ctx, pkey, ct, ct_len, secret, secret_len);
-    } else if (pktype == EVP_PKEY_RSA) {
+    if (pknid <= 0)
+        return 0;
+
+    if (pknid == EVP_PKEY_EC
+        || pknid == EVP_PKEY_X25519
+        || pknid == EVP_PKEY_X448) {
+        return kem_decapsulation(ctx, pkey, 1, ct, ct_len, secret, secret_len);
+    } else if (pknid == EVP_PKEY_RSA) {
         return ossl_cmp_kemrsa_decapsulation(ctx, pkey,
                                              ct, ct_len, secret, secret_len);
+    } else {
+        return kem_decapsulation(ctx, pkey, 0, ct, ct_len, secret, secret_len);
     }
     return 0;
 }
@@ -347,10 +371,11 @@ int OSSL_CMP_get_ssk(OSSL_CMP_CTX *ctx)
     return 1;
 }
 
-static int EC_kem_encapsulation(OSSL_CMP_CTX *ctx,
-                                const EVP_PKEY *pubkey,
-                                size_t *secret_len, unsigned char **secret,
-                                size_t *ct_len, unsigned char **ct)
+static int kem_encapsulation(OSSL_CMP_CTX *ctx,
+                             const EVP_PKEY *pubkey,
+                             int is_EC,
+                             size_t *secret_len, unsigned char **secret,
+                             size_t *ct_len, unsigned char **ct)
 {
     int ret = 0;
     EVP_PKEY_CTX *kem_encaps_ctx = NULL;
@@ -366,7 +391,7 @@ static int EC_kem_encapsulation(OSSL_CMP_CTX *ctx,
 
     if (kem_encaps_ctx == NULL
         || EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0
-        || EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0
+        || (is_EC && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0)
         || EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, ct_len,
                                 NULL, secret_len) <= 0) {
         goto err;
@@ -400,24 +425,29 @@ static int performKemEncapsulation(OSSL_CMP_CTX *ctx,
                                    size_t *secret_len, unsigned char **secret,
                                    size_t *ct_len, unsigned char **ct)
 {
-    int pktype;
+    int pknid;
 
     if (secret_len == NULL || secret == NULL
         || ct_len == NULL || ct == NULL
         || pubkey == NULL)
         return 0;
 
-    pktype = EVP_PKEY_get_base_id(pubkey);
-    if (pktype == EVP_PKEY_EC
-        || pktype == EVP_PKEY_X25519
-        || pktype == EVP_PKEY_X448) {
-        return EC_kem_encapsulation(ctx, pubkey, secret_len,
-                                    secret, ct_len, ct);
-    } else if (pktype == EVP_PKEY_RSA) {
+    pknid = get_pknid(pubkey);
+    if (pknid <= 0)
+        return 0;
+
+    if (pknid == EVP_PKEY_EC
+        || pknid == EVP_PKEY_X25519
+        || pknid == EVP_PKEY_X448) {
+        return kem_encapsulation(ctx, pubkey, 1, secret_len,
+                                 secret, ct_len, ct);
+    } else if (pknid == EVP_PKEY_RSA) {
         return ossl_cmp_kemrsa_encapsulation(ctx, pubkey, secret_len,
                                              secret, ct_len, ct);
+    } else {
+        return kem_encapsulation(ctx, pubkey, 0, secret_len,
+                                 secret, ct_len, ct);
     }
-    return 0;
 }
 
 OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
