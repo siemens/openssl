@@ -912,6 +912,7 @@ int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
                                     const ASN1_OCTET_STRING *src);
 int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
                                           const unsigned char *bytes, int len);
+int ossl_cmp_x509_algor_set0(X509_ALGOR **tgt, X509_ALGOR *src);
 
 /* from cmp_ctx.c */
 # define KBM_SSK_USING_CLIENT_KEM_KEY       1
