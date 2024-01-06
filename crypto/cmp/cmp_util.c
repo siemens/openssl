@@ -284,3 +284,17 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
     *tgt = new;
     return 1;
 }
+
+int ossl_cmp_x509_algor_set0(X509_ALGOR **tgt, X509_ALGOR *src)
+{
+    if (tgt == NULL || src == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if (*tgt == src) /* self-assignment */
+        return 1;
+
+    X509_ALGOR_free(*tgt);
+    *tgt = src;
+    return 1;
+}
