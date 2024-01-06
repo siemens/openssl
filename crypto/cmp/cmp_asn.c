@@ -296,29 +296,28 @@ OSSL_CMP_ITAV *ossl_cmp_itav_new_KemCiphertext(X509_ALGOR *kem,
                                                unsigned char *in_ct,
                                                int len)
 {
-    ASN1_OCTET_STRING *ct = NULL;
-    OSSL_CMP_ITAV *itav;
+    OSSL_CMP_ITAV *itav = NULL;
+    OSSL_CMP_KEMCIPHERTEXTINFO *KemCtInfoValue;
 
     if (kem == NULL || in_ct == NULL)
         return NULL;
 
+    if ((KemCtInfoValue = OSSL_CMP_KEMCIPHERTEXTINFO_new()) == NULL
+        || !ossl_cmp_x509_algor_set0(&KemCtInfoValue->kem, kem)
+        || !ossl_cmp_asn1_octet_string_set1_bytes(&KemCtInfoValue->ct,
+                                                  in_ct, len))
+        goto err;
+
     if ((itav = OSSL_CMP_ITAV_new()) == NULL)
-        return NULL;
+        goto err;
+
     itav->infoType = OBJ_nid2obj(NID_id_it_KemCiphertextInfo);
-    itav->infoValue.KemCiphertextInfoValue = OSSL_CMP_KEMCIPHERTEXTINFO_new();
-    if (itav->infoValue.KemCiphertextInfoValue == NULL)
-        goto err;
+    itav->infoValue.KemCiphertextInfoValue = KemCtInfoValue;
 
-    itav->infoValue.KemCiphertextInfoValue->kem = kem;
-    if (itav->infoValue.KemCiphertextInfoValue->kem == NULL)
-        goto err;
-
-    if (!ossl_cmp_asn1_octet_string_set1_bytes(&ct, in_ct, len))
-        goto err;
-    itav->infoValue.KemCiphertextInfoValue->ct = ct;
     return itav;
 
  err:
+    OSSL_CMP_KEMCIPHERTEXTINFO_free(KemCtInfoValue);
     OSSL_CMP_ITAV_free(itav);
     return NULL;
 }
@@ -336,9 +335,8 @@ int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
     if ((kemOtherInfo = OSSL_CMP_KEMOTHERINFO_new()) == NULL)
         return 0;
 
-    if ((kemOtherInfo->staticString = sk_ASN1_UTF8STRING_new_null()) == NULL
-        || !ossl_cmp_sk_ASN1_UTF8STRING_push_str(kemOtherInfo->staticString,
-                                                 KEMCMP_STATICSTRING, -1))
+    if (!ossl_cmp_sk_ASN1_UTF8STRING_push_str(kemOtherInfo->staticString,
+                                              KEMCMP_STATICSTRING, -1))
         goto err;
 
     kemOtherInfo->transactionID = ctx->transactionID;
@@ -350,7 +348,11 @@ int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
                             V_ASN1_UNDEF, NULL))
         goto err;
 
-    kemOtherInfo->ct = ossl_cmp_ctx_get_kem_ct(ctx);
+    if (ctx->kem_ct != NULL
+            && !ossl_cmp_asn1_octet_string_set1(&kemOtherInfo->ct,
+                                                ctx->kem_ct))
+        goto err;
+
     *out = NULL;
     if ((*len = i2d_OSSL_CMP_KEMOTHERINFO(kemOtherInfo, out)) <= 0)
         goto err;
@@ -361,7 +363,6 @@ int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
     kemOtherInfo->transactionID = NULL;
     kemOtherInfo->senderNonce = NULL;
     kemOtherInfo->recipNonce = NULL;
-    kemOtherInfo->ct = NULL;
     OSSL_CMP_KEMOTHERINFO_free(kemOtherInfo);
     return ret;
 }
