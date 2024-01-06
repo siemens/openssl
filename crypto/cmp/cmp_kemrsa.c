@@ -52,8 +52,9 @@ X509_ALGOR *ossl_cmp_rsakem_algor(OSSL_CMP_CTX *ctx)
     ASN1_STRING *stmp = NULL;
 
     if ((param = OSSL_CMP_RSAKEMPARAMETERS_new()) == NULL
-        || (param->KeyDerivationFunction
-            = ossl_cmp_kem_kdf_algor(ctx, NID_id_kdf_kdf2)) == NULL
+        || !ossl_cmp_x509_algor_set0(&param->KeyDerivationFunction,
+                                     ossl_cmp_kem_kdf_algor(ctx,
+                                                            NID_id_kdf_kdf2))
         || !ASN1_INTEGER_set(param->KeyLength, RSAKEM_KEYLENGTH))
         goto err;
 
