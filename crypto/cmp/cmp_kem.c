@@ -124,8 +124,9 @@ X509_ALGOR *ossl_cmp_kem_BasedMac_algor(const OSSL_CMP_CTX *ctx)
     ASN1_STRING *param_str = NULL;
 
     if ((param = OSSL_CMP_KEMBMPARAMETER_new()) == NULL
-        || (param->kdf = ossl_cmp_kem_kdf_algor(ctx, ctx->kem_kdf)) == NULL
-        || (param->mac = mac_algor(ctx)) == NULL
+        || !ossl_cmp_x509_algor_set0(&param->kdf,
+                                     ossl_cmp_kem_kdf_algor(ctx, ctx->kem_kdf))
+        || !ossl_cmp_x509_algor_set0(&param->mac, mac_algor(ctx))
         || !ASN1_INTEGER_set(param->len, ctx->kem_ssklen))
         goto err;
 
@@ -312,6 +313,9 @@ int ossl_cmp_kem_derivessk(OSSL_CMP_CTX *ctx,
     derive_ssk_HKDF(ctx, secret, secret_len,
                     salt, sizeof(salt), info, info_len,
                     out, len);
+
+    OPENSSL_clear_free(info, info_len);
+    OPENSSL_free(salt);
     return 1;
 }
 
@@ -322,7 +326,7 @@ int ossl_cmp_kem_derivessk_using_kemctinfo(OSSL_CMP_CTX *ctx,
     ASN1_OCTET_STRING *ct;
     size_t secret_len = 0;
     unsigned char *secret = NULL, *ssk = NULL;
-    int ssk_len;
+    int ssk_len = 0, ret = 0;
 
     if (ctx == NULL || KemCiphertextInfo == NULL || pkey == NULL)
         return 0;
@@ -339,18 +343,23 @@ int ossl_cmp_kem_derivessk_using_kemctinfo(OSSL_CMP_CTX *ctx,
                                  ASN1_STRING_get0_data(ct),
                                  ASN1_STRING_length(ct),
                                  &secret, &secret_len))
-        return 0;
+        goto err;
 
     if (!ossl_cmp_kem_derivessk(ctx, secret, secret_len, &ssk, &ssk_len))
-        return 0;
+        goto err;
 
     ossl_cmp_ctx_set1_kem_ssk(ctx, ssk, ssk_len);
-    return 1;
+    ret = 1;
+ err:
+    OPENSSL_clear_free(secret, secret_len);
+    OPENSSL_clear_free(ssk, ssk_len);
+    return ret;
 }
 
 int OSSL_CMP_get_ssk(OSSL_CMP_CTX *ctx)
 {
     OSSL_CMP_ITAV *req, *itav;
+    int ret = 0;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -364,11 +373,14 @@ int OSSL_CMP_get_ssk(OSSL_CMP_CTX *ctx)
         return 0;
 
     if (!ossl_cmp_kem_derivessk_using_kemctinfo(ctx, itav, ctx->pkey))
-        return 0;
+        goto err;
 
     OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_KEM_STATUS,
                             KBM_SSK_ESTABLISHED_USING_CLIENT);
-    return 1;
+    ret = 1;
+ err:
+    OSSL_CMP_ITAV_free(itav);
+    return ret;
 }
 
 static int kem_encapsulation(OSSL_CMP_CTX *ctx,
@@ -567,5 +579,6 @@ int ossl_cmp_kem_derive_ssk_using_srvcert(OSSL_CMP_CTX *ctx,
                             OSSL_CMP_OPT_KEM_STATUS,
                             KBM_SSK_ESTABLISHED_USING_SERVER);
     OPENSSL_free(ssk);
+    OSSL_CMP_KEMBMPARAMETER_free(param);
     return 1;
 }
