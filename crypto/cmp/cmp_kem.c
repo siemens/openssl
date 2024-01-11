@@ -18,6 +18,18 @@
 
 #define RSAKEM_KEYLENGTH 32
 
+static void print_buf(const char *title, const unsigned char *buf,
+                      size_t buf_len)
+{
+    size_t i = 0;
+
+    fprintf(stdout, "%s , len %ld\n", title, buf_len);
+    for (i = 0; i < buf_len; ++i)
+        fprintf(stdout, "%02X%s", buf[i],
+                (i + 1) % 16 == 0 ? "\r\n" : " ");
+
+}
+
 /* TODO: look for existing OpenSSL solution */
 static int x509_algor_from_nid_with_md(int nid, X509_ALGOR **palg,
                                        const EVP_MD *md)
@@ -228,6 +240,8 @@ static int kem_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey, int is_EC,
         OPENSSL_free(*secret);
         goto err;
     }
+    print_buf("\nct", ct, ct_len);
+    print_buf("\nsecret", *secret, *secret_len);
     ret = 1;
  err:
     EVP_PKEY_CTX_free(kem_decaps_ctx);
@@ -313,6 +327,9 @@ int ossl_cmp_kem_derivessk(OSSL_CMP_CTX *ctx,
     derive_ssk_HKDF(ctx, secret, secret_len,
                     salt, sizeof(salt), info, info_len,
                     out, len);
+    print_buf("\nsecret", secret, secret_len);
+    print_buf("\ninfo", info, info_len);
+    print_buf("\nssk", *out, *len);
 
     OPENSSL_clear_free(info, info_len);
     OPENSSL_free(salt);
@@ -425,7 +442,8 @@ static int kem_encapsulation(OSSL_CMP_CTX *ctx,
         OPENSSL_free(*secret);
         goto err;
     }
-
+    print_buf("\nct", *ct, *ct_len);
+    print_buf("\nsecret", *secret, *secret_len);
     ret = 1;
  err:
     EVP_PKEY_CTX_free(kem_encaps_ctx);
