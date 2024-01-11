@@ -194,7 +194,7 @@ IF[{- !$disabled{chacha} -}]
  ENDIF
 ENDIF
 
-IF[{- !$disabled{integrity-only-cipher} -}]
+IF[{- !$disabled{tls1_3-integrity-only_ciphers} -}]
   SOURCE[$ENULL_HMAC_GOAL]=\
       cipher_enull_hmac.c cipher_enull_hmac_hw.c
 ENDIF

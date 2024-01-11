@@ -113,7 +113,7 @@ static SSL_CIPHER tls13_ciphers[] = {
         64, /* CCM8 uses a short tag, so we have a low security strength */
         128,
     },
-#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHER
+#ifndef OPENSSL_NO_TLS1_3_INTEGRITY_ONLY_CIPHERS
     {
         1,
         TLS1_3_RFC_SHA256_SHA256,
