@@ -65,6 +65,7 @@ static int check_key_level(X509_STORE_CTX *ctx, EVP_PKEY *pkey);
 static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert);
 static int check_curve(X509 *cert);
 
+static int GENERAL_NAMES_match_idp(GENERAL_NAMES *gens, DIST_POINT_NAME *b);
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
                          unsigned int *preasons, X509_CRL *crl, X509 *x);
 static int get_crl_delta(X509_STORE_CTX *ctx,
@@ -1429,6 +1430,22 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
     return X509_cmp(cert_ta, crl_ta) == 0;
 }
 
+static int GENERAL_NAMES_match(GENERAL_NAMES *as, GENERAL_NAMES *bs)
+{
+    int i, j;
+    GENERAL_NAME *gena, *genb;
+
+    for (i = 0; i < sk_GENERAL_NAME_num(as); i++) {
+        gena = sk_GENERAL_NAME_value(as, i);
+        for (j = 0; j < sk_GENERAL_NAME_num(bs); j++) {
+            genb = sk_GENERAL_NAME_value(bs, j);
+            if (GENERAL_NAME_cmp(gena, genb) == 0)
+                return 1;
+        }
+    }
+    return 0;
+}
+
 /*-
  * Check for match between two dist point names: three separate cases.
  * 1. Both are relative names and compare X509_NAME types.
@@ -1438,12 +1455,7 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
  */
 static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
 {
-    X509_NAME *nm = NULL;
-    GENERAL_NAMES *gens = NULL;
-    GENERAL_NAME *gena, *genb;
-    int i, j;
-
-    if (a == NULL || b == NULL)
+    if (a == NULL || b == NULL) /* Case 4 */
         return 1;
     if (a->type == 1) {
         if (a->dpname == NULL)
@@ -1454,42 +1466,36 @@ static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
                 return 0;
             return X509_NAME_cmp(a->dpname, b->dpname) == 0;
         }
-        /* Case 2: set name and GENERAL_NAMES appropriately */
-        nm = a->dpname;
-        gens = b->name.fullname;
-    } else if (b->type == 1) {
+        /* Case 2a */
+        return GENERAL_NAMES_match_idp(b->name.fullname, a);
+    }
+    /* Cases 2b and 3 */
+    return GENERAL_NAMES_match_idp(a->name.fullname, b);
+}
+
+static int GENERAL_NAMES_match_idp(GENERAL_NAMES *gens, DIST_POINT_NAME *b)
+{
+    int i;
+    GENERAL_NAME *gena;
+
+    if (gens == NULL || b == NULL)
+        return 1;
+
+    if (b->type == 1) {
         if (b->dpname == NULL)
             return 0;
-        /* Case 2: set name and GENERAL_NAMES appropriately */
-        gens = a->name.fullname;
-        nm = b->dpname;
-    }
-
-    /* Handle case 2 with one GENERAL_NAMES and one X509_NAME */
-    if (nm != NULL) {
+        /* Case 2: one GENERAL_NAMES and one X509_NAME */
         for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
-            gena = sk_GENERAL_NAME_value(gens, i);
-            if (gena->type != GEN_DIRNAME)
+            if ((gena = sk_GENERAL_NAME_value(gens, i))->type != GEN_DIRNAME)
                 continue;
-            if (X509_NAME_cmp(nm, gena->d.directoryName) == 0)
+            if (X509_NAME_cmp(b->dpname, gena->d.directoryName) == 0)
                 return 1;
         }
         return 0;
     }
 
     /* Else case 3: two GENERAL_NAMES */
-
-    for (i = 0; i < sk_GENERAL_NAME_num(a->name.fullname); i++) {
-        gena = sk_GENERAL_NAME_value(a->name.fullname, i);
-        for (j = 0; j < sk_GENERAL_NAME_num(b->name.fullname); j++) {
-            genb = sk_GENERAL_NAME_value(b->name.fullname, j);
-            if (GENERAL_NAME_cmp(gena, genb) == 0)
-                return 1;
-        }
-    }
-
-    return 0;
-
+    return GENERAL_NAMES_match(gens, b->name.fullname);
 }
 
 static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
@@ -1532,7 +1538,12 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
 
         if (crldp_check_crlissuer(dp, crl, crl_score)) {
             if (crl->idp == NULL
-                    || idp_check_dp(dp->distpoint, crl->idp->distpoint)) {
+                || (dp->distpoint != NULL
+                      ? idp_check_dp(dp->distpoint, crl->idp->distpoint)
+                      : (crl->idp->distpoint == NULL
+                       || (dp->CRLissuer != NULL
+                           && GENERAL_NAMES_match_idp(dp->CRLissuer,
+                                                      crl->idp->distpoint))))) {
                 *preasons &= dp->dp_reasons;
                 return 1;
             }
