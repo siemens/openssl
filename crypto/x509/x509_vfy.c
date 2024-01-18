@@ -75,8 +75,8 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
                          STACK_OF(X509_CRL) *crls);
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
                            int *pcrl_score);
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
-                           unsigned int *preasons);
+static int crl_check_scope_crldp(X509 *x, X509_CRL *crl, int crl_score,
+                                 unsigned int *preasons);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
 static int check_crl_chain(X509_STORE_CTX *ctx,
                            STACK_OF(X509) *cert_path,
@@ -1309,8 +1309,7 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     if ((crl_score & CRL_SCORE_AKID) == 0)
         return 0;
 
-    /* Check cert for matching CRL distribution points */
-    if (crl_crldp_check(x, crl, crl_score, &crl_reasons)) {
+    if (crl_check_scope_crldp(x, crl, crl_score, &crl_reasons)) {
         /* If no new reasons reject */
         if ((crl_reasons & ~tmp_reasons) == 0)
             return 0;
@@ -1453,7 +1452,7 @@ static int GENERAL_NAMES_match(GENERAL_NAMES *as, GENERAL_NAMES *bs)
  * 3. Both are full names and compare two GENERAL_NAMES.
  * 4. One is NULL: automatic match.
  */
-static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
+static int crldp_matches_idp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
 {
     if (a == NULL || b == NULL) /* Case 4 */
         return 1;
@@ -1487,7 +1486,7 @@ static int GENERAL_NAMES_match_idp(GENERAL_NAMES *gens, DIST_POINT_NAME *b)
         /* Case 2: one GENERAL_NAMES and one X509_NAME */
         for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
             if ((gena = sk_GENERAL_NAME_value(gens, i))->type != GEN_DIRNAME)
-                continue;
+                continue; /* other GeneralName types not supported */
             if (X509_NAME_cmp(b->dpname, gena->d.directoryName) == 0)
                 return 1;
         }
@@ -1498,7 +1497,7 @@ static int GENERAL_NAMES_match_idp(GENERAL_NAMES *gens, DIST_POINT_NAME *b)
     return GENERAL_NAMES_match(gens, b->name.fullname);
 }
 
-static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
+static int crldp_matches_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
 {
     int i;
     const X509_NAME *nm = X509_CRL_get_issuer(crl);
@@ -1510,16 +1509,16 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
         GENERAL_NAME *gen = sk_GENERAL_NAME_value(dp->CRLissuer, i);
 
         if (gen->type != GEN_DIRNAME)
-            continue;
+            continue; /* other GeneralName types not supported */
         if (X509_NAME_cmp(gen->d.directoryName, nm) == 0)
             return 1;
     }
     return 0;
 }
 
-/* Check CRLDP and IDP */
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
-                           unsigned int *preasons)
+/* Check CRL IDP: cert must have a matching CRL distribution point etc. */
+static int crl_check_scope_crldp(X509 *x, X509_CRL *crl, int crl_score,
+                                 unsigned int *preasons)
 {
     int i;
 
@@ -1536,10 +1535,10 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++) {
         DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
 
-        if (crldp_check_crlissuer(dp, crl, crl_score)) {
+        if (crldp_matches_crlissuer(dp, crl, crl_score)) {
             if (crl->idp == NULL
                 || (dp->distpoint != NULL
-                      ? idp_check_dp(dp->distpoint, crl->idp->distpoint)
+                      ? crldp_matches_idp(dp->distpoint, crl->idp->distpoint)
                       : (crl->idp->distpoint == NULL
                        || (dp->CRLissuer != NULL
                            && GENERAL_NAMES_match_idp(dp->CRLissuer,
