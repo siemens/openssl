@@ -4445,7 +4445,10 @@ static int test_early_data_psk_with_all_ciphers(int idx)
         goto end;
 
     if (idx == 4 || idx == 5 || idx == 6) {
-        /* CCM8 ciphers are considered low security due to their short tag */
+        /*
+         * CCM8 ciphers are considered low security due to their short tag.
+         * Integrity-only cipher do not provide any confidentiality.
+         */
         SSL_set_security_level(clientssl, 0);
         SSL_set_security_level(serverssl, 0);
     }
@@ -5294,8 +5297,8 @@ static int test_tls13_ciphersuite(int idx)
           ":" TLS1_3_RFC_AES_128_CCM_SHA256, 1, 1 },
 # if !defined(OPENSSL_NO_TLS1_3_INTEGRITY_ONLY_CIPHERS)
         /* Integrity-only cipher do not provide any confidentiality */
-        { TLS1_3_RFC_SHA256_SHA256
-          ":" TLS1_3_RFC_SHA384_SHA384, 0, 1 }
+        { TLS1_3_RFC_SHA256_SHA256, 0, 1 },
+        { TLS1_3_RFC_SHA384_SHA384, 0, 1 }
 # endif
     };
     const char *t13_cipher = NULL;
