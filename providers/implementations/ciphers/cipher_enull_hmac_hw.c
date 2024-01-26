@@ -66,7 +66,8 @@ static int enull_hmac_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
             return 0;
 
         if (!bctx->enc) {
-            if (CRYPTO_memcmp(ltag, ctx->tag, ctx->tag_len) != 0)
+            if (ltag_len != ctx->tag_len
+                || CRYPTO_memcmp(ltag, ctx->tag, ctx->tag_len) != 0)
                 return 0;
         }
     }

@@ -58,15 +58,12 @@ static void *enull_hmac_dupctx(void *vctx)
     if (dupctx == NULL)
         return NULL;
 
+    if (!ossl_assert(dupctx->base.tlsmac == NULL))
+        goto err;
+
     if (!ossl_prov_digest_copy(&dupctx->md, &ctx->md))
         goto err;
 
-    if (dupctx->base.tlsmac != NULL && dupctx->base.alloced) {
-        dupctx->base.tlsmac = OPENSSL_memdup(dupctx->base.tlsmac,
-                                             dupctx->base.tlsmacsize);
-        if (dupctx->base.tlsmac == NULL)
-            goto err;
-    }
     if ((dupctx->hmac = HMAC_CTX_new()) == NULL)
         goto err;
 
