@@ -389,16 +389,16 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
 
         if (mode == EVP_CIPH_GCM_MODE) {
             *taglen = EVP_GCM_TLS_TAG_LEN;
-        } else if (EVP_CIPHER_is_a(ciph, SN_enull_hmac_sha256)) {
+        } else if (EVP_CIPHER_is_a(ciph, SN_null_hmac_sha256)) {
             /*
-             * SN_enull_hmac_sha256 must be consistent
-             * with PROV_NAMES_ENULL_HMAC_SHA256
+             * SN_null_hmac_sha256 must be consistent
+             * with PROV_NAMES_NULL_HMAC_SHA256
              */
             *taglen = EVP_HMACSHA256_TLS_TAG_LEN;
-        } else if (EVP_CIPHER_is_a(ciph, SN_enull_hmac_sha384)) {
+        } else if (EVP_CIPHER_is_a(ciph, SN_null_hmac_sha384)) {
             /*
-             * SN_enull_hmac_sha384 must be consistent
-             * with PROV_NAMES_ENULL_HMAC_SHA384
+             * SN_null_hmac_sha384 must be consistent
+             * with PROV_NAMES_NULL_HMAC_SHA384
              */
             *taglen = EVP_HMACSHA384_TLS_TAG_LEN;
         } else {

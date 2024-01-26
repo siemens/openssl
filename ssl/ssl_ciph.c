@@ -56,9 +56,9 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX */
     {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX */
     /* SSL_ENC_eNULLHMACSHA256_IDX 24 */
-    {SSL_eNULLHMACSHA256, NID_enull_hmac_sha256},
+    {SSL_eNULLHMACSHA256, NID_null_hmac_sha256},
     /* SSL_ENC_eNULLHMACSHA384_IDX 25 */
-    {SSL_eNULLHMACSHA384, NID_enull_hmac_sha384},
+    {SSL_eNULLHMACSHA384, NID_null_hmac_sha384},
 };
 
 #define SSL_COMP_NULL_IDX       0

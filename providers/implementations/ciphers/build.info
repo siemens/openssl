@@ -26,7 +26,7 @@ $CHACHA_GOAL=../../libdefault.a
 $CHACHAPOLY_GOAL=../../libdefault.a
 $SIV_GOAL=../../libdefault.a
 $SIV_GCM_GOAL=../../libdefault.a
-$ENULL_HMAC_GOAL=../../libdefault.a
+$NULL_HMAC_GOAL=../../libdefault.a
 
 IF[{- !$disabled{asm} -}]
   $GHASHDEF_x86=GHASH_ASM
@@ -195,6 +195,6 @@ IF[{- !$disabled{chacha} -}]
 ENDIF
 
 IF[{- !$disabled{tls1_3-integrity-only_ciphers} -}]
-  SOURCE[$ENULL_HMAC_GOAL]=\
-      cipher_enull_hmac.c cipher_enull_hmac_hw.c
+  SOURCE[$NULL_HMAC_GOAL]=\
+      cipher_null_hmac.c cipher_null_hmac_hw.c
 ENDIF

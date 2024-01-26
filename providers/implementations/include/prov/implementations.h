@@ -242,8 +242,8 @@ extern const OSSL_DISPATCH ossl_chacha20_ossl_poly1305_functions[];
 # endif /* OPENSSL_NO_POLY1305 */
 #endif /* OPENSSL_NO_CHACHA */
 #ifndef OPENSSL_NO_TLS1_3_INTEGRITY_ONLY_CIPHER
-extern const OSSL_DISPATCH ossl_enull_hmac_sha256_functions[];
-extern const OSSL_DISPATCH ossl_enull_hmac_sha384_functions[];
+extern const OSSL_DISPATCH ossl_null_hmac_sha256_functions[];
+extern const OSSL_DISPATCH ossl_null_hmac_sha384_functions[];
 #endif
 
 #ifndef OPENSSL_NO_SIV

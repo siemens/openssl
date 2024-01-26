@@ -2506,8 +2506,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureAlgorithm", "X509v3 Alternative Signature Algorithm", NID_alt_signature_algorithm, 3, &so[8466]},
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
-    {"eNULL-HMAC-SHA256", "enull-hmac-sha256", NID_enull_hmac_sha256},
-    {"eNULL-HMAC-SHA384", "enull-hmac-sha384", NID_enull_hmac_sha384},
+    {"NULL-HMAC-SHA256", "null-hmac-sha256", NID_null_hmac_sha256},
+    {"NULL-HMAC-SHA384", "null-hmac-sha384", NID_null_hmac_sha384},
 };
 
 #define NUM_SN 1313
@@ -2705,6 +2705,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      388,    /* "Mail" */
      393,    /* "NULL" */
      404,    /* "NULL" */
+    1320,    /* "NULL-HMAC-SHA256" */
+    1321,    /* "NULL-HMAC-SHA384" */
       57,    /* "Netscape" */
      366,    /* "Nonce" */
       17,    /* "O" */
@@ -2985,8 +2987,6 @@ static const unsigned int sn_objs[NUM_SN] = {
     1157,    /* "dstu34311" */
     1159,    /* "dstu4145be" */
     1158,    /* "dstu4145le" */
-    1320,    /* "eNULL-HMAC-SHA256" */
-    1321,    /* "eNULL-HMAC-SHA384" */
      791,    /* "ecdsa-with-Recommended" */
      416,    /* "ecdsa-with-SHA1" */
      793,    /* "ecdsa-with-SHA224" */
@@ -4370,8 +4370,6 @@ static const unsigned int ln_objs[NUM_LN] = {
       48,    /* "emailAddress" */
      632,    /* "encrypted track 2" */
      885,    /* "enhancedSearchGuide" */
-    1320,    /* "enull-hmac-sha256" */
-    1321,    /* "enull-hmac-sha384" */
     1267,    /* "ess-attributes" */
     1265,    /* "etsi" */
       56,    /* "extendedCertificateAttributes" */
@@ -4782,6 +4780,8 @@ static const unsigned int ln_objs[NUM_LN] = {
     1217,    /* "modp_8192" */
      481,    /* "nSRecord" */
      173,    /* "name" */
+    1320,    /* "null-hmac-sha256" */
+    1321,    /* "null-hmac-sha384" */
      681,    /* "onBasis" */
      379,    /* "org" */
     1089,    /* "organizationIdentifier" */

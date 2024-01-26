@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* enull_hmac cipher implementation */
+/* null_hmac cipher implementation */
 
 /*
  * HMAC low level APIs are deprecated for public use, but still ok for internal
@@ -16,12 +16,12 @@
 #include "internal/deprecated.h"
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include "cipher_enull_hmac.h"
+#include "cipher_null_hmac.h"
 
-static int enull_hmac_initkey(PROV_CIPHER_CTX *bctx, const uint8_t *key,
-                              size_t keylen)
+static int null_hmac_initkey(PROV_CIPHER_CTX *bctx, const uint8_t *key,
+                             size_t keylen)
 {
-    PROV_ENULL_HMAC_CTX *ctx = (PROV_ENULL_HMAC_CTX *)bctx;
+    PROV_NULL_HMAC_CTX *ctx = (PROV_NULL_HMAC_CTX *)bctx;
 
     if (key == NULL || keylen > sizeof(ctx->key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
@@ -32,12 +32,12 @@ static int enull_hmac_initkey(PROV_CIPHER_CTX *bctx, const uint8_t *key,
     return 1;
 }
 
-static int enull_hmac_initiv(PROV_CIPHER_CTX *bctx,
-                             const unsigned char *iv, size_t ivlen)
+static int null_hmac_initiv(PROV_CIPHER_CTX *bctx,
+                            const unsigned char *iv, size_t ivlen)
 {
-    PROV_ENULL_HMAC_CTX *ctx = (PROV_ENULL_HMAC_CTX *)bctx;
+    PROV_NULL_HMAC_CTX *ctx = (PROV_NULL_HMAC_CTX *)bctx;
 
-    if (iv == NULL || ivlen > ENULL_HMAC_MAX_IVLEN) {
+    if (iv == NULL || ivlen > NULL_HMAC_MAX_IVLEN) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -49,12 +49,12 @@ static int enull_hmac_initiv(PROV_CIPHER_CTX *bctx,
     return HMAC_Update(ctx->hmac, iv, ivlen);
 }
 
-static int enull_hmac_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
-                             const unsigned char *in, size_t inl)
+static int null_hmac_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
+                            const unsigned char *in, size_t inl)
 {
-    PROV_ENULL_HMAC_CTX *ctx = (PROV_ENULL_HMAC_CTX *)bctx;
-    unsigned char ltag[ENULL_HMAC_MAX_TAGLEN];
-    unsigned int ltag_len;
+    PROV_NULL_HMAC_CTX *ctx = (PROV_NULL_HMAC_CTX *)bctx;
+    unsigned char ltag[NULL_HMAC_MAX_TAGLEN];
+    unsigned int ltag_len = 0;
 
     if (in != NULL) {
         if (!HMAC_Update(ctx->hmac, in, inl))
@@ -79,12 +79,12 @@ static int enull_hmac_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
     return 1;
 }
 
-static const PROV_CIPHER_HW_ENULL_HMAC enull_hmac_hw = {
-    { enull_hmac_initkey, enull_hmac_cipher },
-    enull_hmac_initiv
+static const PROV_CIPHER_HW_NULL_HMAC null_hmac_hw = {
+    { null_hmac_initkey, null_hmac_cipher },
+    null_hmac_initiv
 };
 
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_enull_hmac(size_t keybits)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_null_hmac(size_t keybits)
 {
-    return (PROV_CIPHER_HW *)&enull_hmac_hw;
+    return (PROV_CIPHER_HW *)&null_hmac_hw;
 }

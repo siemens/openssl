@@ -132,7 +132,7 @@ push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless $no_dsa;
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
-push @defltfiles, qw(evpciph_enull_hmac.txt) unless $no_tls1_3_integrity_only_ciphers;
+push @defltfiles, qw(evpciph_null_hmac.txt) unless $no_tls1_3_integrity_only_ciphers;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
 
 plan tests =>
