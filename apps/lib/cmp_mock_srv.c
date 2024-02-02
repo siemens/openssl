@@ -409,6 +409,22 @@ static X509 *extracert_withKEM(STACK_OF(X509) *certs)
     return NULL;
 }
 
+#define RATS_NONCE_LEN 32
+static OSSL_CMP_ITAV *dummy_rats_nonce(void)
+{
+    unsigned char *rand = OPENSSL_zalloc(RATS_NONCE_LEN);
+    OSSL_CMP_ITAV *itav = NULL;
+
+    if (rand == NULL
+        || RAND_bytes(rand, RATS_NONCE_LEN) <= 0) {
+        BIO_printf(bio_err, "RAND_bytes failed\n");
+        return NULL;
+    }
+
+    itav = OSSL_CMP_ITAV_new_ratsnonce(rand, RATS_NONCE_LEN);
+    return itav;
+}
+
 static OSSL_CMP_ITAV *process_genm_itav(OSSL_CMP_SRV_CTX *srv_ctx,
                                         int req_nid,
                                         const OSSL_CMP_ITAV *req,
@@ -425,6 +441,9 @@ static OSSL_CMP_ITAV *process_genm_itav(OSSL_CMP_SRV_CTX *srv_ctx,
         rsp = OSSL_CMP_ITAV_new_rootCaKeyUpdate(ctx->newWithNew,
                                                 ctx->newWithOld,
                                                 ctx->oldWithNew);
+        break;
+    case NID_id_smime_aa_nonce:
+        rsp = dummy_rats_nonce();
         break;
     case NID_id_it_KemCiphertextInfo:
         if (OSSL_CMP_ITAV_get0_value(req) == NULL) {
