@@ -19,6 +19,9 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
+#if 1
+#include <evidence.h>
+#endif
 
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -282,17 +285,22 @@ static X509_EXTENSIONS *getattestationExt(void)
     X509_EXTENSIONS *exts = NULL;
     X509_EXTENSION *ext = NULL;
     unsigned char *der_data = NULL, *evidence = NULL;
-    int der_len = 0, ret = 0;
+    int der_len = 0, ret = 0, len = EVIDENCE_LEN;
     ASN1_OCTET_STRING oct;
 
+#if 1
+    fprintf(stdout, "generate_evidence_string");
+    generate_evidence_string(&evidence, &len);
+#else
     /* TODO: get evidence from library */
     evidence = OPENSSL_malloc(EVIDENCE_LEN);
     if (evidence == NULL)
         return NULL;
     memset(evidence, 0xAA, EVIDENCE_LEN);
+#endif
 
     oct.data = evidence;
-    oct.length = EVIDENCE_LEN;
+    oct.length = len;
     oct.flags = 0;
 
     der_len = i2d_ASN1_OCTET_STRING(&oct, &der_data);
