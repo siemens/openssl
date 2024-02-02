@@ -886,7 +886,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
     }
 
     if (ctx->rats_status) {
-        if (ossl_cmp_get_nonce(ctx))
+        if (!ossl_cmp_get_nonce(ctx))
             goto err;
     } else {
         kembasedmac = ossl_cmp_kem_BasedMac_required(ctx);
