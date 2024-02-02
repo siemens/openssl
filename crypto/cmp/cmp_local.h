@@ -119,6 +119,8 @@ struct ossl_cmp_ctx_st {
     int popoMethod; /* Proof-of-possession mechanism; default: signature */
     X509 *oldCert; /* cert to be updated (via KUR) or to be revoked (via RR) */
     X509_REQ *p10CSR; /* for P10CR: PKCS#10 CSR to be sent */
+    int rats_status; /* Remote attestation procedures (RATS) status */
+    ASN1_OCTET_STRING *rats_nonce; /* RATS nonce for generating evidence */
 
     /* misc body contents */
     int revocationReason; /* revocation reason code to be included in RR */
@@ -339,6 +341,7 @@ struct ossl_cmp_itav_st {
         OSSL_CMP_ROOTCAKEYUPDATE *rootCaKeyUpdate;
         /* NID_id_it_KemCiphertextInfo -  KEM ciphertext */
         OSSL_CMP_KEMCIPHERTEXTINFO *KemCiphertextInfoValue;
+        ASN1_OCTET_STRING *RemoteAttestationNonce;
         /* this is to be used for so far undeclared objects */
         ASN1_TYPE *other;
     } infoValue;
@@ -928,6 +931,8 @@ int ossl_cmp_ctx_set1_kem_ssk(OSSL_CMP_CTX *ctx, const unsigned char *sec,
                               int len);
 int ossl_cmp_ctx_set1_kem_secret(OSSL_CMP_CTX *ctx,
                                  const unsigned char *sec, int len);
+int ossl_cmp_ctx_set1_rats_nonce(OSSL_CMP_CTX *ctx,
+                                 const ASN1_OCTET_STRING *ct);
 
 /* from cmp_status.c */
 int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si);
@@ -1088,6 +1093,7 @@ int ossl_cmp_kem_derive_ssk_using_srvcert(OSSL_CMP_CTX *ctx,
                                           const OSSL_CMP_MSG *msg);
 OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
                                               const EVP_PKEY *pubkey);
+int ossl_cmp_get_nonce(OSSL_CMP_CTX *ctx);
 
 /* from cmp_kemrsa.c */
 X509_ALGOR *ossl_cmp_rsakem_algor(OSSL_CMP_CTX *ctx);

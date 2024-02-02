@@ -277,6 +277,8 @@ int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
                                        X509 **newWithNew,
                                        X509 **newWithOld,
                                        X509 **oldWithNew);
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_ratsnonce(const unsigned char *nonce,
+                                           int len);
 
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 
@@ -302,6 +304,7 @@ const char *OSSL_CMP_CTX_get0_propq(const OSSL_CMP_CTX *ctx);
 #  define OSSL_CMP_OPT_IMPLICIT_CONFIRM 25
 #  define OSSL_CMP_OPT_DISABLE_CONFIRM 26
 #  define OSSL_CMP_OPT_REVOCATION_REASON 27
+#  define OSSL_CMP_OPT_INIT_RATS 28
 /* CMP protection options: */
 #  define OSSL_CMP_OPT_UNPROTECTED_SEND 30
 #  define OSSL_CMP_OPT_UNPROTECTED_ERRORS 31

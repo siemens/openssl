@@ -131,7 +131,7 @@ static int add_extensions(STACK_OF(X509_EXTENSION) **target,
 {
     int i;
 
-    if (target == NULL)
+    if (target == NULL || exts == NULL)
         return 0;
 
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
@@ -276,6 +276,67 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx, int for_KUR,
     return NULL;
 }
 
+#define EVIDENCE_LEN 10
+static X509_EXTENSIONS *getattestationExt(void)
+{
+    X509_EXTENSIONS *exts = NULL;
+    X509_EXTENSION *ext = NULL;
+    unsigned char *der_data = NULL, *evidence = NULL;
+    int der_len = 0, ret = 0;
+    ASN1_OCTET_STRING oct;
+
+    /* TODO: get evidence from library */
+    evidence = OPENSSL_malloc(EVIDENCE_LEN);
+    if (evidence == NULL)
+        return NULL;
+    memset(evidence, 0xAA, EVIDENCE_LEN);
+
+    oct.data = evidence;
+    oct.length = EVIDENCE_LEN;
+    oct.flags = 0;
+
+    der_len = i2d_ASN1_OCTET_STRING(&oct, &der_data);
+    if (der_len < 0) {
+        goto err;
+    }
+
+    oct.data = der_data;
+    oct.length = der_len;
+    oct.flags = 0;
+
+    ext = X509_EXTENSION_create_by_NID(NULL, NID_id_smime_aa_evidenceStatement,
+                                       0, &oct);
+    if (ext == NULL
+        || (exts = sk_X509_EXTENSION_new_null()) == NULL
+        || !sk_X509_EXTENSION_push(exts, ext))
+        goto err;
+    ret = 1;
+
+ err:
+    OPENSSL_free(evidence);
+    OPENSSL_free(der_data);
+    if (ret == 0) {
+        X509_EXTENSION_free(ext);
+        sk_X509_EXTENSION_free(exts);
+        exts = NULL;
+    }
+    return exts;
+}
+
+static int add_rats_extensions(X509_EXTENSIONS **exts)
+{
+    int ret = 0;
+    X509_EXTENSIONS *rats_exts;
+
+    if (exts == NULL)
+        return 0;
+    if ((rats_exts = getattestationExt()) != NULL) {
+        ret = add_extensions(exts, rats_exts);
+        sk_X509_EXTENSION_pop_free(rats_exts, X509_EXTENSION_free);
+    }
+    return ret;
+}
+
 OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
 {
     OSSL_CRMF_MSG *crm = NULL;
@@ -344,6 +405,9 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
     if (sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0
             && !add1_extension(&exts, NID_subject_alt_name,
                                crit, ctx->subjectAltNames))
+        goto err;
+    if (ctx->rats_status
+        && !add_rats_extensions(&exts))
         goto err;
     if (ctx->policies != NULL
             && !add1_extension(&exts, NID_certificate_policies,

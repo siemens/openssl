@@ -884,13 +884,19 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
-    kembasedmac = ossl_cmp_kem_BasedMac_required(ctx);
-    if (kembasedmac == -1) {
-        goto err;
-    } else if (kembasedmac == 1
-               && ctx->kem_status == KBM_SSK_USING_CLIENT_KEM_KEY) {
-        if (!OSSL_CMP_get_ssk(ctx))
+
+    if (ctx->rats_status) {
+        if (ossl_cmp_get_nonce(ctx))
             goto err;
+    } else {
+        kembasedmac = ossl_cmp_kem_BasedMac_required(ctx);
+        if (kembasedmac == -1) {
+            goto err;
+        } else if (kembasedmac == 1
+                   && ctx->kem_status == KBM_SSK_USING_CLIENT_KEM_KEY) {
+            if (!OSSL_CMP_get_ssk(ctx))
+                goto err;
+        }
     }
 
     if (!initial_certreq(ctx, req_type, crm, &rep, rep_type))

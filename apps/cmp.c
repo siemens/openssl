@@ -133,6 +133,7 @@ static int opt_implicit_confirm = 0;
 static int opt_disable_confirm = 0;
 static char *opt_certout = NULL;
 static char *opt_chainout = NULL;
+static int opt_rats = 0;
 
 /* certificate enrollment and revocation */
 static char *opt_oldcert = NULL;
@@ -220,7 +221,7 @@ typedef enum OPTION_choice {
     OPT_POLICIES, OPT_POLICY_OIDS, OPT_POLICY_OIDS_CRITICAL,
     OPT_POPO, OPT_CSR,
     OPT_OUT_TRUSTED, OPT_IMPLICIT_CONFIRM, OPT_DISABLE_CONFIRM,
-    OPT_CERTOUT, OPT_CHAINOUT,
+    OPT_CERTOUT, OPT_CHAINOUT, OPT_RATS,
 
     OPT_OLDCERT, OPT_ISSUER, OPT_SERIAL, OPT_REVREASON,
 
@@ -344,6 +345,8 @@ const OPTIONS cmp_options[] = {
      "File to save newly enrolled certificate"},
     {"chainout", OPT_CHAINOUT, 's',
      "File to save the chain of newly enrolled certificate"},
+    {"rats", OPT_RATS, '-',
+     "Request certificate with remote attestations"},
 
     OPT_SECTION("Certificate enrollment and revocation"),
 
@@ -602,7 +605,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {(char **)&opt_popo}, {&opt_csr},
     {&opt_out_trusted},
     {(char **)&opt_implicit_confirm}, {(char **)&opt_disable_confirm},
-    {&opt_certout}, {&opt_chainout},
+    {&opt_certout}, {&opt_chainout}, {(char **)&opt_rats},
 
     {&opt_oldcert}, {&opt_issuer}, {&opt_serial}, {(char **)&opt_revreason},
 
@@ -2088,6 +2091,8 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (opt_total_timeout >= 0)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_TOTAL_TIMEOUT,
                                       opt_total_timeout);
+    if (opt_rats)
+        (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_INIT_RATS, 1);
 
     if (opt_rspin != NULL) {
         rspin_in_use = 1;
@@ -2739,6 +2744,9 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_CHAINOUT:
             opt_chainout = opt_str();
+            break;
+        case OPT_RATS:
+            opt_rats = 1;
             break;
         case OPT_OLDCERT:
             opt_oldcert = opt_str();

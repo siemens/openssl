@@ -264,6 +264,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     ASN1_OCTET_STRING_free(ctx->kem_ct );
     ASN1_OCTET_STRING_free(ctx->kem_ssk);
     ASN1_OCTET_STRING_free(ctx->kem_secret);
+    ASN1_OCTET_STRING_free(ctx->rats_nonce);
 
     OPENSSL_free(ctx);
 }
@@ -863,6 +864,9 @@ DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, kem_ct)
 /* get ciphertext from context */
 DEFINE_OSSL_get(ossl_cmp_ctx, kem_ct, ASN1_OCTET_STRING *, NULL)
 
+/* Set the nonce to be used in attestation evidence */
+DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, rats_nonce)
+
 /* Set the proxy server to use for HTTP(S) connections */
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
 
@@ -1025,6 +1029,9 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         break;
     case OSSL_CMP_OPT_KEM_MAC_ALGNID:
         ctx->kem_mac = val;
+        break;
+    case OSSL_CMP_OPT_INIT_RATS:
+        ctx->rats_status = val;
         break;
     default:
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_OPTION);
