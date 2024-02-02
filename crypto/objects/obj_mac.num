@@ -1322,3 +1322,5 @@ id_KemBasedMac		1321
 hkdfWithSHA256		1322
 id_kem_rsa		1323
 id_kdf_kdf2		1324
+id_smime_aa_nonce		1325
+id_smime_aa_evidenceStatement		1326
