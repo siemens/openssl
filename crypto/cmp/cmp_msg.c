@@ -20,7 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #if 1
-#include <evidence.h>
+#include <libatg.h>
 #endif
 
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq)
@@ -279,18 +279,25 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx, int for_KUR,
     return NULL;
 }
 
-#define EVIDENCE_LEN 10
-static X509_EXTENSIONS *getattestationExt(void)
+#define EVIDENCE_LEN 2000
+static X509_EXTENSIONS *getattestationExt(OSSL_CMP_CTX *ctx)
 {
     X509_EXTENSIONS *exts = NULL;
     X509_EXTENSION *ext = NULL;
     unsigned char *der_data = NULL, *evidence = NULL;
-    int der_len = 0, ret = 0, len = EVIDENCE_LEN;
+    int der_len = 0, ret = 0;
+    long unsigned int len = EVIDENCE_LEN;
     ASN1_OCTET_STRING oct;
 
 #if 1
     fprintf(stdout, "generate_evidence_string");
-    generate_evidence_string(&evidence, &len);
+    evidence = OPENSSL_malloc(EVIDENCE_LEN);
+    if (evidence == NULL)
+        return NULL;
+    //generate_evidence_string(&evidence, &len);
+    ret = get_attestation_token(ctx->rats_nonce->data, ctx->rats_nonce->length,
+                                evidence, EVIDENCE_LEN, &len,
+                                NULL, NULL);
 #else
     /* TODO: get evidence from library */
     evidence = OPENSSL_malloc(EVIDENCE_LEN);
@@ -331,14 +338,14 @@ static X509_EXTENSIONS *getattestationExt(void)
     return exts;
 }
 
-static int add_rats_extensions(X509_EXTENSIONS **exts)
+static int add_rats_extensions(OSSL_CMP_CTX *ctx, X509_EXTENSIONS **exts)
 {
     int ret = 0;
     X509_EXTENSIONS *rats_exts;
 
     if (exts == NULL)
         return 0;
-    if ((rats_exts = getattestationExt()) != NULL) {
+    if ((rats_exts = getattestationExt(ctx)) != NULL) {
         ret = add_extensions(exts, rats_exts);
         sk_X509_EXTENSION_pop_free(rats_exts, X509_EXTENSION_free);
     }
@@ -415,7 +422,7 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
                                crit, ctx->subjectAltNames))
         goto err;
     if (ctx->rats_status
-        && !add_rats_extensions(&exts))
+        && !add_rats_extensions(ctx, &exts))
         goto err;
     if (ctx->policies != NULL
             && !add1_extension(&exts, NID_certificate_policies,
@@ -622,8 +629,7 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
     } else if (ctx->p10CSR != NULL) {
         pubkey = X509_REQ_get0_pubkey(ctx->p10CSR);
         subject = X509_REQ_get_subject_name(ctx->p10CSR);
-    }
-    else {
+    } else {
         goto err;
     }
 
