@@ -5549,3 +5549,4 @@ ERR_pop                                 ?	3_3_0	EXIST::FUNCTION:
 X509_STORE_get1_objects                 ?	3_3_0	EXIST::FUNCTION:
 OPENSSL_LH_set_thunks                   ?	3_3_0	EXIST::FUNCTION:
 OPENSSL_LH_doall_arg_thunk              ?	3_3_0	EXIST::FUNCTION:
+OSSL_CMP_ITAV_new_ratsnonce             ?	3_3_0	EXIST::FUNCTION:CMP
