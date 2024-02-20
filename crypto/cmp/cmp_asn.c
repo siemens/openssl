@@ -384,9 +384,6 @@ OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_new1(const DIST_POINT_NAME *dpn,
                                             const GENERAL_NAMES *issuer,
                                             const ASN1_TIME *thisUpdate)
 {
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-    return dpn == NULL && issuer == NULL && thisUpdate == NULL ? NULL : NULL;
-#else
     OSSL_CMP_CRLSOURCE *crlsource;
     OSSL_CMP_CRLSTATUS *crlstatus;
 
@@ -423,7 +420,6 @@ OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_new1(const DIST_POINT_NAME *dpn,
  err:
     OSSL_CMP_CRLSTATUS_free(crlstatus);
     return NULL;
-#endif
 }
 
 static GENERAL_NAMES *gennames_new(const X509_NAME *nm)
@@ -551,6 +547,31 @@ int OSSL_CMP_CRLSTATUS_get0(const OSSL_CMP_CRLSTATUS *crlstatus,
     if (thisUpdate != NULL)
         *thisUpdate = crlstatus->thisUpdate;
     return 1;
+}
+
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crl)
+{
+    OSSL_CMP_ITAV *itav;
+    X509_CRL *crl_copy = NULL;
+    STACK_OF(X509_CRL) *crls = NULL;
+
+    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
+        return NULL;
+
+    if (crl != NULL
+        && ((crls = sk_X509_CRL_new_reserve(NULL, 1)) == NULL
+            || (crl_copy = X509_CRL_dup(crl)) == NULL
+            || !sk_X509_CRL_push(crls, crl_copy)))
+        goto err;
+
+    itav->infoType = OBJ_nid2obj(NID_id_it_crls);
+    itav->infoValue.crls = crls;
+    return itav;
+
+ err:
+    sk_X509_CRL_free(crls);
+    OSSL_CMP_ITAV_free(itav);
+    return NULL;
 }
 
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new0_crls(STACK_OF(X509_CRL) *crls)

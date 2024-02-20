@@ -94,6 +94,8 @@ static char *opt_oldwithold = NULL;
 static char *opt_newwithnew = NULL;
 static char *opt_newwithold = NULL;
 static char *opt_oldwithnew = NULL;
+static char *opt_oldcrl = NULL;
+static char *opt_crlout = NULL;
 
 /* client authentication */
 static char *opt_ref = NULL;
@@ -237,6 +239,7 @@ typedef enum OPTION_choice {
     OPT_IGNORE_KEYUSAGE, OPT_UNPROTECTED_ERRORS, OPT_NO_CACHE_EXTRACERTS,
     OPT_SRVCERTOUT, OPT_EXTRACERTSOUT, OPT_CACERTSOUT,
     OPT_OLDWITHOLD, OPT_NEWWITHNEW, OPT_NEWWITHOLD, OPT_OLDWITHNEW,
+    OPT_OLDCRL, OPT_CRLOUT,
 
     OPT_REF, OPT_SECRET, OPT_CERT, OPT_OWN_TRUSTED, OPT_KEY, OPT_KEYPASS,
     OPT_DIGEST, OPT_MAC, OPT_EXTRACERTS,
@@ -428,6 +431,10 @@ const OPTIONS cmp_options[] = {
       "File to save NewWithOld cert received in genp of type rootCaKeyUpdate"},
     { "oldwithnew", OPT_OLDWITHNEW, 's',
       "File to save OldWithNew cert received in genp of type rootCaKeyUpdate"},
+    { "oldcrl", OPT_OLDCRL, 's',
+      "CRL to request update for in genm of type crlStatusList"},
+    { "crlout", OPT_CRLOUT, 's',
+      "File to save new CRL received in genp of type 'crls'"},
 
     OPT_SECTION("Client authentication"),
     {"ref", OPT_REF, 's',
@@ -623,6 +630,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {(char **)&opt_no_cache_extracerts},
     {&opt_srvcertout}, {&opt_extracertsout}, {&opt_cacertsout},
     {&opt_oldwithold}, {&opt_newwithnew}, {&opt_newwithold}, {&opt_oldwithnew},
+    {&opt_oldcrl}, {&opt_crlout},
 
     {&opt_ref}, {&opt_secret},
     {&opt_cert}, {&opt_own_trusted}, {&opt_key}, {&opt_keypass},
@@ -1880,8 +1888,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_POPO_METHOD, opt_popo);
 
     if (opt_oldcert != NULL) {
-        if (opt_cmd == CMP_GENM) {
-            CMP_warn("-oldcert option is ignored for 'genm' command");
+        if (opt_cmd == CMP_GENM && opt_infotype != NID_id_it_crlStatusList) {
+            CMP_warn("-oldcert option is ignored for 'genm' command except with -infotype crlStatusList");
         } else {
             if (!setup_cert(ctx, opt_oldcert, opt_keypass,
                             /* needed if opt_oldcert is encrypted PKCS12 file */
@@ -1915,20 +1923,20 @@ static int add_certProfile(OSSL_CMP_CTX *ctx, const char *name)
 
     if ((sk = sk_ASN1_UTF8STRING_new_reserve(NULL, 1)) == NULL)
         return 0;
-   if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
-       goto err;
-   if (!ASN1_STRING_set(utf8string, name, (int)strlen(name))) {
-       ASN1_STRING_free(utf8string);
-       goto err;
-   }
-   /* Due to sk_ASN1_UTF8STRING_new_reserve(NULL, 1), this surely succeeds: */
-   (void)sk_ASN1_UTF8STRING_push(sk, utf8string);
-   if ((itav = OSSL_CMP_ITAV_new0_certProfile(sk)) == NULL)
-       goto err;
-   if (OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav))
-       return 1;
-   OSSL_CMP_ITAV_free(itav);
-   return 0;
+    if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
+        goto err;
+    if (!ASN1_STRING_set(utf8string, name, (int)strlen(name))) {
+        ASN1_STRING_free(utf8string);
+        goto err;
+    }
+    /* Due to sk_ASN1_UTF8STRING_new_reserve(NULL, 1), this surely succeeds: */
+    (void)sk_ASN1_UTF8STRING_push(sk, utf8string);
+    if ((itav = OSSL_CMP_ITAV_new0_certProfile(sk)) == NULL)
+        goto err;
+    if (OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav))
+        return 1;
+    OSSL_CMP_ITAV_free(itav);
+    return 0;
 
  err:
     sk_ASN1_UTF8STRING_pop_free(sk, ASN1_UTF8STRING_free);
@@ -1973,7 +1981,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
             if (*ptr != '\0') {
                 if (*ptr != ',') {
                     CMP_err1("Missing ',' or end of -geninfo arg after int at %.40s",
-                        ptr);
+                             ptr);
                     goto err;
                 }
                 ptr++;
@@ -2248,6 +2256,18 @@ static int write_cert(BIO *bio, X509 *cert)
     return 0;
 }
 
+static int write_crl(BIO *bio, X509_CRL *crl)
+{
+    if ((opt_certform == FORMAT_PEM && PEM_write_bio_X509_CRL(bio, crl))
+            || (opt_certform == FORMAT_ASN1 && i2d_X509_CRL_bio(bio, crl)))
+        return 1;
+    if (opt_certform != FORMAT_PEM && opt_certform != FORMAT_ASN1)
+        BIO_printf(bio_err,
+                   "error: unsupported type '%s' for writing CRLs\n",
+                   opt_certform_s);
+    return 0;
+}
+
 /*
  * If file != NULL writes out a stack of certs to the given file.
  * If certs is NULL, the file is emptied.
@@ -2295,6 +2315,35 @@ static int save_free_certs(STACK_OF(X509) *certs,
     return n;
 }
 
+static int save_free_crl(X509_CRL *crl,
+                         const char *file, const char *desc)
+{
+    BIO *bio = NULL;
+    int res = 0;
+
+    if (file == NULL)
+        goto end;
+    if (crl != NULL)
+        CMP_info2("received %s CRL, saving to file '%s'", desc, file);
+
+    if ((bio = BIO_new(BIO_s_file())) == NULL
+            || !BIO_write_filename(bio, (char *)file)) {
+        CMP_err3("could not open file '%s' for %s %s CRL",
+                 file, crl == NULL ? "deleting" : "writing", desc);
+        goto end;
+    }
+
+    if (!write_crl(bio, crl)) {
+        CMP_err2("cannot write %s crl to file '%s'", desc, file);
+        goto end;
+    }
+    res = 1;
+
+ end:
+    BIO_free(bio);
+    return res;
+}
+
 static int delete_file(const char *file, const char *desc)
 {
     if (file == NULL)
@@ -2325,6 +2374,20 @@ static int save_cert_or_delete(X509 *cert, const char *file, const char *desc)
             return 0;
         }
         return save_free_certs(certs, file, desc) >= 0;
+    }
+}
+
+static int save_crl_or_delete(X509_CRL *crl, const char *file, const char *desc)
+{
+    if (file == NULL)
+        return 1;
+    if (crl == NULL) {
+        char desc_crl[80];
+
+        BIO_snprintf(desc_crl, sizeof(desc_crl), "%s CRL", desc);
+        return delete_file(file, desc_crl);
+    } else {
+        return save_free_crl(crl, file, desc);
     }
 }
 
@@ -2727,7 +2790,12 @@ static int get_opts(int argc, char **argv)
         case OPT_OLDWITHNEW:
             opt_oldwithnew = opt_str();
             break;
-
+        case OPT_OLDCRL:
+            opt_oldcrl = opt_str();
+            break;
+        case OPT_CRLOUT:
+            opt_crlout = opt_str();
+            break;
         case OPT_V_CASES:
             if (!opt_verify(o, vpm))
                 goto opthelp;
@@ -3141,6 +3209,45 @@ static int do_genm(OSSL_CMP_CTX *ctx)
     end_upd:
         X509_free(oldwithold);
         return res;
+    } else if (opt_infotype == NID_id_it_crlStatusList) {
+        X509_CRL *oldcrl = NULL, *crl = NULL;
+        int res = 0;
+
+        if (opt_oldcrl == NULL && opt_oldcert == NULL) {
+            CMP_err("Missing -oldcrl and no -oldcert given for -infotype crlStatusList");
+            return 0;
+        }
+        if (opt_crlout == NULL) {
+            CMP_err("Missing -crlout for -infotype crlStatusList");
+            return 0;
+        }
+
+        if (opt_oldcrl == NULL) {
+            CMP_warn("No -oldcrl given, will use data from -oldcert");
+        } else {
+            oldcrl = load_crl(opt_oldcrl, FORMAT_UNDEF, 0,
+                              "CRL for genm with -infotype crlStatusList");
+            if (oldcrl == NULL)
+                goto end_crlupd;
+        }
+        if (!OSSL_CMP_get1_crlUpdate(ctx, oldcrl, &crl))
+            goto end_crlupd;
+
+        const char *desc = "CRL from genp of type 'crls'";
+        if (crl == NULL) {
+            CMP_info("no CRL update available");
+            if (!delete_file(opt_crlout, desc))
+                goto end_crlupd;
+        } else if (!save_crl_or_delete(crl, opt_crlout, desc)) {
+            goto end_crlupd;
+        }
+        res = 1;
+
+    end_crlupd:
+        X509_CRL_free(oldcrl);
+        X509_CRL_free(crl);
+        return res;
+
     } else {
         OSSL_CMP_ITAV *req;
         STACK_OF(OSSL_CMP_ITAV) *itavs;
