@@ -189,6 +189,7 @@ static char *opt_srv_trusted = NULL;
 static char *opt_srv_untrusted = NULL;
 static char *opt_ref_cert = NULL;
 static char *opt_rsp_cert = NULL;
+static char *opt_rsp_crl = NULL;
 static char *opt_rsp_extracerts = NULL;
 static char *opt_rsp_capubs = NULL;
 static char *opt_rsp_newwithnew = NULL;
@@ -270,9 +271,9 @@ typedef enum OPTION_choice {
     OPT_SRV_REF, OPT_SRV_SECRET,
     OPT_SRV_CERT, OPT_SRV_KEY, OPT_SRV_KEYPASS,
     OPT_SRV_TRUSTED, OPT_SRV_UNTRUSTED,
-    OPT_REF_CERT, OPT_RSP_CERT, OPT_RSP_EXTRACERTS, OPT_RSP_CAPUBS,
-    OPT_RSP_NEWWITHNEW, OPT_RSP_NEWWITHOLD, OPT_RSP_OLDWITHNEW,
-    OPT_POLL_COUNT, OPT_CHECK_AFTER,
+    OPT_REF_CERT, OPT_RSP_CERT, OPT_RSP_CRL, OPT_RSP_EXTRACERTS,
+    OPT_RSP_CAPUBS, OPT_RSP_NEWWITHNEW, OPT_RSP_NEWWITHOLD,
+    OPT_RSP_OLDWITHNEW, OPT_POLL_COUNT, OPT_CHECK_AFTER,
     OPT_GRANT_IMPLICITCONF,
     OPT_PKISTATUS, OPT_FAILURE,
     OPT_FAILUREBITS, OPT_STATUSSTRING,
@@ -551,6 +552,8 @@ const OPTIONS cmp_options[] = {
      "Certificate to be expected for rr and any oldCertID in kur messages"},
     {"rsp_cert", OPT_RSP_CERT, 's',
      "Certificate to be returned as mock enrollment result"},
+    {"rsp_crl", OPT_RSP_CRL, 's',
+     "CRL to be returned in genp of type crls"},
     {"rsp_extracerts", OPT_RSP_EXTRACERTS, 's',
      "Extra certificates to be included in mock certification responses"},
     {"rsp_capubs", OPT_RSP_CAPUBS, 's',
@@ -660,8 +663,9 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_srv_ref}, {&opt_srv_secret},
     {&opt_srv_cert}, {&opt_srv_key}, {&opt_srv_keypass},
     {&opt_srv_trusted}, {&opt_srv_untrusted},
-    {&opt_ref_cert}, {&opt_rsp_cert}, {&opt_rsp_extracerts}, {&opt_rsp_capubs},
-    {&opt_rsp_newwithnew}, {&opt_rsp_newwithold}, {&opt_rsp_oldwithnew},
+    {&opt_ref_cert}, {&opt_rsp_cert}, {&opt_rsp_crl}, {&opt_rsp_extracerts},
+    {&opt_rsp_capubs}, {&opt_rsp_newwithnew}, {&opt_rsp_newwithold},
+    {&opt_rsp_oldwithnew},
 
     {(char **)&opt_poll_count}, {(char **)&opt_check_after},
     {(char **)&opt_grant_implicitconf},
@@ -1018,6 +1022,21 @@ static int setup_certs(char *files, const char *desc, void *ctx,
     return ok;
 }
 
+typedef int (*add_X509_CRL_fn_t)(void *ctx, const X509_CRL *crl);
+static int setup_crl(void *ctx, const char *file, const char *desc,
+                     add_X509_CRL_fn_t set1_fn)
+{
+    X509_CRL *crl;
+    int ok;
+
+    if (file == NULL)
+        return 1;
+    if ((crl = load_crl(file, FORMAT_UNDEF, 0, desc)) == NULL)
+        return 0;
+    ok = (*set1_fn)(ctx, crl);
+    X509_CRL_free(crl);
+    return ok;
+}
 /*
  * parse and transform some options, checking their syntax.
  * Returns 1 on success, 0 on error
@@ -1160,6 +1179,9 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
                         (add_X509_fn_t)ossl_cmp_mock_srv_set1_certOut))
             goto err;
     }
+    if (!setup_crl(srv_ctx, opt_rsp_crl, "CRL the mock server returns",
+                   (add_X509_CRL_fn_t)ossl_cmp_mock_srv_set1_crlOut))
+        goto err;
     if (!setup_certs(opt_rsp_extracerts,
                      "CMP extra certificates for mock server", srv_ctx,
                      (add_X509_stack_fn_t)ossl_cmp_mock_srv_set1_chainOut))
@@ -2972,6 +2994,9 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_RSP_CERT:
             opt_rsp_cert = opt_str();
+            break;
+        case OPT_RSP_CRL:
+            opt_rsp_crl = opt_str();
             break;
         case OPT_RSP_EXTRACERTS:
             opt_rsp_extracerts = opt_str();

@@ -574,17 +574,6 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crl)
     return NULL;
 }
 
-OSSL_CMP_ITAV *OSSL_CMP_ITAV_new0_crls(STACK_OF(X509_CRL) *crls)
-{
-    OSSL_CMP_ITAV *itav;
-
-    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
-        return NULL;
-    itav->infoType = OBJ_nid2obj(NID_id_it_crls);
-    itav->infoValue.crls = crls;
-    return itav;
-}
-
 int OSSL_CMP_ITAV_get0_crls(const OSSL_CMP_ITAV *itav, STACK_OF(X509_CRL) **out)
 {
     if (itav == NULL || out == NULL) {

@@ -347,8 +347,6 @@ OSSL_CMP_ITAV
 int OSSL_CMP_ITAV_get0_crlStatusList(const OSSL_CMP_ITAV *itav,
                                      STACK_OF(OSSL_CMP_CRLSTATUS) **out);
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crls);
-OSSL_CMP_ITAV
-*OSSL_CMP_ITAV_new0_crls(STACK_OF(X509_CRL) *crls);
 int OSSL_CMP_ITAV_get0_crls(const OSSL_CMP_ITAV *it, STACK_OF(X509_CRL) **out);
 
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);

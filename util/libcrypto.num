@@ -5554,6 +5554,6 @@ OSSL_CMP_CRLSTATUS_get0                 ?	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CRLSTATUS_free                 ?	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_new0_crlStatusList        ?	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_crlStatusList        ?	3_3_0	EXIST::FUNCTION:CMP
-OSSL_CMP_ITAV_new0_crls                 ?	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_crls                 ?	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_get1_crlUpdate                 ?	3_3_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_new_crls                  ?	3_3_0	EXIST::FUNCTION:CMP

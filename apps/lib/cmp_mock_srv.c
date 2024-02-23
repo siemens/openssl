@@ -20,6 +20,7 @@ typedef struct
 {
     X509 *refCert;             /* cert to expect for oldCertID in kur/rr msg */
     X509 *certOut;             /* certificate to be returned in cp/ip/kup msg */
+    X509_CRL *crlOut;          /* CRL to be returned in genp for crls */
     STACK_OF(X509) *chainOut;  /* chain of certOut to add to extraCerts field */
     STACK_OF(X509) *caPubsOut; /* used in caPubs of ip and in caCerts of genp */
     X509 *newWithNew;          /* to return in newWithNew of rootKeyUpdate */
@@ -86,6 +87,22 @@ static mock_srv_ctx *mock_srv_ctx_new(void)
 
 DEFINE_OSSL_SET1_CERT(refCert)
 DEFINE_OSSL_SET1_CERT(certOut)
+
+int ossl_cmp_mock_srv_set1_crlOut(OSSL_CMP_SRV_CTX *srv_ctx,
+                                  X509_CRL *crl)
+{
+    mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if (crl != NULL && !X509_CRL_up_ref(crl))
+        return 0;
+    X509_CRL_free(ctx->crlOut);
+    ctx->crlOut = crl;
+    return 1;
+}
 
 int ossl_cmp_mock_srv_set1_chainOut(OSSL_CMP_SRV_CTX *srv_ctx,
                                     STACK_OF(X509) *chain)
@@ -391,6 +408,27 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     return OSSL_CMP_PKISI_dup(ctx->statusOut);
 }
 
+static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
+                            const X509_CRL *crl)
+{
+    OSSL_CMP_CRLSTATUS *crlstatus;
+    DIST_POINT_NAME *distpoint;
+    GENERAL_NAMES *gen;
+    ASN1_TIME *thisupd;
+
+    if (crlStatusList == NULL || crl == NULL)
+        return 0;
+    if (sk_OSSL_CMP_CRLSTATUS_num(crlStatusList) != 1)
+        return 0;
+    crlstatus = sk_OSSL_CMP_CRLSTATUS_value(crlStatusList, 0);
+    if (!OSSL_CMP_CRLSTATUS_get0(crlstatus, &distpoint, &gen, &thisupd))
+        return 0;
+    if (ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) >= 0)
+        return 0;
+
+    return 1;
+}
+
 static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
                                         const OSSL_CMP_ITAV *req)
 {
@@ -404,6 +442,17 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
         rsp = OSSL_CMP_ITAV_new_rootCaKeyUpdate(ctx->newWithNew,
                                                 ctx->newWithOld,
                                                 ctx->oldWithNew);
+        break;
+    case NID_id_it_crlStatusList:
+        {
+            STACK_OF(OSSL_CMP_CRLSTATUS) *crlstatuslist;
+
+            rsp = OSSL_CMP_ITAV_get0_crlStatusList(req, &crlstatuslist)
+                ? check_client_crl(crlstatuslist, ctx->crlOut)
+                ? OSSL_CMP_ITAV_new_crls(ctx->crlOut)
+                : OSSL_CMP_ITAV_new_crls(NULL)
+                : OSSL_CMP_ITAV_new_crls(NULL);
+        }
         break;
     default:
         rsp = OSSL_CMP_ITAV_dup(req);
