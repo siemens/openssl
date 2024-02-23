@@ -15,7 +15,8 @@ OSSL_CMP_try_certreq,
 OSSL_CMP_exec_RR_ses,
 OSSL_CMP_exec_GENM_ses,
 OSSL_CMP_get1_caCerts,
-OSSL_CMP_get1_rootCaKeyUpdate
+OSSL_CMP_get1_rootCaKeyUpdate,
+OSSL_CMP_get1_crlUpdate
 - functions implementing CMP client transactions
 
 =head1 SYNOPSIS
@@ -41,6 +42,8 @@ OSSL_CMP_get1_rootCaKeyUpdate
  int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
                                    const X509 *oldWithOld, X509 **newWithNew,
                                    X509 **newWithOld, X509 **oldWithNew);
+ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509_CRL *last_crl,
+                             X509_CRL **crl);
 
 =head1 DESCRIPTION
 
@@ -157,6 +160,13 @@ The trust placed in it cannot be stronger than the trust placed in
 the I<oldwithold> certificate if present, otherwise it cannot be stronger than
 the weakest trust in any of the certificates in the trust store of I<ctx>.
 
+OSSL_CMP_get1_crlUpdate() uses a genm request message with infoType crlStatusList
+to obtain CRL from the CMP server referenced by I<ctx> in a genp response message
+with infoType crls. It uses oldcert referenced by I<ctx> and I<last_crl> to create
+request. On success it assigns to I<*crl> the CRL received.
+NULL means that no CRL was provided by the server.
+The CRL obtained this way must be freed by the caller.
+
 =head1 NOTES
 
 CMP is defined in RFC 4210 (and CRMF in RFC 4211).
@@ -193,7 +203,7 @@ and the output parameter I<checkAfter> has been used to
 assign the received value unless I<checkAfter> is NULL.
 
 OSSL_CMP_exec_RR_ses(), OSSL_CMP_get1_caCerts(),
-and OSSL_CMP_get1_rootCaKeyUpdate()
+OSSL_CMP_get1_rootCaKeyUpdate() and OSSL_CMP_get1_crlUpdate()
 return 1 on success, 0 on error.
 
 OSSL_CMP_exec_GENM_ses() returns NULL on error,
@@ -220,8 +230,8 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 OSSL_CMP_get1_caCerts() and OSSL_CMP_get1_rootCaKeyUpdate()
 were added in OpenSSL 3.2.
 
-Support for delayed delivery of all types of response messages
-was added in OpenSSL 3.3.
+OSSL_CMP_get1_crlUpdate() and support for delayed delivery 
+of all types of response messages was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

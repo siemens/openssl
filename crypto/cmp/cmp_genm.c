@@ -345,7 +345,8 @@ int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
     return res;
 }
 
-int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509_CRL *last_crl,
+int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
+                            const X509_CRL *last_crl,
                             X509_CRL **crl)
 {
     OSSL_CMP_CRLSTATUS *status = NULL;
@@ -355,20 +356,17 @@ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509_CRL *last_crl,
     int res = 0;
 
     if (crl == NULL) {
-        ERR_raise_data(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT,
-                       "No crl output parameter given");
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     *crl = NULL;
 
-    if ((status = OSSL_CMP_CRLSTATUS_create(last_crl, ctx->oldCert, 1)) == NULL) {
-        ERR_raise_data(ERR_LIB_CMP, CMP_R_GENERATE_CRLSTATUS,
-                       "Cannot set up CRLStatus structure");
+    if ((status = OSSL_CMP_CRLSTATUS_create(last_crl, crlcert, 1)) == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_GENERATE_CRLSTATUS);
         goto end;
     }
     if ((list = sk_OSSL_CMP_CRLSTATUS_new_reserve(NULL, 1)) == NULL) {
-        ERR_raise_data(ERR_LIB_CMP, CMP_R_GENERATE_CRLSTATUS,
-                       "Cannot set up CRLStatus list");
+        ERR_raise(ERR_LIB_CMP, CMP_R_GENERATE_CRLSTATUS);
         goto end;
     }
     (void)sk_OSSL_CMP_CRLSTATUS_push(list, status); /* cannot fail */
@@ -386,8 +384,10 @@ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509_CRL *last_crl,
     if (!OSSL_CMP_ITAV_get0_crls(itav, &crls))
         goto end;
 
-    if (crls == NULL) /* no CRL update available */
+    if (crls == NULL) { /* no CRL update available */
+        res = 1;
         goto end;
+    }
     if (sk_X509_CRL_num(crls) != 1) {
         ERR_raise_data(ERR_LIB_CMP, CMP_R_INVALID_GENP,
                        "Unexpected number of CRLs in genp: %d",

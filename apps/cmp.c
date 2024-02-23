@@ -94,6 +94,7 @@ static char *opt_oldwithold = NULL;
 static char *opt_newwithnew = NULL;
 static char *opt_newwithold = NULL;
 static char *opt_oldwithnew = NULL;
+static char *opt_crlcert = NULL;
 static char *opt_oldcrl = NULL;
 static char *opt_crlout = NULL;
 
@@ -240,7 +241,7 @@ typedef enum OPTION_choice {
     OPT_IGNORE_KEYUSAGE, OPT_UNPROTECTED_ERRORS, OPT_NO_CACHE_EXTRACERTS,
     OPT_SRVCERTOUT, OPT_EXTRACERTSOUT, OPT_CACERTSOUT,
     OPT_OLDWITHOLD, OPT_NEWWITHNEW, OPT_NEWWITHOLD, OPT_OLDWITHNEW,
-    OPT_OLDCRL, OPT_CRLOUT,
+    OPT_CRLCERT, OPT_OLDCRL, OPT_CRLOUT,
 
     OPT_REF, OPT_SECRET, OPT_CERT, OPT_OWN_TRUSTED, OPT_KEY, OPT_KEYPASS,
     OPT_DIGEST, OPT_MAC, OPT_EXTRACERTS,
@@ -271,9 +272,9 @@ typedef enum OPTION_choice {
     OPT_SRV_REF, OPT_SRV_SECRET,
     OPT_SRV_CERT, OPT_SRV_KEY, OPT_SRV_KEYPASS,
     OPT_SRV_TRUSTED, OPT_SRV_UNTRUSTED,
-    OPT_REF_CERT, OPT_RSP_CERT, OPT_RSP_CRL, OPT_RSP_EXTRACERTS,
-    OPT_RSP_CAPUBS, OPT_RSP_NEWWITHNEW, OPT_RSP_NEWWITHOLD,
-    OPT_RSP_OLDWITHNEW, OPT_POLL_COUNT, OPT_CHECK_AFTER,
+    OPT_REF_CERT, OPT_RSP_CERT, OPT_RSP_CRL, OPT_RSP_EXTRACERTS, OPT_RSP_CAPUBS,
+    OPT_RSP_NEWWITHNEW, OPT_RSP_NEWWITHOLD, OPT_RSP_OLDWITHNEW,
+    OPT_POLL_COUNT, OPT_CHECK_AFTER,
     OPT_GRANT_IMPLICITCONF,
     OPT_PKISTATUS, OPT_FAILURE,
     OPT_FAILUREBITS, OPT_STATUSSTRING,
@@ -432,6 +433,8 @@ const OPTIONS cmp_options[] = {
       "File to save NewWithOld cert received in genp of type rootCaKeyUpdate"},
     { "oldwithnew", OPT_OLDWITHNEW, 's',
       "File to save OldWithNew cert received in genp of type rootCaKeyUpdate"},
+    { "crlcert", OPT_CRLCERT, 's',
+      "certificate to request CRL update for in genm of type crlStatusList"},
     { "oldcrl", OPT_OLDCRL, 's',
       "CRL to request update for in genm of type crlStatusList"},
     { "crlout", OPT_CRLOUT, 's',
@@ -633,7 +636,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {(char **)&opt_no_cache_extracerts},
     {&opt_srvcertout}, {&opt_extracertsout}, {&opt_cacertsout},
     {&opt_oldwithold}, {&opt_newwithnew}, {&opt_newwithold}, {&opt_oldwithnew},
-    {&opt_oldcrl}, {&opt_crlout},
+    {&opt_crlcert}, {&opt_oldcrl}, {&opt_crlout},
 
     {&opt_ref}, {&opt_secret},
     {&opt_cert}, {&opt_own_trusted}, {&opt_key}, {&opt_keypass},
@@ -663,9 +666,9 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_srv_ref}, {&opt_srv_secret},
     {&opt_srv_cert}, {&opt_srv_key}, {&opt_srv_keypass},
     {&opt_srv_trusted}, {&opt_srv_untrusted},
-    {&opt_ref_cert}, {&opt_rsp_cert}, {&opt_rsp_crl}, {&opt_rsp_extracerts},
-    {&opt_rsp_capubs}, {&opt_rsp_newwithnew}, {&opt_rsp_newwithold},
-    {&opt_rsp_oldwithnew},
+    {&opt_ref_cert}, {&opt_rsp_cert}, {&opt_rsp_crl},
+    {&opt_rsp_extracerts}, {&opt_rsp_capubs},
+    {&opt_rsp_newwithnew}, {&opt_rsp_newwithold}, {&opt_rsp_oldwithnew},
 
     {(char **)&opt_poll_count}, {(char **)&opt_check_after},
     {(char **)&opt_grant_implicitconf},
@@ -1022,9 +1025,7 @@ static int setup_certs(char *files, const char *desc, void *ctx,
     return ok;
 }
 
-typedef int (*add_X509_CRL_fn_t)(void *ctx, const X509_CRL *crl);
-static int setup_crl(void *ctx, const char *file, const char *desc,
-                     add_X509_CRL_fn_t set1_fn)
+static int setup_mock_crlout(void *ctx, const char *file, const char *desc)
 {
     X509_CRL *crl;
     int ok;
@@ -1033,7 +1034,7 @@ static int setup_crl(void *ctx, const char *file, const char *desc,
         return 1;
     if ((crl = load_crl(file, FORMAT_UNDEF, 0, desc)) == NULL)
         return 0;
-    ok = (*set1_fn)(ctx, crl);
+    ok = ossl_cmp_mock_srv_set1_crlOut(ctx, crl);
     X509_CRL_free(crl);
     return ok;
 }
@@ -1179,8 +1180,8 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
                         (add_X509_fn_t)ossl_cmp_mock_srv_set1_certOut))
             goto err;
     }
-    if (!setup_crl(srv_ctx, opt_rsp_crl, "CRL the mock server returns",
-                   (add_X509_CRL_fn_t)ossl_cmp_mock_srv_set1_crlOut))
+    if (!setup_mock_crlout(srv_ctx, opt_rsp_crl,
+                           "CRL to be returned by the mock server"))
         goto err;
     if (!setup_certs(opt_rsp_extracerts,
                      "CMP extra certificates for mock server", srv_ctx,
@@ -1910,8 +1911,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_POPO_METHOD, opt_popo);
 
     if (opt_oldcert != NULL) {
-        if (opt_cmd == CMP_GENM && opt_infotype != NID_id_it_crlStatusList) {
-            CMP_warn("-oldcert option is ignored for 'genm' command except with -infotype crlStatusList");
+        if (opt_cmd == CMP_GENM) {
+            CMP_warn("-oldcert option is ignored for 'genm' command");
         } else {
             if (!setup_cert(ctx, opt_oldcert, opt_keypass,
                             /* needed if opt_oldcert is encrypted PKCS12 file */
@@ -2280,14 +2281,14 @@ static int write_cert(BIO *bio, X509 *cert)
 
 static int write_crl(BIO *bio, X509_CRL *crl)
 {
-    if ((opt_certform == FORMAT_PEM && PEM_write_bio_X509_CRL(bio, crl))
-            || (opt_certform == FORMAT_ASN1 && i2d_X509_CRL_bio(bio, crl)))
-        return 1;
-    if (opt_certform != FORMAT_PEM && opt_certform != FORMAT_ASN1)
-        BIO_printf(bio_err,
-                   "error: unsupported type '%s' for writing CRLs\n",
+    if (opt_certform != FORMAT_PEM && opt_certform != FORMAT_ASN1) {
+        BIO_printf(bio_err, "error: unsupported type '%s' for writing CRLs\n",
                    opt_certform_s);
-    return 0;
+        return 0;
+    }
+
+    return opt_certform == FORMAT_PEM ? PEM_write_bio_X509_CRL(bio, crl)
+                                      : i2d_X509_CRL_bio(bio, crl);
 }
 
 /*
@@ -2350,8 +2351,8 @@ static int save_free_crl(X509_CRL *crl,
 
     if ((bio = BIO_new(BIO_s_file())) == NULL
             || !BIO_write_filename(bio, (char *)file)) {
-        CMP_err3("could not open file '%s' for %s %s CRL",
-                 file, crl == NULL ? "deleting" : "writing", desc);
+        CMP_err2("could not open file '%s' for writing %s CRL",
+                 file, desc);
         goto end;
     }
 
@@ -2406,7 +2407,7 @@ static int save_crl_or_delete(X509_CRL *crl, const char *file, const char *desc)
     if (crl == NULL) {
         char desc_crl[80];
 
-        BIO_snprintf(desc_crl, sizeof(desc_crl), "%s CRL", desc);
+        BIO_snprintf(desc_crl, sizeof(desc_crl), "%s", desc);
         return delete_file(file, desc_crl);
     } else {
         return save_free_crl(crl, file, desc);
@@ -2811,6 +2812,9 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_OLDWITHNEW:
             opt_oldwithnew = opt_str();
+            break;
+        case OPT_CRLCERT:
+            opt_crlcert = opt_str();
             break;
         case OPT_OLDCRL:
             opt_oldcrl = opt_str();
@@ -3236,10 +3240,12 @@ static int do_genm(OSSL_CMP_CTX *ctx)
         return res;
     } else if (opt_infotype == NID_id_it_crlStatusList) {
         X509_CRL *oldcrl = NULL, *crl = NULL;
+        X509 *crlcert = NULL;
         int res = 0;
+        const char *desc = "CRL from genp of type 'crls'";
 
-        if (opt_oldcrl == NULL && opt_oldcert == NULL) {
-            CMP_err("Missing -oldcrl and no -oldcert given for -infotype crlStatusList");
+        if (opt_oldcrl == NULL && opt_crlcert == NULL) {
+            CMP_err("Missing -oldcrl and no -crlcert given for -infotype crlStatusList");
             return 0;
         }
         if (opt_crlout == NULL) {
@@ -3247,28 +3253,43 @@ static int do_genm(OSSL_CMP_CTX *ctx)
             return 0;
         }
 
+        if (opt_crlcert == NULL) {
+            CMP_warn("No -crlcert given, will use data from -oldcrl");
+        } else {
+            crlcert = load_cert_pwd(opt_crlcert, opt_otherpass,
+                                    "Cert for genm with -infotype crlStatusList");
+            if (crlcert == NULL)
+                goto end_crlupd;
+        }
+
         if (opt_oldcrl == NULL) {
-            CMP_warn("No -oldcrl given, will use data from -oldcert");
+            CMP_warn("No -oldcrl given, will use data from -crlcert");
         } else {
             oldcrl = load_crl(opt_oldcrl, FORMAT_UNDEF, 0,
                               "CRL for genm with -infotype crlStatusList");
             if (oldcrl == NULL)
                 goto end_crlupd;
         }
-        if (!OSSL_CMP_get1_crlUpdate(ctx, oldcrl, &crl))
+
+        if (opt_oldcrl != NULL && opt_crlcert != NULL) {
+            if (X509_NAME_cmp(X509_CRL_get_issuer(oldcrl),
+                              X509_get_issuer_name(crlcert))
+                != 0)
+                CMP_warn("-oldcrl and -crlcert have different issuer");
+        }
+
+        if (!OSSL_CMP_get1_crlUpdate(ctx, crlcert, oldcrl, &crl))
             goto end_crlupd;
 
-        const char *desc = "CRL from genp of type 'crls'";
-        if (crl == NULL) {
+        if (crl == NULL)
             CMP_info("no CRL update available");
-            if (!delete_file(opt_crlout, desc))
-                goto end_crlupd;
-        } else if (!save_crl_or_delete(crl, opt_crlout, desc)) {
+        if (!save_crl_or_delete(crl, opt_crlout, desc))
             goto end_crlupd;
-        }
+
         res = 1;
 
     end_crlupd:
+        X509_free(crlcert);
         X509_CRL_free(oldcrl);
         X509_CRL_free(crl);
         return res;

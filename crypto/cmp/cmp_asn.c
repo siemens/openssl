@@ -157,8 +157,6 @@ ASN1_SEQUENCE(OSSL_CMP_CRLSTATUS) = {
 } ASN1_SEQUENCE_END(OSSL_CMP_CRLSTATUS)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_CRLSTATUS)
 
-IMPLEMENT_ASN1_DUP_FUNCTION(DIST_POINT_NAME)
-
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value)
 {
     OSSL_CMP_ITAV *itav;
@@ -429,7 +427,7 @@ static GENERAL_NAMES *gennames_new(const X509_NAME *nm)
 
     if ((names = sk_GENERAL_NAME_new_reserve(NULL, 1)) == NULL)
         return NULL;
-    if (!GENERAL_NAME_create(&name, nm)) {
+    if (!GENERAL_NAME_set1_X509_NAME(&name, nm)) {
         sk_GENERAL_NAME_free(names);
         return NULL;
     }
@@ -461,11 +459,11 @@ OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_create(const X509_CRL *crl,
     int i, NID_akid = NID_authority_key_identifier;
 
     /*
-     * Note: X509{,_CRL}_get_ext_d2i(..., NID, &i, ...) return the 1st extension
-     * with the given NID that is available, if any. There might be more such.
+     * Note: X509{,_CRL}_get_ext_d2i(..., NID, ..., NULL) return the 1st extension
+     * with the given NID that is available, if any. If there are more, this is an error.
      */
     if (cert != NULL) {
-        crldps = X509_get_ext_d2i(cert, NID_crl_distribution_points, &i, NULL);
+        crldps = X509_get_ext_d2i(cert, NID_crl_distribution_points, NULL, NULL);
         /* if available, take the first suitable element */
         for (i = 0; i < sk_DIST_POINT_num(crldps); i++) {
             DIST_POINT *dp = sk_DIST_POINT_value(crldps, i);
@@ -486,21 +484,21 @@ OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_create(const X509_CRL *crl,
             return NULL;
         }
         idp = X509_CRL_get_ext_d2i(crl,
-                                   NID_issuing_distribution_point, &i, NULL);
+                                   NID_issuing_distribution_point, NULL, NULL);
         if (idp != NULL && idp->distpoint != NULL)
             dpn = idp->distpoint;
     }
 
     if (dpn == NULL && CRLissuer == NULL) {
         if (cert != NULL) {
-            akid = X509_get_ext_d2i(cert, NID_akid, &i, NULL);
+            akid = X509_get_ext_d2i(cert, NID_akid, NULL, NULL);
             if (akid != NULL && gennames_allowed(akid->issuer, only_DN))
                 CRLissuer = akid->issuer;
             else
                 CRLissuer = issuers = gennames_new(X509_get_issuer_name(cert));
         }
         if (CRLissuer == NULL && crl != NULL) {
-            akid = X509_CRL_get_ext_d2i(crl, NID_akid, &i, NULL);
+            akid = X509_CRL_get_ext_d2i(crl, NID_akid, NULL, NULL);
             if (akid != NULL && gennames_allowed(akid->issuer, only_DN))
                 CRLissuer = akid->issuer;
             else
@@ -558,11 +556,12 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crl)
     if ((itav = OSSL_CMP_ITAV_new()) == NULL)
         return NULL;
 
-    if (crl != NULL
-        && ((crls = sk_X509_CRL_new_reserve(NULL, 1)) == NULL
-            || (crl_copy = X509_CRL_dup(crl)) == NULL
-            || !sk_X509_CRL_push(crls, crl_copy)))
-        goto err;
+    if (crl != NULL) {
+        if ((crls = sk_X509_CRL_new_reserve(NULL, 1)) == NULL
+                || (crl_copy = X509_CRL_dup(crl)) == NULL)
+            goto err;
+        (void)sk_X509_CRL_push(crls, crl_copy); /* cannot fail */
+    }
 
     itav->infoType = OBJ_nid2obj(NID_id_it_crls);
     itav->infoValue.crls = crls;
@@ -588,7 +587,7 @@ int OSSL_CMP_ITAV_get0_crls(const OSSL_CMP_ITAV *itav, STACK_OF(X509_CRL) **out)
     return 1;
 }
 
-/* get ASN.1 encoded integer, return -1 on error */
+/* get ASN.1 encoded integer, return -2 on error; -1 is valid for certReqId */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
 {
     int64_t res;
