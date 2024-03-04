@@ -182,6 +182,8 @@
 # define SSL_GOST12_512          0x00000200U
 # define SSL_MAGMAOMAC           0x00000400U
 # define SSL_KUZNYECHIKOMAC      0x00000800U
+# define SSL_HMACSHA256          0x00001000U
+# define SSL_HMACSHA384          0x00002000U
 
 /*
  * When adding new digest in the ssl_ciph.c and increment SSL_MD_NUM_IDX make
@@ -202,7 +204,8 @@
 # define SSL_MD_SHA512_IDX 11
 # define SSL_MD_MAGMAOMAC_IDX 12
 # define SSL_MD_KUZNYECHIKOMAC_IDX 13
-# define SSL_MAX_DIGEST 14
+# define SSL_HMACSHA256_IDX 14
+# define SSL_MAX_DIGEST 15
 
 #define SSL_MD_NUM_IDX  SSL_MAX_DIGEST
 
@@ -2505,6 +2508,9 @@ __owur int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
 void ssl_update_cache(SSL_CONNECTION *s, int mode);
 __owur int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                                      const EVP_CIPHER **enc);
+__owur int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                                     const EVP_MD **md,
+                                     int *mac_pkey_type, size_t *mac_secret_size);
 __owur int ssl_cipher_get_evp(SSL_CTX *ctxc, const SSL_SESSION *s,
                               const EVP_CIPHER **enc, const EVP_MD **md,
                               int *mac_pkey_type, size_t *mac_secret_size,
