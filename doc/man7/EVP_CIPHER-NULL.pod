@@ -2,51 +2,67 @@
 
 =head1 NAME
 
-EVP_CIPHER-NULL - NULL encryption EVP_CIPHER implementation
+EVP_CIPHER-NULL - The NULL EVP_CIPHER implementation
 
 =head1 DESCRIPTION
 
-This module provides support for NULL encryption using the B<EVP_CIPHER> API.
-It simply copies the data without any encryption.
+Support for a NULL symmetric encryption using the B<EVP_CIPHER> API.
+This is used when the TLS cipher suite is TLS_NULL_WITH_NULL_NULL.
+This does no encryption (just copies the data) and has a mac size of zero.
 
-=head2 Algorithm Names
+=head2 Algorithm Name
 
-The default provider offers the following algorithms:
+The following algorithm is available in the default provider:
 
 =over 4
 
 =item "NULL"
 
-=item "NULL-HMAC-SHA256" and "NULL-HMAC-SHA384"
-
 =back
 
 =head2 Parameters
 
-The parameters supported by this implementation are detailed in
-L<EVP_EncryptInit(3)/PARAMETERS>.
+This implementation supports the following parameters:
 
-=head1 NOTES
+=head3 Gettable EVP_CIPHER parameters
 
-"NULL" algorithm is used when the TLS cipher suite is TLS_NULL_WITH_NULL_NULL.
-This does no encryption (just copies the data) and has a mac size of zero.
-This conforms to RFC 5246 section-6.2.3.1.
+See L<EVP_EncryptInit(3)/Gettable EVP_CIPHER parameters>
 
-"NULL-HMAC-SHA256" and "NULL-HMAC-SHA384" are used when the TLS cipher suite is
-TLS_SHA256_SHA256 and TLS_SHA384_SHA384 respectively.
-This conforms to RFC 9150.
+=head3 Gettable EVP_CIPHER_CTX parameters
+
+=over 4
+
+=item "keylen" (B<OSSL_CIPHER_PARAM_KEYLEN>) <unsigned integer>
+
+=item "ivlen" (B<OSSL_CIPHER_PARAM_IVLEN> and <B<OSSL_CIPHER_PARAM_AEAD_IVLEN>) <unsigned integer>
+
+=item "tls-mac" (B<OSSL_CIPHER_PARAM_TLS_MAC>) <octet ptr>
+
+=back
+
+See L<EVP_EncryptInit(3)/PARAMETERS> for further information.
+
+=head3 Settable EVP_CIPHER_CTX parameters
+
+=over 4
+
+=item "tls-mac-size" (B<OSSL_CIPHER_PARAM_TLS_MAC_SIZE>) <unsigned integer>
+
+=back
+
+See L<EVP_EncryptInit(3)/PARAMETERS> for further information.
+
+=head1 CONFORMING TO
+
+RFC 5246 section-6.2.3.1
 
 =head1 SEE ALSO
 
 L<provider-cipher(7)>, L<OSSL_PROVIDER-default(7)>
 
-=head1 HISTORY
-
-The NULL-HMAC-SHA256 and NULL-HMAC-SHA384 ciphers were added in OpenSSL version 3.3.
-
 =head1 COPYRIGHT
 
-Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

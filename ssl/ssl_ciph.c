@@ -55,10 +55,6 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_ARIA256GCM, NID_aria_256_gcm}, /* SSL_ENC_ARIA256GCM_IDX 21 */
     {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX */
     {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX */
-    /* SSL_ENC_eNULLHMACSHA256_IDX 24 */
-    {SSL_eNULLHMACSHA256, NID_null_hmac_sha256},
-    /* SSL_ENC_eNULLHMACSHA384_IDX 25 */
-    {SSL_eNULLHMACSHA384, NID_null_hmac_sha384},
 };
 
 #define SSL_COMP_NULL_IDX       0
@@ -85,9 +81,8 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     {0, NID_md5_sha1},          /* SSL_MD_MD5_SHA1_IDX 9 */
     {0, NID_sha224},            /* SSL_MD_SHA224_IDX 10 */
     {0, NID_sha512},            /* SSL_MD_SHA512_IDX 11 */
-    {SSL_MAGMAOMAC, NID_magma_mac}, /* sSL_MD_MAGMAOMAC_IDX 12 */
-    {SSL_KUZNYECHIKOMAC, NID_kuznyechik_mac}, /* SSL_MD_KUZNYECHIKOMAC_IDX 13 */
-    {SSL_HMACSHA256, NID_sha256}  /* SSL_HMACSHA256_IDX 14 */
+    {SSL_MAGMAOMAC, NID_magma_mac}, /* sSL_MD_MAGMAOMAC_IDX */
+    {SSL_KUZNYECHIKOMAC, NID_kuznyechik_mac} /* SSL_MD_KUZNYECHIKOMAC_IDX */
 };
 
 /* *INDENT-OFF* */

@@ -91,7 +91,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
                         size_t macsize)
 {
     EVP_CIPHER_CTX *ctx;
-    unsigned char iv[EVP_MAX_IV_LENGTH], recheader[SSL3_RT_HEADER_LENGTH];
+    unsigned char recheader[SSL3_RT_HEADER_LENGTH];
     unsigned char tag[EVP_MAX_MD_SIZE];
     size_t ivlen, offset, loop, hdrlen, taglen;
     unsigned char *staticiv;

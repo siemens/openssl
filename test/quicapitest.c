@@ -593,7 +593,7 @@ static int test_quic_forbidden_apis_ctx(void)
     "TLS_AES_256_CCM_SHA384:"           \
     "TLS_AES_128_CCM_8_SHA256:"         \
     "TLS_SHA256_SHA256:"                \
-    "TLS_SHA384_SHA384"                 \
+    "TLS_SHA384_SHA384"
 
     /* Set TLSv1.3 ciphersuite list for the SSL_CTX. */
     if (!TEST_true(SSL_CTX_set_ciphersuites(ctx,

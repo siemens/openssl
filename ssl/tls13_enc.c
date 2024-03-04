@@ -408,18 +408,6 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
 
             if (mode == EVP_CIPH_GCM_MODE) {
                 *taglen = EVP_GCM_TLS_TAG_LEN;
-            } else if (EVP_CIPHER_is_a(ciph, SN_null_hmac_sha256)) {
-                /*
-                * SN_null_hmac_sha256 must be consistent
-                * with PROV_NAMES_NULL_HMAC_SHA256
-                */
-                *taglen = EVP_HMACSHA256_TLS_TAG_LEN;
-            } else if (EVP_CIPHER_is_a(ciph, SN_null_hmac_sha384)) {
-                /*
-                * SN_null_hmac_sha384 must be consistent
-                * with PROV_NAMES_NULL_HMAC_SHA384
-                */
-                *taglen = EVP_HMACSHA384_TLS_TAG_LEN;
             } else {
                 /* CHACHA20P-POLY1305 */
                 *taglen = EVP_CHACHAPOLY_TLS_TAG_LEN;
@@ -483,7 +471,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     int ret = 0;
     const EVP_MD *md = NULL, *mac_md = NULL;
     const EVP_CIPHER *cipher = NULL;
-    const EVP_MAC *mac = NULL;
     int mac_pkey_type = NID_undef;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     size_t keylen, ivlen, taglen, mac_secret_size;

@@ -152,8 +152,6 @@
 # define SSL_ARIA256GCM          0x00200000U
 # define SSL_MAGMA               0x00400000U
 # define SSL_KUZNYECHIK          0x00800000U
-# define SSL_eNULLHMACSHA256     0x01000000U
-# define SSL_eNULLHMACSHA384     0x02000000U
 
 # define SSL_AESGCM              (SSL_AES128GCM | SSL_AES256GCM)
 # define SSL_AESCCM              (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
@@ -165,7 +163,6 @@
 # define SSL_CBC                 (SSL_DES | SSL_3DES | SSL_RC2 | SSL_IDEA \
                                   | SSL_AES128 | SSL_AES256 | SSL_CAMELLIA128 \
                                   | SSL_CAMELLIA256 | SSL_SEED)
-# define SSL_eNULLHMAC          (SSL_eNULLHMACSHA256 | SSL_eNULLHMACSHA384)
 
 /* Bits for algorithm_mac (symmetric authentication) */
 
@@ -182,8 +179,6 @@
 # define SSL_GOST12_512          0x00000200U
 # define SSL_MAGMAOMAC           0x00000400U
 # define SSL_KUZNYECHIKOMAC      0x00000800U
-# define SSL_HMACSHA256          0x00001000U
-# define SSL_HMACSHA384          0x00002000U
 
 /*
  * When adding new digest in the ssl_ciph.c and increment SSL_MD_NUM_IDX make
@@ -204,8 +199,7 @@
 # define SSL_MD_SHA512_IDX 11
 # define SSL_MD_MAGMAOMAC_IDX 12
 # define SSL_MD_KUZNYECHIKOMAC_IDX 13
-# define SSL_HMACSHA256_IDX 14
-# define SSL_MAX_DIGEST 15
+# define SSL_MAX_DIGEST 14
 
 #define SSL_MD_NUM_IDX  SSL_MAX_DIGEST
 
@@ -367,9 +361,7 @@
 # define SSL_ENC_ARIA256GCM_IDX  21
 # define SSL_ENC_MAGMA_IDX       22
 # define SSL_ENC_KUZNYECHIK_IDX  23
-# define SSL_ENC_NULL_HMAC_SHA256_IDX  24
-# define SSL_ENC_NULL_HMAC_SHA384_IDX  25
-# define SSL_ENC_NUM_IDX 26
+# define SSL_ENC_NUM_IDX         24
 
 /*-
  * SSL_kRSA <- RSA_ENC

@@ -21,7 +21,7 @@
 # define MAXCHUNK    ((size_t)1 << 30)
 # define MAXBITCHUNK ((size_t)1 << (sizeof(size_t) * 8 - 4))
 
-# define GENERIC_BLOCK_SIZE 48  /* EVP_MAX_AEAD_TAG_LENGTH */
+# define GENERIC_BLOCK_SIZE 16
 # define IV_STATE_UNINITIALISED 0  /* initial state is not initialized */
 # define IV_STATE_BUFFERED      1  /* iv has been copied to the iv buffer */
 # define IV_STATE_COPIED        2  /* iv has been copied from the iv buffer */

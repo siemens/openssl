@@ -31,7 +31,6 @@ my $no_ec2m = disabled("ec2m");
 my $no_sm2 = disabled("sm2");
 my $no_siv = disabled("siv");
 my $no_argon2 = disabled("argon2");
-my $no_tls1_3_integrity_only_ciphers = disabled("tls1_3-integrity-only_ciphers");
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
@@ -132,7 +131,6 @@ push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless $no_dsa;
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
-push @defltfiles, qw(evpciph_null_hmac.txt) unless $no_tls1_3_integrity_only_ciphers;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
 
 plan tests =>
