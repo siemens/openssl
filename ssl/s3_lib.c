@@ -117,16 +117,16 @@ static SSL_CIPHER tls13_ciphers[] = {
     {
         1,
         TLS1_3_RFC_SHA256_SHA256,
-        TLS1_3_RFC_SHA256_SHA256,
-        TLS1_3_CK_SHA256_SHA256,
+        TLS1_3_RFC_SHA256_SHA256,           /* RFC name */
+        TLS1_3_CK_SHA256_SHA256,            /* id */
         SSL_kANY,
         SSL_aANY,
-        SSL_eNULLHMACSHA256,
-        SSL_AEAD,
+        SSL_eNULL,                            /* algorithm_enc */
+        SSL_SHA256,                       /* algorithm_mac */
         TLS1_3_VERSION, TLS1_3_VERSION,
         0, 0,
         SSL_NOT_DEFAULT | SSL_STRONG_NONE,
-        SSL_HANDSHAKE_MAC_SHA256,
+        SSL_HANDSHAKE_MAC_SHA256,           /* algorithm2 */
         0,
         256,
     }, {
