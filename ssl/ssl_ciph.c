@@ -482,7 +482,8 @@ static int load_builtin_compressions(void)
 int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                               const EVP_CIPHER **enc)
 {
-    int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, sslc->algorithm_enc);
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher,
+                                   sslc->algorithm_enc);
 
     if (i == -1) {
         *enc = NULL;
@@ -513,14 +514,13 @@ int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                               int *mac_pkey_type, size_t *mac_secret_size)
 {
     int i = ssl_cipher_info_lookup(ssl_cipher_table_mac, sslc->algorithm_mac);
+
     if (i == -1) {
         *md = NULL;
         if (mac_pkey_type != NULL)
             *mac_pkey_type = NID_undef;
         if (mac_secret_size != NULL)
             *mac_secret_size = 0;
-        if (sslc->algorithm_mac == SSL_AEAD)
-            mac_pkey_type = NULL;
     } else {
         const EVP_MD *digest = ctx->ssl_digest_methods[i];
 
@@ -528,13 +528,12 @@ int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                 || !ssl_evp_md_up_ref(digest)) {
             return 0;
         }
-        *md = digest;
+        *md = ctx->ssl_digest_methods[i];
         if (mac_pkey_type != NULL)
             *mac_pkey_type = ctx->ssl_mac_pkey_id[i];
         if (mac_secret_size != NULL)
             *mac_secret_size = ctx->ssl_mac_secret_size[i];
     }
-
     return 1;
 }
 
@@ -584,9 +583,10 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     }
 
     if ((*enc != NULL)
-        && (*md != NULL 
+        && (*md != NULL
             || (EVP_CIPHER_get_flags(*enc) & EVP_CIPH_FLAG_AEAD_CIPHER))
-        && (!mac_pkey_type || *mac_pkey_type != NID_undef)) {
+        && (c->algorithm_mac == SSL_AEAD
+            ||!mac_pkey_type || *mac_pkey_type != NID_undef)) {
         const EVP_CIPHER *evp = NULL;
 
         if (use_etm

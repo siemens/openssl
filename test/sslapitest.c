@@ -3879,6 +3879,8 @@ static const char *ciphersuites[] = {
     "TLS_AES_128_CCM_SHA256",
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     "TLS_CHACHA20_POLY1305_SHA256",
+#else
+    NULL,
 #endif
 #if !defined(OPENSSL_NO_TLS1_3_INTEGRITY_ONLY_CIPHERS)
     "TLS_SHA256_SHA256",
@@ -3904,6 +3906,9 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
     size_t readbytes, written;
 
     if (is_fips && (cipher == 4 || cipher == 5 || cipher == 6))
+        return 1;
+
+    if (ciphersuites[cipher] == NULL)
         return 1;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),

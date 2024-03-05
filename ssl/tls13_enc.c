@@ -720,8 +720,8 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     if (!ssl_set_new_record_layer(s, s->version,
                                   direction,
                                   level, secret, hashlen, key, keylen, iv,
-                                  ivlen, NULL, 0, cipher, taglen, NID_undef,
-                                  mac_md, NULL, md)) {
+                                  ivlen, NULL, 0, cipher, taglen,
+                                  mac_pkey_type, mac_md, NULL, md)) {
         /* SSLfatal already called */
         goto err;
     }
