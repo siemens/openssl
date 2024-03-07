@@ -373,12 +373,10 @@ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
 
     if ((req = OSSL_CMP_ITAV_new0_crlStatusList(list)) == NULL)
         goto end;
-
     status = NULL;
     list = NULL;
 
-    itav = get_genm_itav(ctx, req, NID_id_it_crls, "crl");
-    if (itav == NULL)
+    if ((itav = get_genm_itav(ctx, req, NID_id_it_crls, "crl")) == NULL)
         goto end;
 
     if (!OSSL_CMP_ITAV_get0_crls(itav, &crls))

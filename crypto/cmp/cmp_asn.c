@@ -322,7 +322,7 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaKeyUpdate(const X509 *newWithNew,
     itav->infoValue.rootCaKeyUpdate = upd;
     return itav;
 
- err:
+    err:
     OSSL_CMP_ROOTCAKEYUPDATE_free(upd);
     return NULL;
 }
@@ -459,8 +459,9 @@ OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_create(const X509_CRL *crl,
     int i, NID_akid = NID_authority_key_identifier;
 
     /*
-     * Note: X509{,_CRL}_get_ext_d2i(..., NID, ..., NULL) return the 1st extension
-     * with the given NID that is available, if any. If there are more, this is an error.
+     * Note:
+     * X509{,_CRL}_get_ext_d2i(..., NID, ..., NULL) return the 1st extension with
+     * given NID that is available, if any. If there are more, this is an error.
      */
     if (cert != NULL) {
         crldps = X509_get_ext_d2i(cert, NID_crl_distribution_points, NULL, NULL);

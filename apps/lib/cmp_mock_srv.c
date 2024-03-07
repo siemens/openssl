@@ -413,8 +413,8 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
                             const X509_CRL *crl)
 {
     OSSL_CMP_CRLSTATUS *crlstatus;
-    DIST_POINT_NAME *distpoint;
-    GENERAL_NAMES *gen;
+    DIST_POINT_NAME *dpn;
+    GENERAL_NAMES *issuer;
     ASN1_TIME *thisupd = NULL;
 
     if (sk_OSSL_CMP_CRLSTATUS_num(crlStatusList) != 1) {
@@ -425,11 +425,11 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
         return 0;
 
     crlstatus = sk_OSSL_CMP_CRLSTATUS_value(crlStatusList, 0);
-    if (!OSSL_CMP_CRLSTATUS_get0(crlstatus, &distpoint, &gen, &thisupd))
+    if (!OSSL_CMP_CRLSTATUS_get0(crlstatus, &dpn, &issuer, &thisupd))
         return -1;
 
-    if (gen != NULL) {
-        GENERAL_NAME *gn = sk_GENERAL_NAME_value(gen, 0);
+    if (issuer != NULL) {
+        GENERAL_NAME *gn = sk_GENERAL_NAME_value(issuer, 0);
 
         if (gn != NULL && gn->type == GEN_DIRNAME) {
             X509_NAME *gen_name = gn->d.dirn;
@@ -438,6 +438,9 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
                 ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_CRL_ISSUER);
                 return -1;
             }
+        } else {  
+            ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);  
+            return -1; /* error according to RFC 9483 section 4.3.4 */  
         }
     }
 

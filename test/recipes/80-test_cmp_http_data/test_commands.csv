@@ -94,6 +94,7 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 0,genm crlStatusList with -crlcert nonexistent, -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -crlcert, idontexist,,,,, -crlout, _RESULT_DIR/test.crlout.pem
 0,genm crlStatusList with wrong issuer, -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -crlcert, server.crt,,,,, -crlout, _RESULT_DIR/test.crlout.pem
 0,genm crlStatusList missing -crlcert & -oldcrl, -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,,,,,,,, -crlout, _RESULT_DIR/test.crlout.pem
+0,genm crlStatusList with wrong cert and correct crl, -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -crlcert, server.crt, -oldcrl, oldcrl.pem,,, -crlout, _RESULT_DIR/test.crlout.pem
 ,,,,,,,,,,,,,,,,,,,,,,
 1,profile, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,profile1,BLANK,,BLANK,
 0,profile wrong value, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,profile2,BLANK,,BLANK,

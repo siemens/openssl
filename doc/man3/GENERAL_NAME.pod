@@ -21,12 +21,10 @@ and populates it based on provided X509_NAME I<src> which can be NULL.
 I<tgt> must not be NULL. If successful, I<*tgt> will be set to point
 to the newly created GENERAL_NAME.
 
-=head1 NOTES
 =head1 RETURN VALUES
 
 GENERAL_NAME_set1_X509_NAME() return 1 on success, 0 on error.
 
-=head1 SEE ALSO
 =head1 HISTORY
 
 GENERAL_NAME_set1_X509_NAME() was added in OpenSSL 3.3.

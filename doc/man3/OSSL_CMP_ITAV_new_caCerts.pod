@@ -93,7 +93,6 @@ OSSL_CMP_CRLSTATUS_create() is a high-level variant of OSSL_CMP_CRLSTATUS_new1()
 It fills the thisUpdate field with a copy of the thisUpdate field of I<crl> if present.
 It fills the CRLSource field with a copy of the first data item found using the I<crl>
 and/or I<cert> parameters as follows.
-The CRLSource field is filled with the first data item found in them as follows.
 Any available distribution point name is preferred over issuer names.
 Data from I<cert>, if present, is preferred over data from I<crl>.
 If no distribution point names are available,

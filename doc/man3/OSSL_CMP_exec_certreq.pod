@@ -42,7 +42,8 @@ OSSL_CMP_get1_crlUpdate
  int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
                                    const X509 *oldWithOld, X509 **newWithNew,
                                    X509 **newWithOld, X509 **oldWithNew);
- int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509_CRL *last_crl,
+ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
+                             const X509_CRL *last_crl,
                              X509_CRL **crl);
 
 =head1 DESCRIPTION
@@ -162,8 +163,9 @@ the weakest trust in any of the certificates in the trust store of I<ctx>.
 
 OSSL_CMP_get1_crlUpdate() uses a genm request message with infoType crlStatusList
 to obtain CRL from the CMP server referenced by I<ctx> in a genp response message
-with infoType crls. It uses oldcert referenced by I<ctx> and I<last_crl> to create
-request. On success it assigns to I<*crl> the CRL received.
+with infoType crls. It uses I<last_crl> and I<crlcert> to create  
+a request with a status field as described for L<OSSL_CMP_CRLSTATUS_create(3)>. 
+On success it assigns to I<*crl> the CRL received.
 NULL means that no CRL was provided by the server.
 The CRL obtained this way must be freed by the caller.
 
@@ -221,7 +223,7 @@ L<OSSL_CMP_CTX_new(3)>, L<OSSL_CMP_CTX_free(3)>,
 L<OSSL_CMP_CTX_set1_subjectName(3)>, L<OSSL_CMP_CTX_set0_newPkey(3)>,
 L<OSSL_CMP_CTX_set1_p10CSR(3)>, L<OSSL_CMP_CTX_set1_oldCert(3)>,
 L<OSSL_CMP_CTX_get0_newCert(3)>, L<OSSL_CMP_CTX_push0_genm_ITAV(3)>,
-L<OSSL_CMP_MSG_http_perform(3)>
+L<OSSL_CMP_MSG_http_perform(3)>, L<OSSL_CMP_CRLSTATUS_create(3)>
 
 =head1 HISTORY
 

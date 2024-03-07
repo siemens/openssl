@@ -94,6 +94,7 @@ Client authentication and protection options:
 Credentials format options:
 
 [B<-certform> I<PEM|DER>]
+[B<-crlform> I<PEM|DER>]
 [B<-keyform> I<PEM|DER|P12|ENGINE>]
 [B<-otherpass> I<arg>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
@@ -251,7 +252,8 @@ ITAV B<infoType>s is printed to stdout.
 
 Set InfoType name to use for requesting specific info in B<genm>,
 e.g., C<signKeyPairTypes>.
-So far, there is specific support for C<caCerts> and C<rootCaCert>.
+So far, there is specific support for C<caCerts>, C<rootCaCert>
+and C<crlStatusList>.
 
 =item B<-profile> I<name>
 
@@ -741,11 +743,14 @@ If on success no such cert was received, this is indicated by deleting the file.
 
 Certificate used for specifying a CRL issuer when requesting a CRL 
 in a genm message with infoType C<crlStatusList>.
+Any available distribution point name is preferred over issuer names.
 
 =item B<-oldcrl> I<filename>
 
 CRL used for specifying a CRL issuer when requesting a CRL 
 in a genm message with infoType C<crlStatusList>.
+Any available distribution point name is preferred over issuer names.
+If also -crlcrt is given, its data is preferred over data from -oldcrl.
 
 =item B<-crlout> I<filename>
 
@@ -876,6 +881,11 @@ Send request messages without CMP-level protection.
 
 File format to use when saving a certificate to a file.
 Default value is PEM.
+
+=item B<-crlform> I<PEM|DER>
+
+File format to use when saving a CRL to a file.
+Default value is DER.
 
 =item B<-keyform> I<PEM|DER|P12|ENGINE>
 
@@ -1162,7 +1172,7 @@ Certificate to be returned as mock enrollment result.
 
 =item B<-rsp_crl> I<filename>|I<uri>
 
-CRL to be returned in genp of type crls.
+CRL to be returned in genp of type C<crls>.
 
 =item B<-rsp_extracerts> I<filenames>|I<uris>
 
@@ -1461,7 +1471,8 @@ The B<cmp> application was added in OpenSSL 3.0.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
-The B<-profile> option was added in OpenSSL 3.3.
+B<-profile>, B<-crlcert>, B<-oldcrl>, B<-crlout>, B<-crlform>
+and B<-rsp_crl> options were added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

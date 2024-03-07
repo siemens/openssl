@@ -146,6 +146,8 @@ static int opt_revreason = CRL_REASON_NONE;
 /* credentials format */
 static char *opt_certform_s = "PEM";
 static int opt_certform = FORMAT_PEM;
+static char *opt_crlform_s = "DER";
+static int opt_crlform = FORMAT_ASN1;
 static char *opt_keyform_s = NULL;
 static int opt_keyform = FORMAT_UNDEF;
 static char *opt_otherpass = NULL;
@@ -247,7 +249,7 @@ typedef enum OPTION_choice {
     OPT_DIGEST, OPT_MAC, OPT_EXTRACERTS,
     OPT_UNPROTECTED_REQUESTS,
 
-    OPT_CERTFORM, OPT_KEYFORM,
+    OPT_CERTFORM, OPT_CRLFORM, OPT_KEYFORM,
     OPT_OTHERPASS,
 #ifndef OPENSSL_NO_ENGINE
     OPT_ENGINE,
@@ -434,7 +436,7 @@ const OPTIONS cmp_options[] = {
     { "oldwithnew", OPT_OLDWITHNEW, 's',
       "File to save OldWithNew cert received in genp of type rootCaKeyUpdate"},
     { "crlcert", OPT_CRLCERT, 's',
-      "certificate to request CRL update for in genm of type crlStatusList"},
+      "certificate to request a CRL for in genm of type crlStatusList"},
     { "oldcrl", OPT_OLDCRL, 's',
       "CRL to request update for in genm of type crlStatusList"},
     { "crlout", OPT_CRLOUT, 's',
@@ -470,6 +472,8 @@ const OPTIONS cmp_options[] = {
     OPT_SECTION("Credentials format"),
     {"certform", OPT_CERTFORM, 's',
      "Format (PEM or DER) to use when saving a certificate to a file. Default PEM"},
+     {"crlform", OPT_CRLFORM, 's',
+     "Format (PEM or DER) to use when saving a CRL to a file. Default DER"},
     {"keyform", OPT_KEYFORM, 's',
      "Format of the key input (ENGINE, other values ignored)"},
     {"otherpass", OPT_OTHERPASS, 's',
@@ -643,7 +647,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_digest}, {&opt_mac}, {&opt_extracerts},
     {(char **)&opt_unprotected_requests},
 
-    {&opt_certform_s}, {&opt_keyform_s},
+    {&opt_certform_s}, {&opt_crlform_s}, {&opt_keyform_s},
     {&opt_otherpass},
 #ifndef OPENSSL_NO_ENGINE
     {&opt_engine},
@@ -1083,6 +1087,11 @@ static int transform_opts(void)
     if (opt_certform_s != NULL
             && !opt_format(opt_certform_s, OPT_FMT_PEMDER, &opt_certform)) {
         CMP_err("unknown option given for certificate storing format");
+        return 0;
+    }
+    if (opt_crlform_s != NULL
+            && !opt_format(opt_crlform_s, OPT_FMT_PEMDER, &opt_crlform)) {
+        CMP_err("unknown option given for CRL storing format");
         return 0;
     }
 
@@ -1946,20 +1955,20 @@ static int add_certProfile(OSSL_CMP_CTX *ctx, const char *name)
 
     if ((sk = sk_ASN1_UTF8STRING_new_reserve(NULL, 1)) == NULL)
         return 0;
-    if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
-        goto err;
-    if (!ASN1_STRING_set(utf8string, name, (int)strlen(name))) {
-        ASN1_STRING_free(utf8string);
-        goto err;
-    }
-    /* Due to sk_ASN1_UTF8STRING_new_reserve(NULL, 1), this surely succeeds: */
-    (void)sk_ASN1_UTF8STRING_push(sk, utf8string);
-    if ((itav = OSSL_CMP_ITAV_new0_certProfile(sk)) == NULL)
-        goto err;
-    if (OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav))
-        return 1;
-    OSSL_CMP_ITAV_free(itav);
-    return 0;
+   if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
+       goto err;
+   if (!ASN1_STRING_set(utf8string, name, (int)strlen(name))) {
+       ASN1_STRING_free(utf8string);
+       goto err;
+   }
+   /* Due to sk_ASN1_UTF8STRING_new_reserve(NULL, 1), this surely succeeds: */
+   (void)sk_ASN1_UTF8STRING_push(sk, utf8string);
+   if ((itav = OSSL_CMP_ITAV_new0_certProfile(sk)) == NULL)
+       goto err;
+   if (OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav))
+       return 1;
+   OSSL_CMP_ITAV_free(itav);
+   return 0;
 
  err:
     sk_ASN1_UTF8STRING_pop_free(sk, ASN1_UTF8STRING_free);
@@ -2004,7 +2013,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
             if (*ptr != '\0') {
                 if (*ptr != ',') {
                     CMP_err1("Missing ',' or end of -geninfo arg after int at %.40s",
-                             ptr);
+                        ptr);
                     goto err;
                 }
                 ptr++;
@@ -2281,13 +2290,13 @@ static int write_cert(BIO *bio, X509 *cert)
 
 static int write_crl(BIO *bio, X509_CRL *crl)
 {
-    if (opt_certform != FORMAT_PEM && opt_certform != FORMAT_ASN1) {
+    if (opt_crlform != FORMAT_PEM && opt_crlform != FORMAT_ASN1) {
         BIO_printf(bio_err, "error: unsupported type '%s' for writing CRLs\n",
-                   opt_certform_s);
+                   opt_crlform_s);
         return 0;
     }
 
-    return opt_certform == FORMAT_PEM ? PEM_write_bio_X509_CRL(bio, crl)
+    return opt_crlform == FORMAT_PEM ? PEM_write_bio_X509_CRL(bio, crl)
                                       : i2d_X509_CRL_bio(bio, crl);
 }
 
@@ -2338,26 +2347,26 @@ static int save_free_certs(STACK_OF(X509) *certs,
     return n;
 }
 
-static int save_free_crl(X509_CRL *crl,
-                         const char *file, const char *desc)
+static int save_crl(X509_CRL *crl,
+                    const char *file, const char *desc)
 {
     BIO *bio = NULL;
     int res = 0;
 
     if (file == NULL)
-        goto end;
+        return 1;
     if (crl != NULL)
-        CMP_info2("received %s CRL, saving to file '%s'", desc, file);
+        CMP_info2("received %s, saving to file '%s'", desc, file);
 
     if ((bio = BIO_new(BIO_s_file())) == NULL
             || !BIO_write_filename(bio, (char *)file)) {
-        CMP_err2("could not open file '%s' for writing %s CRL",
+        CMP_err2("could not open file '%s' for writing %s",
                  file, desc);
         goto end;
     }
 
     if (!write_crl(bio, crl)) {
-        CMP_err2("cannot write %s crl to file '%s'", desc, file);
+        CMP_err2("cannot write %s to file '%s'", desc, file);
         goto end;
     }
     res = 1;
@@ -2404,14 +2413,7 @@ static int save_crl_or_delete(X509_CRL *crl, const char *file, const char *desc)
 {
     if (file == NULL)
         return 1;
-    if (crl == NULL) {
-        char desc_crl[80];
-
-        BIO_snprintf(desc_crl, sizeof(desc_crl), "%s", desc);
-        return delete_file(file, desc_crl);
-    } else {
-        return save_free_crl(crl, file, desc);
-    }
+    return (crl == NULL) ? delete_file(file, desc) : save_crl(crl, file, desc);
 }
 
 static int print_itavs(const STACK_OF(OSSL_CMP_ITAV) *itavs)
@@ -2916,6 +2918,9 @@ static int get_opts(int argc, char **argv)
         case OPT_CERTFORM:
             opt_certform_s = opt_str();
             break;
+        case OPT_CRLFORM:
+            opt_crlform_s = opt_str();
+            break;
         case OPT_KEYFORM:
             opt_keyform_s = opt_str();
             break;
@@ -3253,18 +3258,14 @@ static int do_genm(OSSL_CMP_CTX *ctx)
             return 0;
         }
 
-        if (opt_crlcert == NULL) {
-            CMP_warn("No -crlcert given, will use data from -oldcrl");
-        } else {
+        if (opt_crlcert != NULL) {
             crlcert = load_cert_pwd(opt_crlcert, opt_otherpass,
                                     "Cert for genm with -infotype crlStatusList");
             if (crlcert == NULL)
                 goto end_crlupd;
         }
 
-        if (opt_oldcrl == NULL) {
-            CMP_warn("No -oldcrl given, will use data from -crlcert");
-        } else {
+        if (opt_oldcrl != NULL) {
             oldcrl = load_crl(opt_oldcrl, FORMAT_UNDEF, 0,
                               "CRL for genm with -infotype crlStatusList");
             if (oldcrl == NULL)
