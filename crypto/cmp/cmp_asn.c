@@ -70,17 +70,14 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_KEMCIPHERTEXTINFO)
 
 ASN1_SEQUENCE(OSSL_CMP_KEMOTHERINFO) = {
     ASN1_SEQUENCE_OF(OSSL_CMP_KEMOTHERINFO, staticString, ASN1_UTF8STRING),
-    ASN1_EXP_OPT(OSSL_CMP_KEMOTHERINFO, transactionID, ASN1_OCTET_STRING, 0),
-    ASN1_EXP_OPT(OSSL_CMP_KEMOTHERINFO, senderNonce, ASN1_OCTET_STRING, 1),
-    ASN1_EXP_OPT(OSSL_CMP_KEMOTHERINFO, recipNonce, ASN1_OCTET_STRING, 2),
-    ASN1_SIMPLE(OSSL_CMP_KEMOTHERINFO, len, ASN1_INTEGER),
-    ASN1_SIMPLE(OSSL_CMP_KEMOTHERINFO, mac, X509_ALGOR),
-    ASN1_SIMPLE(OSSL_CMP_KEMOTHERINFO, ct, ASN1_OCTET_STRING)
+    ASN1_SIMPLE(OSSL_CMP_KEMOTHERINFO, transactionID, ASN1_OCTET_STRING),
+    ASN1_EXP_OPT(OSSL_CMP_KEMOTHERINFO, kemContext, ASN1_OCTET_STRING, 0),
 } ASN1_SEQUENCE_END(OSSL_CMP_KEMOTHERINFO)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_KEMOTHERINFO)
 
 ASN1_SEQUENCE(OSSL_CMP_KEMBMPARAMETER) = {
     ASN1_SIMPLE(OSSL_CMP_KEMBMPARAMETER, kdf, X509_ALGOR),
+    ASN1_EXP_OPT(OSSL_CMP_KEMBMPARAMETER, kemContext, ASN1_OCTET_STRING, 0),
     ASN1_SIMPLE(OSSL_CMP_KEMBMPARAMETER, len, ASN1_INTEGER),
     ASN1_SIMPLE(OSSL_CMP_KEMBMPARAMETER, mac, X509_ALGOR)
 } ASN1_SEQUENCE_END(OSSL_CMP_KEMBMPARAMETER)
@@ -340,19 +337,14 @@ int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
         goto err;
 
     kemOtherInfo->transactionID = ctx->transactionID;
-    kemOtherInfo->senderNonce = ossl_cmp_ctx_get_kem_senderNonce(ctx);
-    kemOtherInfo->recipNonce = ossl_cmp_ctx_get_kem_recipNonce(ctx);
 
-    if (!ASN1_INTEGER_set(kemOtherInfo->len, ctx->kem_ssklen)
-        || !X509_ALGOR_set0(kemOtherInfo->mac, OBJ_nid2obj(NID_hmacWithSHA256),
-                            V_ASN1_UNDEF, NULL))
-        goto err;
-
+#if 0
+    /*setting kemContext with ct for testing*/
     if (ctx->kem_ct != NULL
-            && !ossl_cmp_asn1_octet_string_set1(&kemOtherInfo->ct,
+            && !ossl_cmp_asn1_octet_string_set1(&kemOtherInfo->kemContext,
                                                 ctx->kem_ct))
         goto err;
-
+#endif
     *out = NULL;
     if ((*len = i2d_OSSL_CMP_KEMOTHERINFO(kemOtherInfo, out)) <= 0)
         goto err;
@@ -361,8 +353,6 @@ int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
 
  err:
     kemOtherInfo->transactionID = NULL;
-    kemOtherInfo->senderNonce = NULL;
-    kemOtherInfo->recipNonce = NULL;
     OSSL_CMP_KEMOTHERINFO_free(kemOtherInfo);
     return ret;
 }

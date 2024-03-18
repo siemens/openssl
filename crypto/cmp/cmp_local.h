@@ -280,35 +280,29 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMCIPHERTEXTINFO)
 
 /*
  * KemOtherInfo ::= SEQUENCE {
- *    staticString      PKIFreeText,
- *    transactionID [0] OCTET STRING     OPTIONAL,
- *    senderNonce   [1] OCTET STRING     OPTIONAL,
- *    recipNonce    [2] OCTET STRING     OPTIONAL,
- *    len               INTEGER (1..MAX),
- *    mac               AlgorithmIdentifier{MAC-ALGORITHM, {...}}
- *    ct                OCTET STRING
- * }
+ *  staticString      PKIFreeText,
+ *  transactionID     OCTET STRING,
+ *  kemContext    [0] OCTET STRING OPTIONAL
+  }
  */
 struct ossl_cmp_KemOtherInfo_st {
     OSSL_CMP_PKIFREETEXT *staticString;
     ASN1_OCTET_STRING *transactionID;
-    ASN1_OCTET_STRING *senderNonce;
-    ASN1_OCTET_STRING *recipNonce;
-    ASN1_INTEGER *len;
-    X509_ALGOR *mac;
-    ASN1_OCTET_STRING *ct;
+    ASN1_OCTET_STRING *kemContext;
 } /* OSSL_CMP_KEMOTHERINFO */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_KEMOTHERINFO)
 
 /*
  * KemBMParameter ::= SEQUENCE {
  *    kdf      AlgorithmIdentifier{KEY-DERIVATION, {...}},
+ *    kemContext   [0] OCTET STRING OPTIONAL,
  *    len      INTEGER (1..MAX),
  *    mac      AlgorithmIdentifier{MAC-ALGORITHM, {...}}
  * }
  */
 typedef struct ossl_cmp_KemBMParameter_st {
     X509_ALGOR *kdf;
+    ASN1_OCTET_STRING *kemContext;
     ASN1_INTEGER *len;
     X509_ALGOR *mac;
 } OSSL_CMP_KEMBMPARAMETER;
