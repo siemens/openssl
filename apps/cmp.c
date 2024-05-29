@@ -123,6 +123,9 @@ static char *opt_profile = NULL;
 /* certificate enrollment */
 static char *opt_newkey = NULL;
 static char *opt_newkeypass = NULL;
+static int opt_centralkeygen = 0;
+static char *opt_newkeytype = NULL;
+static char *opt_newkeyout = NULL;
 static char *opt_subject = NULL;
 static int opt_days = 0;
 static char *opt_reqexts = NULL;
@@ -229,7 +232,8 @@ typedef enum OPTION_choice {
     OPT_CMD, OPT_INFOTYPE, OPT_PROFILE, OPT_GENINFO,
     OPT_TEMPLATE, OPT_KEYSPEC,
 
-    OPT_NEWKEY, OPT_NEWKEYPASS, OPT_SUBJECT,
+    OPT_NEWKEY, OPT_NEWKEYPASS, OPT_CENTRALKEYGEN, OPT_NEWKEYTYPE,
+    OPT_NEWKEYOUT, OPT_SUBJECT,
     OPT_DAYS, OPT_REQEXTS,
     OPT_SANS, OPT_SAN_NODEFAULT,
     OPT_POLICIES, OPT_POLICY_OIDS, OPT_POLICY_OIDS_CRITICAL,
@@ -325,6 +329,12 @@ const OPTIONS cmp_options[] = {
     {"newkey", OPT_NEWKEY, 's',
      "Private or public key for the requested cert. Default: CSR key or client key"},
     {"newkeypass", OPT_NEWKEYPASS, 's', "New private key pass phrase source"},
+    {"centralkeygen", OPT_CENTRALKEYGEN, '-',
+     "Request central (server-side) key generation. Default is local generation"},
+    {"newkeytype", OPT_NEWKEYTYPE, 's',
+     "Request key for ir/cr/kur of given type, e.g., EC:secp521r1"},
+    {"newkeyout", OPT_NEWKEYOUT, 's',
+     "File to save new key generated in central key generation"},
     {"subject", OPT_SUBJECT, 's',
      "Distinguished Name (DN) of subject to use in the requested cert template"},
     {OPT_MORE_STR, 0, 0,
@@ -1671,10 +1681,26 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (!set_name(opt_issuer, OSSL_CMP_CTX_set1_issuer, ctx, "issuer"))
         return 0;
     if (opt_cmd == CMP_IR || opt_cmd == CMP_CR || opt_cmd == CMP_KUR) {
-        if (opt_reqin == NULL && opt_newkey == NULL
+        if (opt_reqin == NULL && opt_newkey == NULL && !opt_centralkeygen
             && opt_key == NULL && opt_csr == NULL && opt_oldcert == NULL) {
-            CMP_err("missing -newkey (or -key) to be certified and no -csr, -oldcert, -cert, or -reqin option given, which could provide fallback public key");
+            CMP_err("missing -newkey (or -key) to be certified and no -csr, -oldcert, -cert, or -reqin option given, which could provide fallback public key."
+                    "Neither central key generation is requested.");
             return 0;
+        }
+        if (opt_popo == OSSL_CRMF_POPO_NONE && !opt_centralkeygen) {
+            CMP_info("POPO is disabled, using -centralkeygen");
+            opt_centralkeygen = 1;
+        }
+        if (opt_centralkeygen) {
+            if (opt_popo > OSSL_CRMF_POPO_NONE) {
+                CMP_err1("-popo value %d is inconsistent with -centralkeygen", opt_popo);
+                return 0;
+            }
+            if (opt_newkeyout == NULL) {
+                CMP_err("-newkeyout not given, nowhere to save newly generated key");
+                return 0;
+            }
+            opt_popo = OSSL_CRMF_POPO_NONE;
         }
         if (opt_newkey == NULL
             && opt_popo != OSSL_CRMF_POPO_NONE
@@ -1723,6 +1749,12 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             CMP_warn1("-policies %s", msg);
         if (opt_policy_oids != NULL)
             CMP_warn1("-policy_oids %s", msg);
+        if (opt_centralkeygen)
+            CMP_warn1("-centralkeygen %s", msg);
+        if (opt_newkeytype != NULL)
+            CMP_warn1("-newkeytype %s", msg);
+        if (opt_newkeyout != NULL)
+            CMP_warn1("-newkeyout %s", msg);
         if (opt_cmd != CMP_P10CR) {
             if (opt_implicit_confirm)
                 CMP_warn1("-implicit_confirm %s, and 'p10cr'", msg);
@@ -2927,6 +2959,15 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_NEWKEYPASS:
             opt_newkeypass = opt_str();
+            break;
+        case OPT_CENTRALKEYGEN:
+            opt_centralkeygen = 1;
+            break;
+        case OPT_NEWKEYTYPE:
+            opt_newkeytype = opt_str();
+            break;
+        case OPT_NEWKEYOUT:
+            opt_newkeyout = opt_str();
             break;
         case OPT_SUBJECT:
             opt_subject = opt_str();
