@@ -388,7 +388,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTORENCCERT)
 /*-
  *   CertifiedKeyPair ::= SEQUENCE {
  *       certOrEncCert       CertOrEncCert,
- *       privateKey      [0] EncryptedValue      OPTIONAL,
+ *       privateKey      [0] EncryptedKey      OPTIONAL,
  *       -- see [CRMF] for comment on encoding
  *       publicationInfo [1] PKIPublicationInfo  OPTIONAL
  *   }
