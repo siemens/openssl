@@ -528,12 +528,24 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
             return 0;
         break;
     case OSSL_CRMF_POPO_KEYENC:
+    {
         /*
          * When OSSL_CMP_certrep_new() supports encrypted certs,
          * should return 1 if the type of req->popo->value.keyEncipherment
          * is OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE and
          * its value.subsequentMessage == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT
          */
+        OSSL_CRMF_POPOPRIVKEY *keyEnc = req->popo->value.keyEncipherment;
+        if (keyEnc == NULL) {
+            ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_MISSING_KEYENCIPHERMENT);
+            return 0;
+        } 
+        if( keyEnc->type == OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE
+                && keyEnc->value.subsequentMessage != NULL
+                && ASN1_INTEGER_get(keyEnc->value.subsequentMessage) == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT)
+            return 1;
+    }
+        /* fall through */
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_POPO_METHOD);
@@ -710,4 +722,42 @@ X509
     OPENSSL_clear_free(ek, eksize);
     OPENSSL_free(iv);
     return cert;
+}
+
+/*-
+ * Decrypts the certificate in the given encryptedKey using private key pkey.
+ * This is needed for the indirect PoP method as in RFC 4210 section 5.2.8.2.
+ *
+ * returns a pointer to the decrypted certificate
+ * returns NULL on error or if no certificate available
+ */
+X509
+*OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
+                                     OSSL_LIB_CTX *libctx, const char *propq,
+                                     EVP_PKEY *pkey, unsigned int flags)
+{
+#ifndef OPENSSL_NO_CMS
+    BIO *bio;
+    X509 *cert = NULL;
+#endif
+
+    if (ecert->type != OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA)
+        return OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(ecert->value.encryptedValue,
+                                                     libctx, propq, pkey);
+#ifndef OPENSSL_NO_CMS
+    bio = CMS_EnvelopedData_decrypt(ecert->value.envelopedData, NULL,
+                                    pkey, NULL /* cert */, NULL, flags,
+                                    libctx, propq);
+    if (bio == NULL)
+        return NULL;
+    cert = d2i_X509_bio(bio, NULL);
+    if (cert == NULL)
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECODING_CERTIFICATE);
+    BIO_free(bio);
+    return cert;
+#else
+    (void)flags; /* prevent warning on unused parameter */
+    ERR_raise(ERR_LIB_CRMF, CRMF_R_CMS_NOT_SUPPORTED);
+    return NULL;
+#endif /* OPENSSL_NO_CMS */
 }
