@@ -530,12 +530,24 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
             return 0;
         break;
     case OSSL_CRMF_POPO_KEYENC:
+    {
         /*
          * When OSSL_CMP_certrep_new() supports encrypted certs,
          * should return 1 if the type of req->popo->value.keyEncipherment
          * is OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE and
          * its value.subsequentMessage == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT
          */
+        OSSL_CRMF_POPOPRIVKEY *keyEnc = req->popo->value.keyEncipherment;
+        if (keyEnc == NULL) {
+            ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_MISSING_KEYENCIPHERMENT);
+            return 0;
+        } 
+        if( keyEnc->type == OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE
+                && keyEnc->value.subsequentMessage != NULL
+                && ASN1_INTEGER_get(keyEnc->value.subsequentMessage) == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT)
+            return 1;
+    }
+        /* fall through */
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_POPO_METHOD);

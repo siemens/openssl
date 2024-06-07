@@ -222,6 +222,7 @@ CMP_R_ERROR_CREATING_POLLREP:123:error creating pollrep
 CMP_R_ERROR_CREATING_POLLREQ:124:error creating pollreq
 CMP_R_ERROR_CREATING_RP:125:error creating rp
 CMP_R_ERROR_CREATING_RR:126:error creating rr
+CMP_R_ERROR_DERIVING_KBM_SSK:198:error deriving ssk
 CMP_R_ERROR_PARSING_PKISTATUS:107:error parsing pkistatus
 CMP_R_ERROR_PROCESSING_MESSAGE:158:error processing message
 CMP_R_ERROR_PROTECTING_MESSAGE:127:error protecting message
@@ -230,7 +231,6 @@ CMP_R_ERROR_UNEXPECTED_CERTCONF:160:error unexpected certconf
 CMP_R_ERROR_VALIDATING_PROTECTION:140:error validating protection
 CMP_R_ERROR_VALIDATING_SIGNATURE:171:error validating signature
 CMP_R_EXPECTED_POLLREQ:104:expected pollreq
-CMP_R_ERROR_DERIVING_KBM_SSK:198:error deriving ssk
 CMP_R_FAILED_BUILDING_OWN_CHAIN:164:failed building own chain
 CMP_R_FAILED_EXTRACTING_CENTRAL_GEN_KEY:203:failed extracting central gen key
 CMP_R_FAILED_EXTRACTING_PUBKEY:141:failed extracting pubkey
@@ -304,8 +304,8 @@ CMP_R_VALUE_TOO_SMALL:177:value too small
 CMP_R_WRONG_ALGORITHM_OID:138:wrong algorithm oid
 CMP_R_WRONG_CERTID:189:wrong certid
 CMP_R_WRONG_CERTID_IN_RP:187:wrong certid in rp
-CMP_R_WRONG_PBM_VALUE:155:wrong pbm value
 CMP_R_WRONG_KBM_VALUE:197:wrong kbm value
+CMP_R_WRONG_PBM_VALUE:155:wrong pbm value
 CMP_R_WRONG_RP_COMPONENT_COUNT:188:wrong rp component count
 CMP_R_WRONG_SERIAL_IN_RP:173:wrong serial in rp
 CMS_R_ADD_SIGNER_ERROR:99:add signer error
@@ -472,6 +472,7 @@ CRMF_R_POPOSKINPUT_NOT_SUPPORTED:113:poposkinput not supported
 CRMF_R_POPO_INCONSISTENT_CENTRAL_KEYGEN:128:popo inconsistent central keygen
 CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY:117:popo inconsistent public key
 CRMF_R_POPO_MISSING:121:popo missing
+CRMF_R_POPO_MISSING_KEYENCIPHERMENT:122:popo missing keyencipherment
 CRMF_R_POPO_MISSING_PUBLIC_KEY:118:popo missing public key
 CRMF_R_POPO_MISSING_SUBJECT:119:popo missing subject
 CRMF_R_POPO_RAVERIFIED_NOT_ACCEPTED:120:popo raverified not accepted

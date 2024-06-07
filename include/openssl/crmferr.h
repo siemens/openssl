@@ -43,6 +43,7 @@
 #  define CRMF_R_POPO_INCONSISTENT_CENTRAL_KEYGEN          128
 #  define CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY              117
 #  define CRMF_R_POPO_MISSING                              121
+#  define CRMF_R_POPO_MISSING_KEYENCIPHERMENT              122
 #  define CRMF_R_POPO_MISSING_PUBLIC_KEY                   118
 #  define CRMF_R_POPO_MISSING_SUBJECT                      119
 #  define CRMF_R_POPO_RAVERIFIED_NOT_ACCEPTED              120
