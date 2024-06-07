@@ -336,7 +336,9 @@ int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
                                               KEMCMP_STATICSTRING, -1))
         goto err;
 
-    kemOtherInfo->transactionID = ctx->transactionID;
+    if (!ossl_cmp_asn1_octet_string_set1(&kemOtherInfo->transactionID,
+                                         ctx->transactionID))
+        goto err;
 
 #if 0
     /*setting kemContext with ct for testing*/
@@ -352,7 +354,6 @@ int ossl_cmp_kem_KemOtherInfo_new(OSSL_CMP_CTX *ctx,
     ret = 1;
 
  err:
-    kemOtherInfo->transactionID = NULL;
     OSSL_CMP_KEMOTHERINFO_free(kemOtherInfo);
     return ret;
 }
