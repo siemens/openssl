@@ -342,7 +342,7 @@ typedef struct ossl_cmp_certorenccert_st {
     int type;
     union {
         X509 *certificate;
-        OSSL_CRMF_ENCRYPTEDVALUE *encryptedCert;
+        OSSL_CRMF_ENCRYPTEDKEY *encryptedCert;
     } value;
 } OSSL_CMP_CERTORENCCERT;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTORENCCERT)
@@ -350,14 +350,14 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTORENCCERT)
 /*-
  *   CertifiedKeyPair ::= SEQUENCE {
  *       certOrEncCert       CertOrEncCert,
- *       privateKey      [0] EncryptedValue      OPTIONAL,
+ *       privateKey      [0] EncryptedKey      OPTIONAL,
  *       -- see [CRMF] for comment on encoding
  *       publicationInfo [1] PKIPublicationInfo  OPTIONAL
  *   }
  */
 typedef struct ossl_cmp_certifiedkeypair_st {
     OSSL_CMP_CERTORENCCERT *certOrEncCert;
-    OSSL_CRMF_ENCRYPTEDVALUE *privateKey;
+    OSSL_CRMF_ENCRYPTEDKEY *privateKey;
     OSSL_CRMF_PKIPUBLICATIONINFO *publicationInfo;
 } OSSL_CMP_CERTIFIEDKEYPAIR;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTIFIEDKEYPAIR)

@@ -1080,10 +1080,9 @@ X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CTX *ctx,
                 ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PRIVATE_KEY);
                 return NULL;
             }
-            crt =
-                OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(coec->value.encryptedCert,
+            crt = OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(coec->value.encryptedCert,
                                                       ctx->libctx, ctx->propq,
-                                                      pkey);
+                                                      pkey, 0);
             break;
         default:
             ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_CERT_TYPE);
