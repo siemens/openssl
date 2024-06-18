@@ -298,3 +298,17 @@ int ossl_cmp_x509_algor_set0(X509_ALGOR **tgt, X509_ALGOR *src)
     *tgt = src;
     return 1;
 }
+
+int ossl_cmp_set0_ASN1_INTEGER(ASN1_INTEGER **tgt, ASN1_INTEGER *src)
+{
+    if (tgt == NULL || src == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if (*tgt == src) /* self-assignment */
+        return 1;
+
+    ASN1_INTEGER_free(*tgt);
+    *tgt = src;
+    return 1;
+}

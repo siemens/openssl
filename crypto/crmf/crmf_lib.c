@@ -457,6 +457,28 @@ int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
     return 0;
 }
 
+int OSSL_CRMF_MSG_certreq_encrcert_popo(const OSSL_CRMF_MSG *req)
+{
+    OSSL_CRMF_POPOPRIVKEY *keyEnc;
+    
+    if (req == NULL || req->popo == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
+        return 0;
+    }
+
+    keyEnc = req->popo->value.keyEncipherment;
+    if (keyEnc == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_MISSING_KEYENCIPHERMENT);
+        return 0;
+    } 
+    if( keyEnc->type == OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE
+            && keyEnc->value.subsequentMessage != NULL
+            && ASN1_INTEGER_get(keyEnc->value.subsequentMessage)
+                == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT)
+        return 1;
+    return 0;
+}
+
 /* verifies the Proof-of-Possession of the request with the given rid in reqs */
 int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                int rid, int acceptRAVerified,
@@ -528,23 +550,14 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
             return 0;
         break;
     case OSSL_CRMF_POPO_KEYENC:
-    {
         /*
          * When OSSL_CMP_certrep_new() supports encrypted certs,
          * should return 1 if the type of req->popo->value.keyEncipherment
          * is OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE and
          * its value.subsequentMessage == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT
          */
-        OSSL_CRMF_POPOPRIVKEY *keyEnc = req->popo->value.keyEncipherment;
-        if (keyEnc == NULL) {
-            ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_MISSING_KEYENCIPHERMENT);
-            return 0;
-        } 
-        if( keyEnc->type == OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE
-                && keyEnc->value.subsequentMessage != NULL
-                && ASN1_INTEGER_get(keyEnc->value.subsequentMessage) == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT)
+        if (OSSL_CRMF_MSG_certreq_encrcert_popo(req))
             return 1;
-    }
         /* fall through */
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
@@ -761,3 +774,17 @@ X509
     return NULL;
 #endif /* OPENSSL_NO_CMS */
 }
+
+OSSL_CRMF_ENCRYPTEDKEY 
+*OSSL_CRMF_ENCRYPTEDKEY_init_envdata(CMS_EnvelopedData *envdata)
+{
+    OSSL_CRMF_ENCRYPTEDKEY *ek = OSSL_CRMF_ENCRYPTEDKEY_new();
+    if (ek == NULL)
+        return NULL;
+
+    ek->type = OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA;
+    ek->value.envelopedData = envdata;
+
+    return ek;
+}
+

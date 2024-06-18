@@ -24,6 +24,7 @@
  * CRMF reason codes.
  */
 #  define CRMF_R_BAD_PBM_ITERATIONCOUNT                    100
+#  define CRMF_R_CMS_NOT_SUPPORTED                         123
 #  define CRMF_R_CRMFERROR                                 102
 #  define CRMF_R_ERROR                                     103
 #  define CRMF_R_ERROR_DECODING_CERTIFICATE                104

@@ -119,8 +119,8 @@ policyIdentifier = 1.2.3.4
 [reqexts]
 basicConstraints = CA:FALSE
 #basicConstraints = critical, CA:TRUE
-keyUsage = critical, digitalSignature # keyAgreement, keyEncipherment, nonRepudiation
-extendedKeyUsage = critical, clientAuth # serverAuth, codeSigning
+keyUsage = critical, keyEncipherment  # digitalSignature keyAgreement, keyEncipherment, nonRepudiation
+#extendedKeyUsage = critical, clientAuth serverAuth, codeSigning
 #crlDistributionPoints = URI:http:
 #authorityInfoAccess = URI:http:
 subjectAltName = @alt_names

@@ -19,6 +19,7 @@
 static const ERR_STRING_DATA CRMF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_BAD_PBM_ITERATIONCOUNT),
     "bad pbm iterationcount"},
+    {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_CMS_NOT_SUPPORTED), "cms not supported"},
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_CRMFERROR), "crmferror"},
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_ERROR), "error"},
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_ERROR_DECODING_CERTIFICATE),
