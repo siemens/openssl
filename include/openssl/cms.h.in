@@ -70,6 +70,7 @@ CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 # define CMS_RECIPINFO_KEK               2
 # define CMS_RECIPINFO_PASS              3
 # define CMS_RECIPINFO_OTHER             4
+# define CMS_RECIPINFO_OTHER_KEM         5
 
 /* S/MIME related flags */
 
@@ -212,7 +213,7 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                                EVP_PKEY *pkey, X509 *cert,
                                ASN1_OCTET_STRING *secret, unsigned int flags,
                                OSSL_LIB_CTX *libctx, const char *propq);
-
+CMS_EnvelopedData *OSSL_CMS_get0_enveloped(CMS_ContentInfo *cms);
 CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
                                            X509 *recip, unsigned int flags);
 CMS_RecipientInfo *CMS_add1_recipient(CMS_ContentInfo *cms, X509 *recip,

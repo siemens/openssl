@@ -158,6 +158,7 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm, X509_EXTENSION *ext);
 int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
                               EVP_PKEY *pkey, const EVP_MD *digest,
                               OSSL_LIB_CTX *libctx, const char *propq);
+int OSSL_CRMF_MSG_certreq_encrcert_popo(const OSSL_CRMF_MSG *req);
 int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                int rid, int acceptRAVerified,
                                OSSL_LIB_CTX *libctx, const char *propq);

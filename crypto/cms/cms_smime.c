@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/cmp.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -706,6 +707,35 @@ static int cms_kari_set1_pkey_and_peer(CMS_ContentInfo *cms,
     return 0;
 }
 
+static int cms_kemri_set1_pkey(CMS_ContentInfo *cms,
+                               CMS_KEMRecipientInfo *kemri,
+                               EVP_PKEY *pk)
+{
+    unsigned char *ss = NULL, *info = NULL;
+    size_t sslen = 0;
+    int ret = 0, infolen = 0;
+
+    if (!ossl_cmp_kem_performKemDecapsulation(pk,
+                                         ASN1_STRING_get0_data(kemri->kemct),
+                                         ASN1_STRING_length(kemri->kemct),
+                                         &ss, &sslen,
+                                         cms->ctx.libctx, cms->ctx.propq)
+        || !cms_ORIforKEMOtherInfo_new(kemri, &info, &infolen)
+        || !ossl_cmp_kem_derive_ssk_HKDF(ss, sslen, NULL, 0, info, infolen,
+                                         &kemri->secret,
+                                         ASN1_INTEGER_get(kemri->kekLength),
+                                         cms->ctx.libctx, cms->ctx.propq))
+        goto err;
+
+    if (!cms_RecipientInfo_kemri_decrypt(cms, kemri))
+        goto err;
+    ret = 1;
+ err:
+    OPENSSL_clear_free(ss, sslen);
+    OPENSSL_clear_free(info, infolen);
+    return ret;
+}
+
 int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
 {
      return CMS_decrypt_set1_pkey_and_peer(cms, pk, cert, NULL);
@@ -741,7 +771,8 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
 
         ri = sk_CMS_RecipientInfo_value(ris, i);
         ri_type = CMS_RecipientInfo_type(ri);
-        if (!ossl_cms_pkey_is_ri_type_supported(pk, ri_type))
+        if (ri_type != CMS_RECIPINFO_OTHER
+            && !ossl_cms_pkey_is_ri_type_supported(pk, ri_type))
             continue;
         match_ri = 1;
         if (ri_type == CMS_RECIPINFO_AGREE) {
@@ -750,6 +781,12 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
                 return 1;
             if (r < 0)
                 return 0;
+        } else if (ri_type == CMS_RECIPINFO_OTHER) {
+            if (OBJ_obj2nid(ri->d.ori->oriType) == NID_id_smime_ori_kem) {
+                if (cms_kemri_set1_pkey(cms, ri->d.ori->oriValue.kemri, pk))
+                    return 1;
+                return 0;
+            }
         }
         /* If we have a cert, try matching RecipientInfo, else try them all */
         else if (cert == NULL || !CMS_RecipientInfo_ktri_cert_cmp(ri, cert)) {

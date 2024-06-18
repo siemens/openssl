@@ -497,6 +497,57 @@ static OSSL_CRMF_ENCRYPTEDKEY *enc_privkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pk
 }
 #endif
 
+OSSL_CMP_CERTIFIEDKEYPAIR *
+ossl_cmp_Enccert_init(X509 *cert, const X509 *encryption_recip,
+                      OSSL_LIB_CTX *libctx, const char *propq)
+{
+    OSSL_CMP_CERTIFIEDKEYPAIR *certifiedKeyPair = NULL;
+    CMS_EnvelopedData *env = NULL;
+    CMS_ContentInfo *cms;
+    EVP_CIPHER *cipher;
+    OSSL_CRMF_ENCRYPTEDKEY *encKey = NULL;
+    BIO *data;
+
+    if ((certifiedKeyPair = OSSL_CMP_CERTIFIEDKEYPAIR_new()) == NULL)
+        goto err;
+
+    if ((cipher = EVP_CIPHER_fetch(NULL, "aes-256-cbc", NULL)) == NULL)
+        goto err;
+
+    if ((data = BIO_new(BIO_s_mem())) == NULL
+        || !i2d_X509_bio(data, cert))
+        goto err;
+
+    cms = CMS_EnvelopedData_create_ex(cipher, libctx, propq);
+    if (!CMS_add1_recipient_cert(cms, (X509 *)encryption_recip, 0)) {
+        ERR_raise(ERR_LIB_CMS, CMS_R_RECIPIENT_ERROR);
+        goto err;
+    }
+    CMS_set_detached(cms, 0);
+    if (CMS_final(cms, data, NULL, SMIME_BINARY) == 0)
+        goto err;
+
+    if ((env = CMS_EnvelopedData_dup(OSSL_CMS_get0_enveloped(cms))) == NULL)
+        goto err;
+
+    BIO_free(data);
+    CMS_ContentInfo_free(cms);
+
+    if ((encKey = OSSL_CRMF_ENCRYPTEDKEY_init_envdata(env)) == NULL)
+        goto err;
+
+    certifiedKeyPair->certOrEncCert->type = OSSL_CMP_CERTORENCCERT_ENCRYPTEDCERT;
+    certifiedKeyPair->certOrEncCert->value.encryptedCert = encKey;
+    return certifiedKeyPair;
+
+ err:
+    BIO_free(data);
+    OSSL_CMP_CERTIFIEDKEYPAIR_free(certifiedKeyPair);
+    EVP_CIPHER_free(cipher);
+    CMS_ContentInfo_free(cms);
+    return NULL;
+}
+
 OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    int certReqId, const OSSL_CMP_PKISI *si,
                                    X509 *cert, const EVP_PKEY *pkey,
@@ -532,8 +583,10 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     if (status != OSSL_CMP_PKISTATUS_rejection
             && status != OSSL_CMP_PKISTATUS_waiting && cert != NULL) {
         if (encryption_recip != NULL) {
-            ERR_raise(ERR_LIB_CMP, ERR_R_UNSUPPORTED);
-            goto err;
+            if ((resp->certifiedKeyPair
+                = ossl_cmp_Enccert_init(cert, encryption_recip,
+                                        ctx->libctx, ctx->propq)) == NULL)
+                goto err;
         }
 
         if ((resp->certifiedKeyPair = OSSL_CMP_CERTIFIEDKEYPAIR_new())

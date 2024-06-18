@@ -1048,8 +1048,9 @@ int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type);
 OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype);
 OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    const OSSL_CRMF_MSG *crm);
-OSSL_CMP_CERTIFIEDKEYPAIR *ossl_cmp_Enccert_init(X509* cert,
-                                                 const X509* encryption_recip);
+OSSL_CMP_CERTIFIEDKEYPAIR *
+ossl_cmp_Enccert_init(X509 *cert, const X509 *encryption_recip,
+                      OSSL_LIB_CTX *libctx, const char *propq);
 OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    int certReqId, const OSSL_CMP_PKISI *si,
                                    X509 *cert, const EVP_PKEY *pkey,

@@ -1489,3 +1489,5 @@ id_KemBasedMac		1621
 hkdfWithSHA256		1622
 id_kem_rsa		1623
 id_kdf_kdf2		1624
+id_smime_ori		1625
+id_smime_ori_kem		1626

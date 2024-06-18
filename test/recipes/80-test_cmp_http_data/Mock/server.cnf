@@ -21,4 +21,6 @@ rsp_newwithnew = newWithNew.pem
 rsp_newwithold = newWithOld.pem
 rsp_oldwithnew = oldWithNew.pem
 
+#max_msgs = 2
+
 verbosity = 7

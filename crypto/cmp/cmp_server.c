@@ -217,6 +217,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     OSSL_CMP_PKISI *si = NULL;
     X509 *certOut = NULL;
     EVP_PKEY *keyOut = NULL;
+    X509 *encryption_recip = NULL;
     STACK_OF(X509) *chainOut = NULL, *caPubs = NULL;
     const OSSL_CRMF_MSG *crm = NULL;
     const X509_REQ *p10cr = NULL;
@@ -316,12 +317,16 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
             keyOut = srv_ctx->ctx->newPkey;
     }
 
+    if (OSSL_CRMF_MSG_certreq_encrcert_popo(crm))
+        encryption_recip = certOut; /* for indirect POP */
+
     msg = ossl_cmp_certrep_new(srv_ctx->ctx, bodytype, certReqId, si,
-                               certOut, keyOut, NULL /* enc */, chainOut, caPubs,
+                               certOut, encryption_recip, chainOut, caPubs, //TODO-RR : check keyout
                                srv_ctx->sendUnprotectedErrors);
     /* When supporting OSSL_CRMF_POPO_KEYENC, "enc" will need to be set */
     if (msg == NULL)
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CREATING_CERTREP);
+    encryption_recip = NULL;
 
  err:
     OSSL_CMP_PKISI_free(si);

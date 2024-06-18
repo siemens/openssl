@@ -3722,6 +3722,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      201,    /* "id-smime-mod-ets-eSignature-97" */
      199,    /* "id-smime-mod-msg-v3" */
      198,    /* "id-smime-mod-oid" */
+    1325,    /* "id-smime-ori" */
+    1326,    /* "id-smime-ori-kem" */
      194,    /* "id-smime-spq" */
      250,    /* "id-smime-spq-ets-sqt-unotice" */
      249,    /* "id-smime-spq-ets-sqt-uri" */
@@ -5337,6 +5339,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      201,    /* "id-smime-mod-ets-eSignature-97" */
      199,    /* "id-smime-mod-msg-v3" */
      198,    /* "id-smime-mod-oid" */
+    1325,    /* "id-smime-ori" */
+    1326,    /* "id-smime-ori-kem" */
      194,    /* "id-smime-spq" */
      250,    /* "id-smime-spq-ets-sqt-unotice" */
      249,    /* "id-smime-spq-ets-sqt-uri" */
@@ -7025,6 +7029,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      193,    /* OBJ_id_smime_cd                  1 2 840 113549 1 9 16 4 */
      194,    /* OBJ_id_smime_spq                 1 2 840 113549 1 9 16 5 */
      195,    /* OBJ_id_smime_cti                 1 2 840 113549 1 9 16 6 */
+    1325,    /* OBJ_id_smime_ori                 1 2 840 113549 1 9 16 13 */
      158,    /* OBJ_x509Certificate              1 2 840 113549 1 9 22 1 */
      159,    /* OBJ_sdsiCertificate              1 2 840 113549 1 9 22 2 */
      160,    /* OBJ_x509Crl                      1 2 840 113549 1 9 23 1 */
@@ -7141,6 +7146,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      254,    /* OBJ_id_smime_cti_ets_proofOfSender 1 2 840 113549 1 9 16 6 4 */
      255,    /* OBJ_id_smime_cti_ets_proofOfApproval 1 2 840 113549 1 9 16 6 5 */
      256,    /* OBJ_id_smime_cti_ets_proofOfCreation 1 2 840 113549 1 9 16 6 6 */
+    1326,    /* OBJ_id_smime_ori_kem             1 2 840 113549 1 9 16 13 3 */
      150,    /* OBJ_keyBag                       1 2 840 113549 1 12 10 1 1 */
      151,    /* OBJ_pkcs8ShroudedKeyBag          1 2 840 113549 1 12 10 1 2 */
      152,    /* OBJ_certBag                      1 2 840 113549 1 12 10 1 3 */

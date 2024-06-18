@@ -201,10 +201,51 @@ ASN1_SEQUENCE(CMS_PasswordRecipientInfo) = {
         ASN1_SIMPLE(CMS_PasswordRecipientInfo, encryptedKey, ASN1_OCTET_STRING)
 } ASN1_SEQUENCE_END(CMS_PasswordRecipientInfo)
 
+ASN1_ADB_TEMPLATE(oritypeandvalue_default) = ASN1_OPT(CMS_OtherRecipientInfo,
+                                                       oriValue.other,
+                                                       ASN1_ANY);
+ASN1_ADB(CMS_OtherRecipientInfo) = {
+      ADB_ENTRY(NID_id_smime_ori_kem,
+              ASN1_OPT(CMS_OtherRecipientInfo, oriValue.kemri,
+                       CMS_KEMRecipientInfo)),
+} ASN1_ADB_END(CMS_OtherRecipientInfo, 0, oriType, 0,
+               &oritypeandvalue_default_tt, NULL);
+
 ASN1_SEQUENCE(CMS_OtherRecipientInfo) = {
-  ASN1_SIMPLE(CMS_OtherRecipientInfo, oriType, ASN1_OBJECT),
-  ASN1_OPT(CMS_OtherRecipientInfo, oriValue, ASN1_ANY)
-} static_ASN1_SEQUENCE_END(CMS_OtherRecipientInfo)
+    ASN1_SIMPLE(CMS_OtherRecipientInfo, oriType, ASN1_OBJECT),
+    ASN1_ADB_OBJECT(CMS_OtherRecipientInfo)
+} ASN1_SEQUENCE_END(CMS_OtherRecipientInfo)
+
+ASN1_SEQUENCE(CMC_ORIforKEMOtherInfo) = {
+    ASN1_SIMPLE(CMC_ORIforKEMOtherInfo, wrap, X509_ALGOR),
+    ASN1_SIMPLE(CMC_ORIforKEMOtherInfo, kekLength, ASN1_INTEGER),
+    ASN1_EXP_OPT(CMC_ORIforKEMOtherInfo, ukm, ASN1_OCTET_STRING, 0),
+} ASN1_SEQUENCE_END(CMC_ORIforKEMOtherInfo)
+IMPLEMENT_ASN1_FUNCTIONS(CMC_ORIforKEMOtherInfo)
+
+/* Free up KEMRecipientInfo additional data */
+static int cms_kemri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+                       void *exarg)
+{
+    CMS_KEMRecipientInfo *kemri = (CMS_KEMRecipientInfo *)*pval;
+
+    if (operation == ASN1_OP_FREE_POST) {
+        OPENSSL_clear_free(kemri->secret, kemri->secret_len);
+    }
+    return 1;
+}
+
+ASN1_SEQUENCE_cb(CMS_KEMRecipientInfo, cms_kemri_cb) = {
+        ASN1_EMBED(CMS_KEMRecipientInfo, version, INT32),
+        ASN1_SIMPLE(CMS_KEMRecipientInfo, rid, CMS_SignerIdentifier),
+        ASN1_SIMPLE(CMS_KEMRecipientInfo, kem, X509_ALGOR),
+        ASN1_SIMPLE(CMS_KEMRecipientInfo, kemct, ASN1_OCTET_STRING),
+        ASN1_SIMPLE(CMS_KEMRecipientInfo, kdf, X509_ALGOR),
+        ASN1_SIMPLE(CMS_KEMRecipientInfo, kekLength, ASN1_INTEGER),
+        ASN1_EXP_OPT(CMS_KEMRecipientInfo, ukm, ASN1_OCTET_STRING, 0),
+        ASN1_SIMPLE(CMS_KEMRecipientInfo, wrap, X509_ALGOR),
+        ASN1_SIMPLE(CMS_KEMRecipientInfo, encryptedKey, ASN1_OCTET_STRING)
+} ASN1_SEQUENCE_END_cb(CMS_KEMRecipientInfo, CMS_KEMRecipientInfo)
 
 /* Free up RecipientInfo additional data */
 static int cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
