@@ -55,7 +55,8 @@ static int x509_algor_from_nid_with_md(int nid, X509_ALGOR **palg,
     return *palg != NULL;
 }
 
-X509_ALGOR *ossl_cmp_kem_kdf_algor(const OSSL_CMP_CTX *ctx, int nid_kdf)
+X509_ALGOR *ossl_cmp_kem_kdf_algor(int nid_kdf, OSSL_LIB_CTX *libctx,
+                                   char *propq)
 {
     X509_ALGOR *alg = NULL;
 
@@ -65,11 +66,13 @@ X509_ALGOR *ossl_cmp_kem_kdf_algor(const OSSL_CMP_CTX *ctx, int nid_kdf)
     } else if (nid_kdf == NID_id_kdf_kdf2) {
         EVP_MD *md = NULL;
 
-        if ((md = EVP_MD_fetch(ctx->libctx, "SHA256",
-                               ctx->propq)) == NULL)
+        if ((md = EVP_MD_fetch(libctx, "SHA256",
+                               propq)) == NULL)
             return NULL;
         (void)x509_algor_from_nid_with_md(NID_id_kdf_kdf2, &alg, md);
         EVP_MD_free(md);
+    } else {
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_ALGORITHM);
     }
 
     return alg;
@@ -101,8 +104,9 @@ static int get_pknid(const EVP_PKEY *pkey)
     return pknid;
 }
 
-static X509_ALGOR *kem_algor(OSSL_CMP_CTX *ctx,
-                             const EVP_PKEY *pubkey)
+X509_ALGOR *ossl_cmp_kem_algor(const EVP_PKEY *pubkey,
+                               OSSL_LIB_CTX *libctx,
+                               char *propq)
 {
     X509_ALGOR *kem = NULL;
     int pknid = get_pknid(pubkey);
@@ -113,7 +117,7 @@ static X509_ALGOR *kem_algor(OSSL_CMP_CTX *ctx,
     switch (pknid) {
     case EVP_PKEY_RSA:
         /* kem rsa */
-        kem = ossl_cmp_rsakem_algor(ctx);
+        kem = ossl_cmp_rsakem_algor(libctx, propq);
         break;
     case EVP_PKEY_EC:
     case EVP_PKEY_X25519:
@@ -137,7 +141,9 @@ X509_ALGOR *ossl_cmp_kem_BasedMac_algor(const OSSL_CMP_CTX *ctx)
 
     if ((param = OSSL_CMP_KEMBMPARAMETER_new()) == NULL
         || !ossl_cmp_x509_algor_set0(&param->kdf,
-                                     ossl_cmp_kem_kdf_algor(ctx, ctx->kem_kdf))
+                                     ossl_cmp_kem_kdf_algor(ctx->kem_kdf,
+                                                            ctx->libctx,
+                                                            ctx->propq))
         || !ossl_cmp_x509_algor_set0(&param->mac, mac_algor(ctx))
         || !ASN1_INTEGER_set(param->len, ctx->kem_ssklen))
         goto err;
@@ -206,21 +212,22 @@ int ossl_cmp_kem_BasedMac_required(OSSL_CMP_CTX *ctx)
     return 0;
 }
 
-static int kem_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey, int is_EC,
+static int kem_decapsulation(EVP_PKEY *pkey, int is_EC,
                              const unsigned char *ct, size_t ct_len,
-                             unsigned char **secret, size_t *secret_len)
+                             unsigned char **secret, size_t *secret_len,
+                             OSSL_LIB_CTX *libctx, char *propq)
 {
     int ret = 0;
     EVP_PKEY_CTX *kem_decaps_ctx;
 
-    if (ctx == NULL || pkey == NULL
+    if (pkey == NULL
         || ct == NULL
         || secret == NULL || secret_len == NULL)
         return 0;
 
-    kem_decaps_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx,
+    kem_decaps_ctx = EVP_PKEY_CTX_new_from_pkey(libctx,
                                                 pkey,
-                                                ctx->propq);
+                                                propq);
 
     if (kem_decaps_ctx == NULL
         || EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0
@@ -248,9 +255,10 @@ static int kem_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey, int is_EC,
     return ret;
 }
 
-static int performKemDecapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
-                                   const unsigned char *ct, size_t ct_len,
-                                   unsigned char **secret, size_t *secret_len)
+int ossl_cmp_kem_performKemDecapsulation(EVP_PKEY *pkey,
+                                         const unsigned char *ct, size_t ct_len,
+                                         unsigned char **secret, size_t *secret_len,
+                                         OSSL_LIB_CTX *libctx, char *propq)
 {
     int pknid = get_pknid(pkey);
 
@@ -260,40 +268,41 @@ static int performKemDecapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
     if (pknid == EVP_PKEY_EC
         || pknid == EVP_PKEY_X25519
         || pknid == EVP_PKEY_X448) {
-        return kem_decapsulation(ctx, pkey, 1, ct, ct_len, secret, secret_len);
+        return kem_decapsulation(pkey, 1, ct, ct_len, secret, secret_len,
+                                 libctx, propq);
     } else if (pknid == EVP_PKEY_RSA) {
-        return ossl_cmp_kemrsa_decapsulation(ctx, pkey,
-                                             ct, ct_len, secret, secret_len);
+        return ossl_cmp_kemrsa_decapsulation(pkey,
+                                             ct, ct_len, secret, secret_len,
+                                             libctx, propq);
     } else {
-        return kem_decapsulation(ctx, pkey, 0, ct, ct_len, secret, secret_len);
+        return kem_decapsulation(pkey, 0, ct, ct_len, secret, secret_len,
+                                 libctx, propq);
     }
     return 0;
 }
 
-static int derive_ssk_HKDF(OSSL_CMP_CTX *ctx,
-                           unsigned char *key, int keylen,
-                           unsigned char *salt, int saltlen,
-                           unsigned char *info, int infolen,
-                           unsigned char **ssk, int *ssklen)
+int ossl_cmp_kem_derive_ssk_HKDF(unsigned char *key, int keylen,
+                                 unsigned char *salt, int saltlen,
+                                 unsigned char *info, int infolen,
+                                 unsigned char **ssk, int ssklen,
+                                 OSSL_LIB_CTX *libctx, char *propq)
 {
     EVP_KDF *kdf;
     EVP_KDF_CTX *kdfctx;
     OSSL_PARAM params[5], *p = params;
     int rv;
 
-    if (ctx == NULL || ssk == NULL || ssklen == NULL
-        || key == NULL || info == NULL)
+    if (ssk == NULL || key == NULL || info == NULL)
         return 0;
 
-    *ssklen = ctx->kem_ssklen;
-    *ssk = OPENSSL_zalloc(*ssklen);
+    *ssk = OPENSSL_zalloc(ssklen);
     if (*ssk == NULL
-        || (kdf = EVP_KDF_fetch(ctx->libctx, "HKDF", ctx->propq)) == NULL)
+        || (kdf = EVP_KDF_fetch(libctx, "HKDF", propq)) == NULL)
         return 0;
 
     kdfctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
-    if (ctx == NULL)
+    if (kdfctx == NULL)
         return 0;
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
@@ -308,8 +317,13 @@ static int derive_ssk_HKDF(OSSL_CMP_CTX *ctx,
                                                  saltlen);
 
     *p = OSSL_PARAM_construct_end();
-    rv = EVP_KDF_derive(kdfctx, *ssk, *ssklen, params);
+    rv = EVP_KDF_derive(kdfctx, *ssk, ssklen, params);
     EVP_KDF_CTX_free(kdfctx);
+
+    print_buf("\nKEY", key, keylen);
+    print_buf("\ninfo", info, infolen);
+    print_buf("\nssk", *ssk, ssklen);
+
     return rv;
 }
 
@@ -324,9 +338,15 @@ int ossl_cmp_kem_derivessk(OSSL_CMP_CTX *ctx,
         return 0;
     }
 
-    derive_ssk_HKDF(ctx, secret, secret_len,
-                    salt, sizeof(salt), info, info_len,
-                    out, len);
+    /*
+     * TODO: extend key derivation for other KDFs,
+     * as of now HKDFwith SHA256 is only supported.
+     */
+    ossl_cmp_kem_derive_ssk_HKDF(secret, secret_len,
+                                 salt, sizeof(salt), info, info_len,
+                                 out, ctx->kem_ssklen,
+                                 ctx->libctx, ctx->propq);
+    *len = ctx->kem_ssklen;
     print_buf("\nsecret", secret, secret_len);
     print_buf("\ninfo", info, info_len);
     print_buf("\nssk", *out, *len);
@@ -356,10 +376,11 @@ int ossl_cmp_kem_derivessk_using_kemctinfo(OSSL_CMP_CTX *ctx,
     if (!ossl_cmp_ctx_set1_kem_ct(ctx, ct))
         return 0;
 
-    if (!performKemDecapsulation(ctx, pkey,
-                                 ASN1_STRING_get0_data(ct),
-                                 ASN1_STRING_length(ct),
-                                 &secret, &secret_len))
+    if (!ossl_cmp_kem_performKemDecapsulation(pkey,
+                                              ASN1_STRING_get0_data(ct),
+                                              ASN1_STRING_length(ct),
+                                              &secret, &secret_len,
+                                              ctx->libctx, ctx->propq))
         goto err;
 
     if (!ossl_cmp_kem_derivessk(ctx, secret, secret_len, &ssk, &ssk_len))
@@ -400,23 +421,23 @@ int OSSL_CMP_get_ssk(OSSL_CMP_CTX *ctx)
     return ret;
 }
 
-static int kem_encapsulation(OSSL_CMP_CTX *ctx,
-                             const EVP_PKEY *pubkey,
+static int kem_encapsulation(const EVP_PKEY *pubkey,
                              int is_EC,
                              size_t *secret_len, unsigned char **secret,
-                             size_t *ct_len, unsigned char **ct)
+                             size_t *ct_len, unsigned char **ct,
+                             OSSL_LIB_CTX *libctx, char *propq)
 {
     int ret = 0;
     EVP_PKEY_CTX *kem_encaps_ctx = NULL;
 
-    if (ctx == NULL || pubkey == NULL
+    if (pubkey == NULL
         || ct == NULL
         || secret == NULL || secret_len == NULL)
         return 0;
 
-    kem_encaps_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx,
+    kem_encaps_ctx = EVP_PKEY_CTX_new_from_pkey(libctx,
                                                 (EVP_PKEY *)pubkey,
-                                                ctx->propq);
+                                                propq);
 
     if (kem_encaps_ctx == NULL
         || EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0
@@ -450,10 +471,11 @@ static int kem_encapsulation(OSSL_CMP_CTX *ctx,
     return ret;
 }
 
-static int performKemEncapsulation(OSSL_CMP_CTX *ctx,
-                                   const EVP_PKEY *pubkey,
-                                   size_t *secret_len, unsigned char **secret,
-                                   size_t *ct_len, unsigned char **ct)
+int ossl_cmp_kem_performKemEncapsulation(const EVP_PKEY *pubkey,
+                                         size_t *secret_len,
+                                         unsigned char **secret,
+                                         size_t *ct_len, unsigned char **ct,
+                                         OSSL_LIB_CTX *libctx, char *propq)
 {
     int pknid;
 
@@ -469,14 +491,17 @@ static int performKemEncapsulation(OSSL_CMP_CTX *ctx,
     if (pknid == EVP_PKEY_EC
         || pknid == EVP_PKEY_X25519
         || pknid == EVP_PKEY_X448) {
-        return kem_encapsulation(ctx, pubkey, 1, secret_len,
-                                 secret, ct_len, ct);
+        return kem_encapsulation(pubkey, 1, secret_len,
+                                 secret, ct_len, ct,
+                                 libctx, propq);
     } else if (pknid == EVP_PKEY_RSA) {
-        return ossl_cmp_kemrsa_encapsulation(ctx, pubkey, secret_len,
-                                             secret, ct_len, ct);
+        return ossl_cmp_kemrsa_encapsulation(pubkey, secret_len,
+                                             secret, ct_len, ct,
+                                             libctx, propq);
     } else {
-        return kem_encapsulation(ctx, pubkey, 0, secret_len,
-                                 secret, ct_len, ct);
+        return kem_encapsulation(pubkey, 0, secret_len,
+                                 secret, ct_len, ct,
+                                 libctx, propq);
     }
 }
 
@@ -492,8 +517,10 @@ OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
     if (ctx == NULL || pubkey == NULL)
         return NULL;
 
-    if (!performKemEncapsulation(ctx, pubkey, &secret_len, &secret,
-                                 &ct_len, &ct))
+    if (!ossl_cmp_kem_performKemEncapsulation(pubkey,
+                                              &secret_len, &secret,
+                                              &ct_len, &ct,
+                                              ctx->libctx, ctx->propq))
         return NULL;
 
     if (!ossl_cmp_ctx_set1_kem_secret(ctx, secret, secret_len))
@@ -503,7 +530,7 @@ OSSL_CMP_ITAV *ossl_cmp_kem_get_KemCiphertext(OSSL_CMP_CTX *ctx,
     if (!ossl_cmp_ctx_set1_kem_ct(ctx, asn1ct))
         goto err;
 
-    kem_algo = kem_algor(ctx, pubkey);
+    kem_algo = ossl_cmp_kem_algor(pubkey, ctx->libctx, ctx->propq);
     kem_itav = ossl_cmp_itav_new_KemCiphertext(kem_algo,
                                                ct, ct_len);
     if (kem_itav == NULL)

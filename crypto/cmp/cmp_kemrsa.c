@@ -17,10 +17,22 @@
 
 #define RSAKEM_KEYLENGTH 32
 
+static void print_buf(const char *title, const unsigned char *buf,
+                      size_t buf_len)
+{
+    size_t i = 0;
+
+    fprintf(stdout, "%s , len %ld\n", title, buf_len);
+    for (i = 0; i < buf_len; ++i)
+        fprintf(stdout, "%02X%s", buf[i],
+                (i + 1) % 16 == 0 ? "\r\n" : " ");
+
+}
+
 /* using X963KDF without info */
-static int kdf2(OSSL_CMP_CTX *ctx,
-                unsigned char *secret, size_t secret_len,
-                unsigned char *out, int out_len)
+static int kdf2(unsigned char *secret, size_t secret_len,
+                unsigned char *out, int out_len,
+                OSSL_LIB_CTX *libctx, char *propq)
 {
     EVP_KDF *kdf;
     EVP_KDF_CTX *kctx;
@@ -29,7 +41,7 @@ static int kdf2(OSSL_CMP_CTX *ctx,
     if (out == NULL)
         return 0;
 
-    kdf = EVP_KDF_fetch(ctx->libctx, "X963KDF", ctx->propq);
+    kdf = EVP_KDF_fetch(libctx, "X963KDF", propq);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
 
@@ -45,7 +57,7 @@ static int kdf2(OSSL_CMP_CTX *ctx,
     return 1;
 }
 
-X509_ALGOR *ossl_cmp_rsakem_algor(OSSL_CMP_CTX *ctx)
+X509_ALGOR *ossl_cmp_rsakem_algor(OSSL_LIB_CTX *libctx, char *propq)
 {
     X509_ALGOR *kemrsa_algo = NULL;
     OSSL_CMP_RSAKEMPARAMETERS *param = NULL;
@@ -53,8 +65,9 @@ X509_ALGOR *ossl_cmp_rsakem_algor(OSSL_CMP_CTX *ctx)
 
     if ((param = OSSL_CMP_RSAKEMPARAMETERS_new()) == NULL
         || !ossl_cmp_x509_algor_set0(&param->KeyDerivationFunction,
-                                     ossl_cmp_kem_kdf_algor(ctx,
-                                                            NID_id_kdf_kdf2))
+                                     ossl_cmp_kem_kdf_algor(NID_id_kdf_kdf2,
+                                                            libctx,
+                                                            propq))
         || !ASN1_INTEGER_set(param->KeyLength, RSAKEM_KEYLENGTH))
         goto err;
 
@@ -72,16 +85,17 @@ X509_ALGOR *ossl_cmp_rsakem_algor(OSSL_CMP_CTX *ctx)
     return kemrsa_algo;
 }
 
-int ossl_cmp_kemrsa_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
+int ossl_cmp_kemrsa_decapsulation(EVP_PKEY *pkey,
                                   const unsigned char *ct, size_t ct_len,
-                                  unsigned char **secret, size_t *secret_len)
+                                  unsigned char **secret, size_t *secret_len,
+                                  OSSL_LIB_CTX *libctx, char *propq)
 {
     int ret = 0;
     size_t sec_len;
     unsigned char *sec;
     EVP_PKEY_CTX *kem_decaps_ctx;
 
-    if (ctx == NULL || pkey == NULL
+    if (pkey == NULL
         || ct == NULL
         || secret == NULL || secret_len == NULL)
         return 0;
@@ -89,9 +103,9 @@ int ossl_cmp_kemrsa_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
     if (EVP_PKEY_get_base_id(pkey) != EVP_PKEY_RSA)
         return 0;
 
-    kem_decaps_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx,
+    kem_decaps_ctx = EVP_PKEY_CTX_new_from_pkey(libctx,
                                                 pkey,
-                                                ctx->propq);
+                                                propq);
 
     if (kem_decaps_ctx == NULL
         || EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0
@@ -119,29 +133,33 @@ int ossl_cmp_kemrsa_decapsulation(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey,
         goto err;
     }
 
-    if (!kdf2(ctx, sec, sec_len, *secret, *secret_len)) {
+    if (!kdf2(sec, sec_len, *secret, *secret_len, libctx, propq)) {
         OPENSSL_clear_free(sec, sec_len);
         OPENSSL_clear_free(*secret, *secret_len);
         goto err;
     }
     OPENSSL_clear_free(sec, sec_len);
+
+    print_buf("\nct", ct, ct_len);
+    print_buf("\nsecret", *secret, *secret_len);
+
     ret = 1;
  err:
     EVP_PKEY_CTX_free(kem_decaps_ctx);
     return ret;
 }
 
-int ossl_cmp_kemrsa_encapsulation(OSSL_CMP_CTX *ctx,
-                                  const EVP_PKEY *pubkey,
+int ossl_cmp_kemrsa_encapsulation(const EVP_PKEY *pubkey,
                                   size_t *secret_len, unsigned char **secret,
-                                  size_t *ct_len, unsigned char **ct)
+                                  size_t *ct_len, unsigned char **ct,
+                                  OSSL_LIB_CTX *libctx, char *propq)
 {
     int ret = 0;
     size_t sec_len;
     unsigned char *sec;
     EVP_PKEY_CTX *kem_encaps_ctx;
 
-    if (ctx == NULL || pubkey == NULL
+    if (pubkey == NULL
         || ct == NULL
         || secret == NULL || secret_len == NULL)
         return 0;
@@ -149,9 +167,9 @@ int ossl_cmp_kemrsa_encapsulation(OSSL_CMP_CTX *ctx,
     if (EVP_PKEY_get_base_id(pubkey) != EVP_PKEY_RSA)
         return 0;
 
-    kem_encaps_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx,
+    kem_encaps_ctx = EVP_PKEY_CTX_new_from_pkey(libctx,
                                                 (EVP_PKEY *)pubkey,
-                                                ctx->propq);
+                                                propq);
 
     if (kem_encaps_ctx == NULL
         || EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0
@@ -185,13 +203,16 @@ int ossl_cmp_kemrsa_encapsulation(OSSL_CMP_CTX *ctx,
         goto err;
     }
 
-    if (!kdf2(ctx, sec, sec_len, *secret, *secret_len)) {
+    if (!kdf2(sec, sec_len, *secret, *secret_len, libctx, propq)) {
         OPENSSL_clear_free(sec, sec_len);
         OPENSSL_clear_free(*secret, *secret_len);
         OPENSSL_clear_free(*ct, *ct_len);
         goto err;
     }
     OPENSSL_clear_free(sec, sec_len);
+
+    print_buf("\nct", *ct, *ct_len);
+    print_buf("\nsecret", *secret, *secret_len);
     ret = 1;
  err:
     EVP_PKEY_CTX_free(kem_encaps_ctx);
