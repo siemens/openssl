@@ -406,7 +406,7 @@ static int cms_RecipientInfo_kemri_init(CMS_RecipientInfo *ri, X509 *recip,
                                      ossl_cmp_kem_algor(pk, ctx->libctx,
                                                         ctx->propq))
         || !ossl_cmp_x509_algor_set0(&kemri->kdf,
-                                     ossl_cmp_kem_kdf_algor(NID_hkdfWithSHA256,
+                                     ossl_cmp_kem_kdf_algor(NID_shake256,
                                                             ctx->libctx,
                                                             ctx->propq))
         || !ASN1_INTEGER_set(kemri->kekLength, 32)) /* hard code for testing*/
@@ -420,7 +420,7 @@ static int cms_RecipientInfo_kemri_init(CMS_RecipientInfo *ri, X509 *recip,
     if (!cms_ORIforKEMOtherInfo_new(kemri, &info, &infolen))
         goto err;
 
-    if (!ossl_cmp_kem_derive_ssk_HKDF(ss, sslen, NULL, 0, info, infolen,
+    if (!ossl_cmp_kem_derive_ssk_SHAKE256(ss, sslen, NULL, 0, info, infolen,
                                      &kemri->secret, kemri->secret_len,
                                      ctx->libctx, ctx->propq))
         goto err;
