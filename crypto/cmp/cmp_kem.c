@@ -71,6 +71,8 @@ X509_ALGOR *ossl_cmp_kem_kdf_algor(int nid_kdf, OSSL_LIB_CTX *libctx,
             return NULL;
         (void)x509_algor_from_nid_with_md(NID_id_kdf_kdf2, &alg, md);
         EVP_MD_free(md);
+    } else if (nid_kdf == NID_shake256) {
+        alg = ossl_X509_ALGOR_from_nid(NID_shake256, V_ASN1_UNDEF, NULL);
     } else {
         ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_ALGORITHM);
     }
@@ -279,6 +281,47 @@ int ossl_cmp_kem_performKemDecapsulation(EVP_PKEY *pkey,
                                  libctx, propq);
     }
     return 0;
+}
+
+int ossl_cmp_kem_derive_ssk_SHAKE256(unsigned char *key, int keylen,
+                                     unsigned char *salt, int saltlen,
+                                     unsigned char *info, int infolen,
+                                     unsigned char **ssk, int ssklen,
+                                     OSSL_LIB_CTX *libctx, char *propq)
+{
+    EVP_MD_CTX *hashctx = NULL;
+    EVP_MD *shake256 = NULL;
+    int ret = 0;
+
+    if (ssk == NULL || key == NULL)
+        return 0;
+
+    *ssk = OPENSSL_zalloc(ssklen);
+    hashctx = EVP_MD_CTX_new();
+    shake256 = EVP_MD_fetch(libctx, "SHAKE256", propq);
+    if (*ssk == NULL || hashctx == NULL || shake256 == NULL)
+        goto err;
+
+    if (!EVP_DigestInit_ex(hashctx, shake256, NULL)
+            || !EVP_DigestUpdate(hashctx, key, keylen)
+            || !EVP_DigestUpdate(hashctx, salt, saltlen)
+            || !EVP_DigestUpdate(hashctx, info, infolen)
+            || !EVP_DigestFinalXOF(hashctx, *ssk, ssklen))
+        goto err;
+
+    ret = 1;
+ err:
+    if (!ret)
+        OPENSSL_clear_free(*ssk, ssklen);
+    EVP_MD_CTX_free(hashctx);
+    EVP_MD_free(shake256);
+
+    printf("\n SHAKE256 ");
+    print_buf("\nKEY", key, keylen);
+    print_buf("\ninfo", info, infolen);
+    print_buf("\nssk", *ssk, ssklen);
+
+    return ret;
 }
 
 int ossl_cmp_kem_derive_ssk_HKDF(unsigned char *key, int keylen,

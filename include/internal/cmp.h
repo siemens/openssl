@@ -40,5 +40,10 @@ int ossl_cmp_kem_derive_ssk_HKDF(unsigned char *key, int keylen,
                                  unsigned char *info, int infolen,
                                  unsigned char **ssk, int ssklen,
                                  OSSL_LIB_CTX *libctx, char *propq);
+int ossl_cmp_kem_derive_ssk_SHAKE256(unsigned char *key, int keylen,
+                                     unsigned char *salt, int saltlen,
+                                     unsigned char *info, int infolen,
+                                     unsigned char **ssk, int ssklen,
+                                     OSSL_LIB_CTX *libctx, char *propq);
 
 #endif
