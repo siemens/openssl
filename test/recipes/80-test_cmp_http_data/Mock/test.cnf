@@ -6,7 +6,7 @@ trusted = trusted.crt
 newkey = new.key
 newkeypass =
 cmd = ir
-out_trusted = root.crt
+out_trusted = ENROLL_Root.pem
 #certout = test.cert.pem
 policies = certificatePolicies
 #policy_oids = 1.2.3.4
@@ -26,7 +26,7 @@ server_path = pkix/
 path = $server_path
 ca_dn = /CN=Root CA
 recipient = $ca_dn
-server_dn = /CN=server.example
+server_dn = /C=DE/O=Siemens/OU=TestDepartment/CN=CMP_LRA_DOWNSTREAM_ENDENTITY
 expect_sender = $server_dn
 subject = "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=leaf"
 newkey = signer.key
