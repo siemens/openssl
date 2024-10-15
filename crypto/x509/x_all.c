@@ -107,6 +107,14 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
             && !X509_set_version(x, X509_VERSION_3))
         return 0;
     x->cert_info.enc.modified = 1;
+    if (ctx == NULL) {
+        ASN1_OBJECT *oid = OBJ_nid2obj(NID_id_alg_noSignature);
+
+        /* TODO alg parameters MUST be present and MUST be encoded as NULL */
+        return X509_ALGOR_set0(&x->cert_info.signature, oid, V_ASN1_UNDEF, NULL)
+            && X509_ALGOR_set0(&x->sig_alg, oid, V_ASN1_UNDEF, NULL)
+            && ASN1_BIT_STRING_set(&x->signature, NULL, 0);
+    }
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
                               &x->cert_info.signature,
                               &x->sig_alg, &x->signature, &x->cert_info, ctx);

@@ -43,7 +43,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_KEYFORM, OPT_REQ, OPT_CAFORM,
     OPT_CAKEYFORM, OPT_VFYOPT, OPT_SIGOPT, OPT_DAYS, OPT_PASSIN, OPT_EXTFILE,
-    OPT_EXTENSIONS, OPT_IN, OPT_OUT, OPT_KEY, OPT_SIGNKEY, OPT_CA, OPT_CAKEY,
+    OPT_EXTENSIONS, OPT_IN, OPT_OUT, OPT_KEY, OPT_SIGNKEY, OPT_NOSIG, OPT_CA, OPT_CAKEY,
     OPT_CASERIAL, OPT_SET_SERIAL, OPT_NEW, OPT_FORCE_PUBKEY, OPT_ISSU, OPT_SUBJ,
     OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_CERTOPT, OPT_DATEOPT, OPT_NAMEOPT,
     OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
@@ -78,6 +78,8 @@ const OPTIONS x509_options[] = {
      "Key for signing, and to include unless using -force_pubkey"},
     {"signkey", OPT_SIGNKEY, 's',
      "Same as -key"},
+    {"nosig", OPT_NOSIG, '-',
+     "Do not sign but use pseudo algorithm 'noSignature'"},
     {"keyform", OPT_KEYFORM, 'E',
      "Key input format (ENGINE, other values ignored)"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -292,7 +294,7 @@ int x509_main(int argc, char **argv)
     int fingerprint = 0, reqfile = 0, checkend = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
-    int noout = 0, CA_createserial = 0, email = 0;
+    int nosig = 0, noout = 0, CA_createserial = 0, email = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
     int ret = 1, i, j, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
@@ -415,6 +417,9 @@ int x509_main(int argc, char **argv)
         case OPT_KEY:
         case OPT_SIGNKEY:
             privkeyfile = opt_arg();
+            break;
+        case OPT_NOSIG:
+            nosig = 1;
             break;
         case OPT_CA:
             CAfile = opt_arg();
@@ -665,6 +670,10 @@ int x509_main(int argc, char **argv)
                                   "explicitly set public key")) == NULL)
             goto end;
     }
+    if (nosig && badsig) {
+        BIO_printf(bio_err, "Cannot use both -nosig and -basig options\n");
+        goto err;
+    }
 
     if (newcert) {
         if (subj == NULL) {
@@ -762,10 +771,10 @@ int x509_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "Warning: ignoring -preserve_dates option with -req or -new\n");
         preserve_dates = 0;
-        if (privkeyfile == NULL && CAkeyfile == NULL) {
+        if (privkeyfile == NULL && CAkeyfile == NULL && !nosig) {
             BIO_printf(bio_err,
                        "We need a private key to sign with, use -key or -CAkey or -CA with private key\n");
-            goto err;
+            goto end;
         }
         if ((x = X509_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
             goto end;
@@ -939,7 +948,7 @@ int x509_main(int argc, char **argv)
 
         if (!do_X509_sign(x, 0, CAkey, digest, sigopts, &ext_ctx))
             goto end;
-    } else if (privkey != NULL) {
+    } else if (privkey != NULL || nosig) {
         if (!do_X509_sign(x, 0, privkey, digest, sigopts, &ext_ctx))
             goto end;
     }

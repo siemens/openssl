@@ -2335,7 +2335,7 @@ int do_X509_sign(X509 *cert, int force_v1, EVP_PKEY *pkey, const char *md,
                  STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx)
 {
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-    int self_sign;
+    int add_default;
     int rv = 0;
 
     if (!force_v1) {
@@ -2350,13 +2350,17 @@ int do_X509_sign(X509 *cert, int force_v1, EVP_PKEY *pkey, const char *md,
         if (!adapt_keyid_ext(cert, ext_ctx, "subjectKeyIdentifier", "hash", 1))
             goto end;
         /* Prevent X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER */
-        self_sign = cert_matches_key(cert, pkey);
+        add_default = pkey != NULL && !cert_matches_key(cert, pkey);
         if (!adapt_keyid_ext(cert, ext_ctx, "authorityKeyIdentifier",
-                             "keyid, issuer", !self_sign))
+                             "keyid, issuer", add_default))
             goto end;
     }
     /* May add further measures for ensuring RFC 5280 compliance, see #19805 */
 
+    if (pkey == NULL) {
+        rv = X509_sign_ctx(cert, NULL);
+        goto end;
+    }
     if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_sign_ctx(cert, mctx) > 0);
  end:
