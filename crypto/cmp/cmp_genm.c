@@ -439,3 +439,48 @@ int OSSL_CMP_get1_certReqTemplate(OSSL_CMP_CTX *ctx,
     OSSL_CMP_ITAV_free(itav);
     return res;
 }
+
+static int set_remote_attestation_Nonce(OSSL_CMP_CTX *ctx,
+                                        OSSL_CMP_ITAV *nonce_itav)
+{
+    ASN1_OCTET_STRING *nonce;
+    int ret = 0;
+
+    if (ctx == NULL || nonce_itav == NULL)
+        goto err;
+
+    if (NID_id_smime_aa_nonce !=
+        OBJ_obj2nid(OSSL_CMP_ITAV_get0_type(nonce_itav)))
+        goto err;
+
+    nonce = nonce_itav->infoValue.RemoteAttestationNonce;
+    if (!ossl_cmp_ctx_set1_rats_nonce(ctx, nonce))
+        goto err;
+
+    ret = 1;
+ err:
+    OSSL_CMP_ITAV_free(nonce_itav);
+    return ret;
+}
+
+int ossl_cmp_get_nonce(OSSL_CMP_CTX *ctx)
+{
+    OSSL_CMP_ITAV *req, *itav;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if ((req = OSSL_CMP_ITAV_create(OBJ_nid2obj(NID_id_smime_aa_nonce),
+                                    NULL)) == NULL)
+        return 0;
+    if ((itav = get_genm_itav(ctx, req, NID_id_smime_aa_nonce,
+                                       "aa-nonce")) == NULL)
+        return 0;
+
+    if (!set_remote_attestation_Nonce(ctx, itav))
+        return 0;
+
+    return 1;
+}
+

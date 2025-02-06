@@ -22,6 +22,9 @@
 #include <openssl/pem.h>
 #include <openssl/bio.h>
 #include <internal/cms.h>
+#if 0
+#include <libatg.h>
+#endif
 
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -271,6 +274,79 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx, int for_KUR,
     return NULL;
 }
 
+#define EVIDENCE_LEN 2000
+static X509_EXTENSIONS *getattestationExt(OSSL_CMP_CTX *ctx)
+{
+    X509_EXTENSIONS *exts = NULL;
+    X509_EXTENSION *ext = NULL;
+    unsigned char *der_data = NULL, *evidence = NULL;
+    int der_len = 0, ret = 0;
+    long unsigned int len = EVIDENCE_LEN;
+    ASN1_OCTET_STRING oct;
+
+#if 0
+    fprintf(stdout, "generate_evidence_string");
+    evidence = OPENSSL_malloc(EVIDENCE_LEN);
+    if (evidence == NULL)
+        return NULL;
+    //generate_evidence_string(&evidence, &len);
+    ret = get_attestation_token(ctx->rats_nonce->data, ctx->rats_nonce->length,
+                                evidence, EVIDENCE_LEN, &len,
+                                NULL, NULL);
+#else
+    /* TODO: get evidence from library */
+    evidence = OPENSSL_malloc(EVIDENCE_LEN);
+    if (evidence == NULL)
+        return NULL;
+    memset(evidence, 0xAA, EVIDENCE_LEN);
+#endif
+
+    oct.data = evidence;
+    oct.length = len;
+    oct.flags = 0;
+
+    der_len = i2d_ASN1_OCTET_STRING(&oct, &der_data);
+    if (der_len < 0) {
+        goto err;
+    }
+
+    oct.data = der_data;
+    oct.length = der_len;
+    oct.flags = 0;
+
+    ext = X509_EXTENSION_create_by_NID(NULL, NID_id_smime_aa_evidenceStatement,
+                                       0, &oct);
+    if (ext == NULL
+        || (exts = sk_X509_EXTENSION_new_null()) == NULL
+        || !sk_X509_EXTENSION_push(exts, ext))
+        goto err;
+    ret = 1;
+
+ err:
+    OPENSSL_free(evidence);
+    OPENSSL_free(der_data);
+    if (ret == 0) {
+        X509_EXTENSION_free(ext);
+        sk_X509_EXTENSION_free(exts);
+        exts = NULL;
+    }
+    return exts;
+}
+
+static int add_rats_extensions(OSSL_CMP_CTX *ctx, X509_EXTENSIONS **exts)
+{
+    int ret = 0;
+    X509_EXTENSIONS *rats_exts;
+
+    if (exts == NULL)
+        return 0;
+    if ((rats_exts = getattestationExt(ctx)) != NULL) {
+        ret = X509v3_add_extensions(exts, rats_exts) != NULL;
+        sk_X509_EXTENSION_pop_free(rats_exts, X509_EXTENSION_free);
+    }
+    return ret;
+}
+
 OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
 {
     OSSL_CRMF_MSG *crm = NULL;
@@ -347,6 +423,9 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
     if (sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0
             && !add1_extension(&exts, NID_subject_alt_name,
                                crit, ctx->subjectAltNames))
+        goto err;
+    if (ctx->rats_status
+        && !add_rats_extensions(ctx, &exts))
         goto err;
     if (ctx->policies != NULL
             && !add1_extension(&exts, NID_certificate_policies,

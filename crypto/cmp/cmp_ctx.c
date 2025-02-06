@@ -248,6 +248,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     OSSL_STACK_OF_X509_free(ctx->newChain);
     OSSL_STACK_OF_X509_free(ctx->caPubs);
     OSSL_STACK_OF_X509_free(ctx->extraCertsIn);
+    ASN1_OCTET_STRING_free(ctx->rats_nonce);
 
     OPENSSL_free(ctx);
 }
@@ -819,6 +820,9 @@ DEFINE_set1_ASN1_OCTET_STRING(OSSL_CMP_CTX, senderNonce)
 /* store the first req sender nonce for verifying delayed delivery */
 DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, first_senderNonce)
 
+/* Set the nonce to be used in attestation evidence */
+DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, rats_nonce)
+
 /* Set the proxy server to use for HTTP(S) connections */
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
 
@@ -972,6 +976,9 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
             return 0;
         }
         ctx->revocationReason = val;
+        break;
+    case OSSL_CMP_OPT_INIT_RATS:
+        ctx->rats_status = val;
         break;
     default:
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_OPTION);

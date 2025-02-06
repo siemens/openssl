@@ -128,7 +128,10 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.crlStatusList,
                                    OSSL_CMP_CRLSTATUS)),
     ADB_ENTRY(NID_id_it_crls,
-              ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.crls, X509_CRL))
+              ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.crls, X509_CRL)),
+    ADB_ENTRY(NID_id_smime_aa_nonce,
+              ASN1_OPT(OSSL_CMP_ITAV, infoValue.RemoteAttestationNonce,
+                       ASN1_OCTET_STRING))
 } ASN1_ADB_END(OSSL_CMP_ITAV, 0, infoType, 0,
                &infotypeandvalue_default_tt, NULL);
 
@@ -471,6 +474,29 @@ int OSSL_CMP_ITAV_get1_certReqTemplate(const OSSL_CMP_ITAV *itav,
     if (keySpec != NULL)
         *keySpec = NULL;
     return 0;
+}
+
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_ratsnonce(const unsigned char *nonce, int len)
+{
+    OSSL_CMP_ITAV *itav;
+
+    if (nonce == NULL || len <= 0)
+        return NULL;
+
+    itav = OSSL_CMP_ITAV_new();
+    if (itav == NULL)
+        return NULL;
+
+    if (!ossl_cmp_asn1_octet_string_set1_bytes(&(itav->infoValue.
+                                                 RemoteAttestationNonce),
+                                               nonce, len))
+        goto err;
+    itav->infoType = OBJ_nid2obj(NID_id_smime_aa_nonce);
+    return itav;
+
+ err:
+    OSSL_CMP_ITAV_free(itav);
+    return NULL;
 }
 
 OSSL_CMP_ATAV *OSSL_CMP_ATAV_create(ASN1_OBJECT *type, ASN1_TYPE *value)

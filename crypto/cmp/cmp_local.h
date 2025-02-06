@@ -119,6 +119,8 @@ struct ossl_cmp_ctx_st {
     int popoMethod; /* Proof-of-possession mechanism; default: signature */
     X509 *oldCert; /* cert to be updated (via KUR) or to be revoked (via RR) */
     X509_REQ *p10CSR; /* for P10CR: PKCS#10 CSR to be sent */
+    int rats_status; /* Remote attestation procedures (RATS) status */
+    ASN1_OCTET_STRING *rats_nonce; /* RATS nonce for generating evidence */
 
     /* misc body contents */
     int revocationReason; /* revocation reason code to be included in RR */
@@ -300,6 +302,7 @@ struct ossl_cmp_itav_st {
         STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList;
         /* NID_id_it_crls - Certificate Status Lists */
         STACK_OF(X509_CRL) *crls;
+        ASN1_OCTET_STRING *RemoteAttestationNonce;
 
         /* this is to be used for so far undeclared objects */
         ASN1_TYPE *other;
@@ -875,6 +878,8 @@ int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
 EVP_PKEY *ossl_cmp_ctx_get0_newPubkey(const OSSL_CMP_CTX *ctx);
 int ossl_cmp_ctx_set1_first_senderNonce(OSSL_CMP_CTX *ctx,
                                         const ASN1_OCTET_STRING *nonce);
+int ossl_cmp_ctx_set1_rats_nonce(OSSL_CMP_CTX *ctx, const ASN1_OCTET_STRING *ct);
+int ossl_cmp_get_nonce(OSSL_CMP_CTX *ctx);
 
 /* from cmp_status.c */
 int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si);

@@ -878,6 +878,11 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
         return NULL;
     }
 
+    if (ctx->rats_status) {
+        if (!ossl_cmp_get_nonce(ctx))
+            goto err;
+    }
+
     if (!initial_certreq(ctx, req_type, crm, &rep, rep_type))
         goto err;
 
