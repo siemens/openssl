@@ -24,6 +24,7 @@
  * CMP reason codes.
  */
 #  define CMP_R_ALGORITHM_NOT_SUPPORTED                    139
+#  define CMP_R_APPLICATION_CALLBACK_FAILED                206
 #  define CMP_R_BAD_CHECKAFTER_IN_POLLREP                  167
 #  define CMP_R_BAD_REQUEST_ID                             108
 #  define CMP_R_CERTHASH_UNMATCHED                         156

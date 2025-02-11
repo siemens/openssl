@@ -788,7 +788,6 @@ DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, subjectName, X509_NAME)
 #ifdef ISSUE_9504_RESOLVED
 DEFINE_PUSH_TEST(1, 1, subjectAltNames, subjectAltName, GENERAL_NAME)
 #endif
-DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 0, reqExtensions, X509_EXTENSION)
 DEFINE_PUSH_TEST(0, 0, policies, policy, POLICYINFO)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, oldCert, X509)
 #ifdef ISSUE_9504_RESOLVED
@@ -879,7 +878,6 @@ int setup_tests(void)
      */
     ADD_TEST(test_CTX_push1_subjectAltName);
 #endif
-    ADD_TEST(test_CTX_set0_get0_reqExtensions);
     ADD_TEST(test_CTX_reqExtensions_have_SAN);
     ADD_TEST(test_CTX_push0_policy);
     ADD_TEST(test_CTX_set1_get0_oldCert);

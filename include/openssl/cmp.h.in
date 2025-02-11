@@ -369,6 +369,7 @@ int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb);
 #  define OSSL_CMP_CTX_set_log_verbosity(ctx, level) \
     OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_LOG_VERBOSITY, level)
 void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx);
+ASN1_OCTET_STRING *OSSL_CMP_CTX_get0_rats_nonce(const OSSL_CMP_CTX *ctx);
 /* message transfer: */
 int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path);
 int OSSL_CMP_CTX_set1_server(OSSL_CMP_CTX *ctx, const char *address);
@@ -419,6 +420,7 @@ int OSSL_CMP_CTX_set1_serialNumber(OSSL_CMP_CTX *ctx, const ASN1_INTEGER *sn);
 int OSSL_CMP_CTX_set1_subjectName(OSSL_CMP_CTX *ctx, const X509_NAME *name);
 int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
                                       const GENERAL_NAME *name);
+X509_EXTENSIONS *OSSL_CMP_CTX_get0_reqExtensions(const OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_set0_reqExtensions(OSSL_CMP_CTX *ctx, X509_EXTENSIONS *exts);
 int OSSL_CMP_CTX_reqExtensions_have_SAN(OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_push0_policy(OSSL_CMP_CTX *ctx, POLICYINFO *pinfo);
@@ -434,6 +436,12 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
 int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_certConf_cb_t cb);
 int OSSL_CMP_CTX_set_certConf_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
 void *OSSL_CMP_CTX_get_certConf_cb_arg(const OSSL_CMP_CTX *ctx);
+/* applicaiton callback */
+typedef int (*OSSL_CMP_app_cb_t) (OSSL_CMP_CTX *ctx, const void *app_cb_arg);
+int OSSL_CMP_app_cb(OSSL_CMP_CTX *ctx, const void *app_cb_arg);
+int OSSL_CMP_CTX_set_app_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_app_cb_t cb);
+int OSSL_CMP_CTX_set_app_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
+void *OSSL_CMP_CTX_get_app_cb_arg(const OSSL_CMP_CTX *ctx);
 /* result fetching: */
 int OSSL_CMP_CTX_get_status(const OSSL_CMP_CTX *ctx);
 OSSL_CMP_PKIFREETEXT *OSSL_CMP_CTX_get0_statusString(const OSSL_CMP_CTX *ctx);

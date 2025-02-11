@@ -481,7 +481,6 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
         || ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) < 0;
 }
 
-
 #define RATS_NONCE_LEN 32
 static OSSL_CMP_ITAV *dummy_rats_nonce(void)
 {

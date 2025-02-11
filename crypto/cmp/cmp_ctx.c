@@ -630,6 +630,7 @@ DEFINE_OSSL_CMP_CTX_set1(serialNumber, ASN1_INTEGER)
  */
 DEFINE_OSSL_CMP_CTX_set1(subjectName, X509_NAME)
 
+DEFINE_OSSL_CMP_CTX_get0(reqExtensions, X509_EXTENSIONS)
 /* Set the X.509v3 certificate request extensions to be used in IR/CR/KUR */
 int OSSL_CMP_CTX_set0_reqExtensions(OSSL_CMP_CTX *ctx, X509_EXTENSIONS *exts)
 {
@@ -822,6 +823,7 @@ DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, first_senderNonce)
 
 /* Set the nonce to be used in attestation evidence */
 DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, rats_nonce)
+DEFINE_OSSL_CMP_CTX_get0(rats_nonce, ASN1_OCTET_STRING)
 
 /* Set the proxy server to use for HTTP(S) connections */
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
@@ -857,6 +859,10 @@ DEFINE_OSSL_set(OSSL_CMP_CTX, transfer_cb_arg, void *)
  * Returns callback argument set previously (NULL if not set or on error)
  */
 DEFINE_OSSL_get(OSSL_CMP_CTX, transfer_cb_arg, void *, NULL)
+
+DEFINE_OSSL_set(OSSL_CMP_CTX, app_cb, OSSL_CMP_app_cb_t)
+DEFINE_OSSL_set(OSSL_CMP_CTX, app_cb_arg, void *)
+DEFINE_OSSL_get(OSSL_CMP_CTX, app_cb_arg, void *, NULL)
 
 /** Set the HTTP server port to be used */
 DEFINE_OSSL_set(OSSL_CMP_CTX, serverPort, int)
@@ -1042,6 +1048,8 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->permitTAInExtraCertsForIR;
     case OSSL_CMP_OPT_REVOCATION_REASON:
         return ctx->revocationReason;
+    case OSSL_CMP_OPT_INIT_RATS:
+        return ctx->rats_status;
     default:
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_OPTION);
         return -1;

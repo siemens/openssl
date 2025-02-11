@@ -475,7 +475,7 @@ int ossl_cmp_get_nonce(OSSL_CMP_CTX *ctx)
                                     NULL)) == NULL)
         return 0;
     if ((itav = get_genm_itav(ctx, req, NID_id_smime_aa_nonce,
-                                       "aa-nonce")) == NULL)
+                              "aa-nonce")) == NULL)
         return 0;
 
     if (!set_remote_attestation_Nonce(ctx, itav))
@@ -483,4 +483,3 @@ int ossl_cmp_get_nonce(OSSL_CMP_CTX *ctx)
 
     return 1;
 }
-

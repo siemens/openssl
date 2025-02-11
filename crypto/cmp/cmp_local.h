@@ -138,6 +138,9 @@ struct ossl_cmp_ctx_st {
     /* certificate confirmation */
     OSSL_CMP_certConf_cb_t certConf_cb; /* callback for app checking new cert */
     void *certConf_cb_arg; /* allows to store an argument individual to cb */
+    /* app callback */
+    OSSL_CMP_app_cb_t app_cb; /* generic callback for app */
+    void *app_cb_arg; /* allows to store an argument individual to cb */
 } /* OSSL_CMP_CTX */;
 
 /*

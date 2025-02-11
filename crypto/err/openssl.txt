@@ -198,6 +198,7 @@ BN_R_P_IS_NOT_PRIME:112:p is not prime
 BN_R_TOO_MANY_ITERATIONS:113:too many iterations
 BN_R_TOO_MANY_TEMPORARY_VARIABLES:109:too many temporary variables
 CMP_R_ALGORITHM_NOT_SUPPORTED:139:algorithm not supported
+CMP_R_APPLICATION_CALLBACK_FAILED:206:application callback failed
 CMP_R_BAD_CHECKAFTER_IN_POLLREP:167:bad checkafter in pollrep
 CMP_R_BAD_REQUEST_ID:108:bad request id
 CMP_R_CERTHASH_UNMATCHED:156:certhash unmatched
