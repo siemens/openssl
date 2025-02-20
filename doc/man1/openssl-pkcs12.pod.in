@@ -90,6 +90,9 @@ and many further options such as B<-chain> are relevant only with B<-export>.
 Conversely, the options regarding encryption of private keys when outputting
 PKCS#12 input are relevant only when the B<-export> option is not given.
 
+Unless stated explcitly below, if an option is given multiple times
+(possibly with different arguments), only the last one takes effect.
+
 The default encryption algorithm is AES-256-CBC with PBKDF2 for key derivation.
 
 When encountering problems loading legacy PKCS#12 files that involve,
