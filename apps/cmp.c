@@ -458,9 +458,9 @@ const OPTIONS cmp_options[] = {
     { "oldwithnew", OPT_OLDWITHNEW, 's',
       "File to save OldWithNew cert received in genp of type rootCaKeyUpdate"},
     { "crlcert", OPT_CRLCERT, 's',
-      "certificate to request a CRL for in genm of type crlStatusList"},
+      "certificate to take CRL source data from in genm of type crlStatusList"},
     { "oldcrl", OPT_OLDCRL, 's',
-      "CRL to request update for in genm of type crlStatusList"},
+      "CRL to obtain an update for in genm of type crlStatusList"},
     { "crlout", OPT_CRLOUT, 's',
       "File to save new CRL received in genp of type 'crls'"},
 
@@ -1646,8 +1646,7 @@ static int set_fallback_pubkey(OSSL_CMP_CTX *ctx)
     char *file = opt_reqin, *end = file, bak;
     OSSL_CMP_MSG *req;
     const X509_PUBKEY *pubkey;
-    EVP_PKEY *pkey;
-    EVP_PKEY *pkey1;
+    EVP_PKEY *pkey, *pkey1;
     int res = 0;
 
     /* temporarily separate first file name in opt_reqin */
@@ -1670,9 +1669,9 @@ static int set_fallback_pubkey(OSSL_CMP_CTX *ctx)
         goto err;
     }
     pkey1 = EVP_PKEY_dup(pkey);
-    if (pkey == NULL || !OSSL_CMP_CTX_set0_newPkey(ctx, 0 /* priv */, pkey1)) {
+    if (pkey1 == NULL || !OSSL_CMP_CTX_set0_newPkey(ctx, 0 /* priv */, pkey1)) {
         EVP_PKEY_free(pkey1);
-        CMP_err1("failed to get fallback public key obtained from ir/cr/kur file '%s'",
+        CMP_err1("failed to set fallback public key obtained from ir/cr/kur file '%s'",
                  file);
         goto err;
     }
@@ -2331,7 +2330,9 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         goto err;
 
     /* not printing earlier, to minimize confusion in case setup fails before */
-    if (opt_reqout_only == NULL)
+    if (opt_server == NULL)
+        CMP_info("will not contact any server");
+    else
         CMP_info3("will contact %s%s%s ", server_buf, proxy_buf,
                   opt_rspin == NULL ? "" :
                   " only if -rspin argument gives too few filenames");
@@ -3762,9 +3763,15 @@ int cmp_main(int argc, char **argv)
         const char *msg = "option is ignored since -reqout_only option is given";
 
 # if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        if (opt_server != NULL)
+        if (opt_server != NULL) {
             CMP_warn1("-server %s", msg);
+            opt_server = NULL;
+        }
 # endif
+        if (opt_path != NULL) {
+            CMP_warn1("-path %s", msg);
+            opt_path = NULL;
+        }
         if (opt_use_mock_srv)
             CMP_warn1("-use_mock_srv %s", msg);
         if (opt_reqout != NULL)
