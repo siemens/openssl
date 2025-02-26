@@ -95,11 +95,13 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_PKMACVALUE)
 
 ASN1_CHOICE(OSSL_CRMF_POPOPRIVKEY) = {
     ASN1_IMP(OSSL_CRMF_POPOPRIVKEY, value.thisMessage, ASN1_BIT_STRING, 0),
+    /* SubsequentMessage is a subtype of INTEGER so the latter is used */
     ASN1_IMP(OSSL_CRMF_POPOPRIVKEY, value.subsequentMessage, ASN1_INTEGER, 1),
     ASN1_IMP(OSSL_CRMF_POPOPRIVKEY, value.dhMAC, ASN1_BIT_STRING, 2),
     ASN1_IMP(OSSL_CRMF_POPOPRIVKEY, value.agreeMAC, OSSL_CRMF_PKMACVALUE, 3),
-    ASN1_IMP(OSSL_CRMF_POPOPRIVKEY, value.encryptedKey, ASN1_NULL, 4),
-    /* When supported, ASN1_NULL needs to be replaced by CMS_ENVELOPEDDATA */
+#ifndef OPENSSL_NO_CMS
+    ASN1_IMP(OSSL_CRMF_POPOPRIVKEY, value.encryptedKey, CMS_EnvelopedData, 4),
+#endif
 } ASN1_CHOICE_END(OSSL_CRMF_POPOPRIVKEY)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_POPOPRIVKEY)
 
@@ -155,12 +157,17 @@ ASN1_ADB(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) = {
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.pkiPublicationInfo,
                           OSSL_CRMF_PKIPUBLICATIONINFO)),
+    /* missing here: id-regCtrl-pkiArchiveOptions */
     ADB_ENTRY(NID_id_regCtrl_oldCertID,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.oldCertID, OSSL_CRMF_CERTID)),
     ADB_ENTRY(NID_id_regCtrl_protocolEncrKey,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.protocolEncrKey, X509_PUBKEY)),
+    /* missing here: id-regCtrl-altCertTemplate */
+    /* missing here: id-regCtrl-wtlsTemplate */
+    /* missing here: id-regCtrl-regTokenUTF8 */
+    /* missing here: id-regCtrl-authenticatorUTF8 */
     ADB_ENTRY(NID_id_regCtrl_algId,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.algId, X509_ALGOR)),
