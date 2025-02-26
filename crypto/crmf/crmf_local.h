@@ -205,11 +205,15 @@ typedef struct ossl_crmf_popoprivkey_st {
     int type;
     union {
         ASN1_BIT_STRING *thisMessage; /* 0 */ /* Deprecated */
-        ASN1_INTEGER *subsequentMessage; /* 1 */
+        /* SubsequentMessage is a subtype of INTEGER so the latter is used */
+        ASN1_INTEGER *subsequentMessage; /* 1 */ /* encoding  */
         ASN1_BIT_STRING *dhMAC; /* 2 */ /* Deprecated */
         OSSL_CRMF_PKMACVALUE *agreeMAC; /* 3 */
+# ifndef OPENSSL_NO_CMS
+        CMS_EnvelopedData *encryptedKey; /* 4 */
+# else
         ASN1_NULL *encryptedKey; /* 4 */
-        /* When supported, ASN1_NULL needs to be replaced by CMS_ENVELOPEDDATA */
+# endif
     } value;
 } OSSL_CRMF_POPOPRIVKEY;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOPRIVKEY)
@@ -356,6 +360,7 @@ struct ossl_crmf_certrequest_st {
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_CERTREQUEST)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTREQUEST)
 
+/* ossl_crmf_attributetypeandvalue_st decl is in include/internal/crmf.h */
 /*-
  * CertReqMessages ::= SEQUENCE SIZE (1..MAX) OF CertReqMsg
  * CertReqMsg ::= SEQUENCE {
