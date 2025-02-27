@@ -176,9 +176,36 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_REVANNCONTENT)
  *       -- the result of applying the one-way function (owf) to a
  *       -- randomly-generated INTEGER, A.  [Note that a different
  *       -- INTEGER MUST be used for each Challenge.]
- *       challenge           OCTET STRING
- *       -- the encryption (under the public key for which the cert.
- *       -- request is being made) of Rand, where Rand is specified as
+ *       challenge           OCTET STRING,
+ *       -- MUST be used for cmp2000(2) popdecc messages and MUST be
+ *       -- the encryption of Rand (using a mechanism depending on the
+ *       -- private key type).
+ *       -- MUST be an empty OCTET STRING for cmp2021(3) popdecc messages.
+ *       -- Note: Using challenge omitting the optional encryptedRand is
+ *       -- bit-compatible to the syntax without adding this optional
+ *       -- field.
+ *       encryptedRand   [0] EnvelopedData OPTIONAL
+ *       -- MUST be omitted for cmp2000(2) popdecc messages.
+ *       -- MUST be used for cmp2021(3) popdecc messages and MUST contain
+ *       -- the encrypted value of Rand using CMS EnvelopedData using the
+ *       -- key management technique depending on the private key type as
+ *       -- defined in Section 5.2.2.
+ *   }
+ */
+typedef struct ossl_cmp_challenge_st {
+    X509_ALGOR *owf;
+    ASN1_OCTET_STRING *witness;
+    ASN1_OCTET_STRING *challenge;
+# ifndef OPENSSL_NO_CMS
+    CMS_EnvelopedData *encryptedRand; /* requires CMPv3 */
+# endif
+} OSSL_CMP_CHALLENGE;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CHALLENGE)
+
+/*-
+ *       -- Rand was added in [RFC9480]
+ *       -- Rand is encrypted involving the public key to form the content of
+ *       -- challenge or encryptedRand in POPODecKeyChallContent
  *       --   Rand ::= SEQUENCE {
  *       --      int      INTEGER,
  *       --       - the randomly-generated INTEGER A (above)
@@ -187,29 +214,54 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_REVANNCONTENT)
  *       --   }
  *   }
  */
-typedef struct ossl_cmp_challenge_st {
-    X509_ALGOR *owf;
-    ASN1_OCTET_STRING *witness;
-    ASN1_OCTET_STRING *challenge;
-} OSSL_CMP_CHALLENGE;
-DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CHALLENGE)
+typedef struct ossl_cmp_rand_st {
+    ASN1_INTEGER *int_; /* cannot use field name "int" */
+    GENERAL_NAME *sender;
+} OSSL_CMP_RAND;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_RAND)
 
 /*-
- *  CAKeyUpdAnnContent ::= SEQUENCE {
+ *  CAKeyUpdAnnContent ::= SEQUENCE { -- deprecated
  *     oldWithNew         Certificate,
  *     newWithOld         Certificate,
  *     newWithNew         Certificate
  *  }
  */
-typedef struct ossl_cmp_cakeyupdanncontent_st {
+typedef struct ossl_cmp_cakeyupdanncontent_st { /* deprecated */
     X509 *oldWithNew;
-    X509 *newWithOld;
-    X509 *newWithNew;
+    X509 *newWithOld; /* must be present */
+    X509 *newWithNew; /* must be present */
 } OSSL_CMP_CAKEYUPDANNCONTENT;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CAKEYUPDANNCONTENT)
 
-typedef struct ossl_cmp_rootcakeyupdate_st OSSL_CMP_ROOTCAKEYUPDATE;
-DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
+/*-
+ * RootCaKeyUpdateContent ::= SEQUENCE {
+ *      newWithNew       CMPCertificate,
+ *      newWithOld   [0] CMPCertificate OPTIONAL,
+ *      oldWithNew   [1] CMPCertificate OPTIONAL
+ * }
+ */
+typedef struct ossl_cmp_rootcakeyupdatecontent_st {
+    X509 *newWithNew;
+    X509 *newWithOld; /* optional */
+    X509 *oldWithNew; /* optional */
+} OSSL_CMP_ROOTCAKEYUPDATECONTENT;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATECONTENT)
+
+/*-
+ *  CAKeyUpdContent ::= CHOICE {
+ *     cAKeyUpdAnnV2      CAKeyUpdAnnContent, -- deprecated
+ *     cAKeyUpdAnnV3  [0] RootCaKeyUpdateContent
+ *  }
+ */
+typedef struct ossl_cmp_cakeyupdcontent_st {
+    int type;
+    union {
+        OSSL_CMP_CAKEYUPDANNCONTENT *cAKeyUpdAnnV2; /* deprecated */
+        OSSL_CMP_ROOTCAKEYUPDATECONTENT *cAKeyUpdAnnV3;
+    } value;
+} OSSL_CMP_CAKEYUPDCONTENT;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CAKEYUPDCONTENT)
 
 typedef struct ossl_cmp_certreqtemplate_st OSSL_CMP_CERTREQTEMPLATE;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTREQTEMPLATE)
@@ -286,16 +338,18 @@ struct ossl_cmp_itav_st {
         OSSL_CMP_MSGS *origPKIMessage;
         /* NID_id_it_suppLangTags - Supported Language Tags */
         STACK_OF(ASN1_UTF8STRING) *suppLangTagsValue;
-        /* NID_id_it_certProfile - Certificate Profile */
-        STACK_OF(ASN1_UTF8STRING) *certProfile;
+
+        /* CMPv3: */
         /* NID_id_it_caCerts - CA Certificates */
         STACK_OF(X509) *caCerts;
-        /* NID_id_it_rootCaCert - Root CA Certificate */
-        X509 *rootCaCert;
         /* NID_id_it_rootCaKeyUpdate - Root CA Certificate Update */
-        OSSL_CMP_ROOTCAKEYUPDATE *rootCaKeyUpdate;
+        OSSL_CMP_ROOTCAKEYUPDATECONTENT *rootCaKeyUpdate;
         /* NID_id_it_certReqTemplate - Certificate Request Template */
         OSSL_CMP_CERTREQTEMPLATE *certReqTemplate;
+        /* NID_id_it_rootCaCert - Root CA Certificate */
+        X509 *rootCaCert;
+        /* NID_id_it_certProfile - Certificate Profile */
+        STACK_OF(ASN1_UTF8STRING) *certProfile;
         /* NID_id_it_crlStatusList -  CRL Update Retrieval */
         STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList;
         /* NID_id_it_crls - Certificate Status Lists */
@@ -787,21 +841,6 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
  *   }
  */
 
-/*
- * RootCaKeyUpdateContent ::= SEQUENCE {
- *      newWithNew       CMPCertificate,
- *      newWithOld   [0] CMPCertificate OPTIONAL,
- *      oldWithNew   [1] CMPCertificate OPTIONAL
- * }
- */
-
-struct ossl_cmp_rootcakeyupdate_st {
-    X509 *newWithNew;
-    X509 *newWithOld;
-    X509 *oldWithNew;
-} /* OSSL_CMP_ROOTCAKEYUPDATE */;
-DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
-
 /*-
  * CertReqTemplateContent ::= SEQUENCE {
  *      certTemplate      CertTemplate,
@@ -860,6 +899,7 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
 # define ossl_cmp_info(ctx, msg)  ossl_cmp_log(INFO,  ctx, msg)
 # define ossl_cmp_debug(ctx, msg) ossl_cmp_log(DEBUG, ctx, msg)
 # define ossl_cmp_trace(ctx, msg) ossl_cmp_log(TRACE, ctx, msg)
+
 int ossl_cmp_ctx_set1_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert);
 int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status);
 int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
