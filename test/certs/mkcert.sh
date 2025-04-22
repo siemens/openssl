@@ -27,7 +27,7 @@ fi
 
 stderr_onerror() {
     (
-        err=$("$@" >&3 2>&1) || {
+        err=$("$@" >&3) || {
             printf "%s\n" "$err" >&2
             exit 1
         }
@@ -56,7 +56,7 @@ key() {
         dsa)  args=(-paramfile "$bits");;
         ed25519)  ;;
         ed448)  ;;
-        *) printf "Unsupported key algorithm: %s\n" "$alg" >&2; return 1;;
+        *) printf "Unsupported key algorithm: %s\n" "$alg" >&2;;
         esac
         stderr_onerror \
             openssl genpkey "${args[@]}" -out "${key}.pem"
