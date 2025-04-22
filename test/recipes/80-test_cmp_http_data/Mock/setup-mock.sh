@@ -1,6 +1,16 @@
 #! /bin/bash
 set -e
-mkcert_sh="../../../../certs/mkcert.sh"
+mkcert_sh="../../../certs/mkcert.sh"
+# This script generates the certificates needed for the CMP server and the signer
+
+server_rootCA_KeyAlg="MLDSA65"
+server_leaf_KeyAlg="MLDSA65"
+
+signer_rootCA_KeyAlg="MLDSA65"
+signer_interCA_KeyAlg="MLDSA65"
+signer_subinterCA_KeyAlg="MLDSA65"
+signer_leaf_KeyAlg="MLKEM768"
+
 
 # CMP server certificate
 rename_serverfiles() {
@@ -19,9 +29,9 @@ remove_serverfiles() {
 gen_servercert() {
     remove_serverfiles
     sleep 5
-    #OPENSSL_KEYALG=MLDSA65 \
+    OPENSSL_KEYALG=${server_rootCA_KeyAlg} \
     $mkcert_sh genroot "Root CA" server_root-key server_root-cert
-    #OPENSSL_KEYALG=MLDSA44 \
+    OPENSSL_KEYALG=${server_leaf_KeyAlg} \
     $mkcert_sh genee -p serverAuth,cmKGA server.example server-key server-cert server_root-key server_root-cert
     rename_serverfiles
 }
@@ -50,14 +60,67 @@ remove_signerfiles() {
     rm -f root.crt signer_root.crt newcrl.pem new.key signer.key signer_only.crt \
         signer_issuing.crt signer.crt
 }
+
+genee_kem() {
+    echo "Generating KEM certificate"
+    openssl genpkey -algorithm "$OPENSSL_KEYALG" -out signer_leaf-key.pem -outpubkey signer_leaf-pubkey.pem
+    openssl x509 -new -subj "/CN=signer-leaf" -CA signer_subinterCA-cert.pem -CAkey signer_subinterCA-key.pem \
+        -out signer_leaf-cert.pem -force_pubkey signer_leaf-pubkey.pem -extensions SAN \
+        -extfile <(printf "[SAN]\nbasicConstraints=critical,CA:false\nkeyUsage=critical,keyEncipherment")
+}
+genee_kem1() {
+    local OPTIND=1
+    local purpose=serverAuth
+    local ku=
+
+    while getopts p:k: o
+    do
+        case $o in
+        p) purpose="$OPTARG";;
+        k) ku="keyUsage = $OPTARG";;
+        *) echo "Usage: $0 genee [-k KU] [-p EKU] cn keyname certname cakeyname cacertname" >&2
+           return 1;;
+        esac
+    done
+
+    shift $((OPTIND - 1))
+    local cn=$1; shift
+    local key=$1; shift
+    local cert=$1; shift
+    local cakey=$1; shift
+    local ca=$1; shift
+
+    exts=$(printf "%s\n%s\n%s\n%s\n%s\n[alts]\n%s\n" \
+	    "subjectKeyIdentifier = hash" \
+	    "authorityKeyIdentifier = keyid, issuer" \
+	    "basicConstraints = CA:false" \
+            "$ku" \
+	    "extendedKeyUsage = $purpose" \
+	    "subjectAltName = @alts" "DNS=${cn}")
+    csr=$(req "$key" "CN = $cn") || return 1
+    echo "$csr" |
+	cert "$cert" "$exts" -CA "${ca}.pem" -CAkey "${cakey}.pem" \
+	    -set_serial 2 -days "${DAYS}" "$@"
+}
+
 gen_signercert() {
     echo "Generating signer certificates"
     remove_signerfiles
     sleep 5
+    OPENSSL_KEYALG=${signer_rootCA_KeyAlg} \
     $mkcert_sh genroot "signer-rootCA" signer_root-key signer_root-cert
+    OPENSSL_KEYALG=${signer_interCA_KeyAlg} \
     $mkcert_sh genca "signer-interCA" signer_interCA-key signer_interCA-cert signer_root-key signer_root-cert
+    OPENSSL_KEYALG=${signer_subinterCA_KeyAlg} \
     $mkcert_sh genca "signer-subinterCA" signer_subinterCA-key signer_subinterCA-cert signer_interCA-key signer_interCA-cert
-    $mkcert_sh genee -p clientAuth "signer-leaf" signer_leaf-key signer_leaf-cert signer_subinterCA-key signer_subinterCA-cert
+
+    OPENSSL_KEYALG=${signer_leaf_KeyAlg}
+    if [[ "$OPENSSL_KEYALG" == *"MLKEM"* ]]; then
+        genee_kem
+    else
+        $mkcert_sh genee -p clientAuth "signer-leaf" signer_leaf-key signer_leaf-cert signer_subinterCA-key signer_subinterCA-cert
+    fi
+
     gen_demoCAfolder
     openssl ca -gencrl -keyfile signer_subinterCA-key.pem -cert signer_subinterCA-cert.pem -out signer_subinterCA-crl.pem -crldays 36525 \
             -config <(printf "[ca]\ndefault_ca= CA_default\n[CA_default]\n%s\n%s\n%s\n" \
@@ -68,6 +131,11 @@ gen_signercert() {
     rm -f signer_fullchain.pem
     cat signer_subinterCA-cert.pem signer_interCA-cert.pem > signer_issuing-cert.pem
     rename_signerfiles
+}
+
+all() {
+    gen_servercert
+    gen_signercert
 }
 
 "$@"
