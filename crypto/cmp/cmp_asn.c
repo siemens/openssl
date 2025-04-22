@@ -155,7 +155,7 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.crlStatusList,
                                    OSSL_CMP_CRLSTATUS)),
     ADB_ENTRY(NID_id_it_crls,
-              ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.crls, X509_CRL))
+              ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.crls, X509_CRL)),
     ADB_ENTRY(NID_id_it_KemCiphertextInfo,
               ASN1_OPT(OSSL_CMP_ITAV, infoValue.KemCiphertextInfoValue,
                        OSSL_CMP_KEMCIPHERTEXTINFO)),

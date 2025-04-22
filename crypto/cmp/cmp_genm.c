@@ -380,7 +380,7 @@ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
     status = NULL;
     list = NULL;
 
-    if ((itav = get_genm_itav(ctx, req, NID_id_it_crls, "crl")) == NULL)
+    if ((itav = ossl_cmp_genm_get_itav(ctx, req, NID_id_it_crls, "crl")) == NULL)
         goto end;
 
     if (!OSSL_CMP_ITAV_get0_crls(itav, &crls))
@@ -429,8 +429,8 @@ int OSSL_CMP_get1_certReqTemplate(OSSL_CMP_CTX *ctx,
         return 0;
     }
 
-    if ((itav = get_genm_itav(ctx, req, NID_id_it_certReqTemplate,
-                              "certReqTemplate")) == NULL)
+    if ((itav = ossl_cmp_genm_get_itav(ctx, req, NID_id_it_certReqTemplate,
+                                       "certReqTemplate")) == NULL)
         return 0;
 
     if (!OSSL_CMP_ITAV_get1_certReqTemplate(itav, certTemplate, keySpec))

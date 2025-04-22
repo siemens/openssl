@@ -230,7 +230,7 @@ CMP_R_ERROR_UNEXPECTED_CERTCONF:160:error unexpected certconf
 CMP_R_ERROR_VALIDATING_PROTECTION:140:error validating protection
 CMP_R_ERROR_VALIDATING_SIGNATURE:171:error validating signature
 CMP_R_EXPECTED_POLLREQ:104:expected pollreq
-CMP_R_ERROR_DERIVING_KBM_SSK:198:error deriving ssk
+CMP_R_ERROR_DERIVING_KBM_SSK:298:error deriving ssk
 CMP_R_FAILED_BUILDING_OWN_CHAIN:164:failed building own chain
 CMP_R_FAILED_EXTRACTING_CENTRAL_GEN_KEY:203:failed extracting central gen key
 CMP_R_FAILED_EXTRACTING_PUBKEY:141:failed extracting pubkey
@@ -305,7 +305,7 @@ CMP_R_WRONG_ALGORITHM_OID:138:wrong algorithm oid
 CMP_R_WRONG_CERTID:189:wrong certid
 CMP_R_WRONG_CERTID_IN_RP:187:wrong certid in rp
 CMP_R_WRONG_PBM_VALUE:155:wrong pbm value
-CMP_R_WRONG_KBM_VALUE:197:wrong kbm value
+CMP_R_WRONG_KBM_VALUE:297:wrong kbm value
 CMP_R_WRONG_RP_COMPONENT_COUNT:188:wrong rp component count
 CMP_R_WRONG_SERIAL_IN_RP:173:wrong serial in rp
 CMS_R_ADD_SIGNER_ERROR:99:add signer error
