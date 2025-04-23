@@ -1,3 +1,19 @@
+# POC - Using KEM credentials for message protection  
+
+[rfc4210bis](https://datatracker.ietf.org/doc/draft-ietf-lamps-rfc4210bis/) - Appendix E  
+  * Figure 3:  Message Flow when PKI entity has a KEM key pair  
+    * Perform below steps to test.  
+      Open two terminal one for server and End entity and change directory to **openssl/test/recipes/80-test_cmp_http_data/Mock**.  
+     **server**   ```$openssl cmp -config server.cnf -verbosity 8 -port 1700```  
+     **client**   ```$openssl cmp -server 127.0.0.1:1700 -config test.cnf -section "Mock commands" -no_proxy 127.0.0.1 -cmd ir -cert kem.crt -key kem.key -certout out.test.pem```
+
+  * Figure 4: Message Flow when the PKI entity knows that the PKI management entity uses a KEM key pair and has the authentic public key
+    * Perform below steps to test.  
+      Open two terminal one for server and End entity and change directory to **openssl/test/recipes/80-test_cmp_http_data/Mock**.  
+     **server**   ```$openssl cmp -config server_withkem.cnf -verbosity 8 -port 1700```  
+     **client**   ```$openssl cmp -server 127.0.0.1:1700 -config test_withserverkem.cnf -section "Mock commands" -no_proxy 127.0.0.1 -cmd ir -cert signer.crt -key signer.key -srvcert kem.crt -certout out.test.pem```
+
+
 Welcome to the OpenSSL Project
 ==============================
 
