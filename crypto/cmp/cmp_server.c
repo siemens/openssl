@@ -321,7 +321,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         encryption_recip = certOut; /* for indirect POP */
 
     msg = ossl_cmp_certrep_new(srv_ctx->ctx, bodytype, certReqId, si,
-                               certOut, encryption_recip, chainOut, caPubs, //TODO-RR : check keyout
+                               certOut, keyOut, encryption_recip, chainOut, caPubs,
                                srv_ctx->sendUnprotectedErrors);
     /* When supporting OSSL_CRMF_POPO_KEYENC, "enc" will need to be set */
     if (msg == NULL)

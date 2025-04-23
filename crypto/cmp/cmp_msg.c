@@ -587,25 +587,25 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
                 = ossl_cmp_Enccert_init(cert, encryption_recip,
                                         ctx->libctx, ctx->propq)) == NULL)
                 goto err;
-        }
-
-        if ((resp->certifiedKeyPair = OSSL_CMP_CERTIFIEDKEYPAIR_new())
-            == NULL)
-            goto err;
-        resp->certifiedKeyPair->certOrEncCert->type =
-            OSSL_CMP_CERTORENCCERT_CERTIFICATE;
-        if (!X509_up_ref(cert))
-            goto err;
-        resp->certifiedKeyPair->certOrEncCert->value.certificate = cert;
-
-        if (pkey != NULL) {
-#ifndef OPENSSL_NO_CMS
-            if ((resp->certifiedKeyPair->privateKey = enc_privkey(ctx, pkey)) == NULL)
+        } else {
+            if ((resp->certifiedKeyPair = OSSL_CMP_CERTIFIEDKEYPAIR_new())
+                == NULL)
                 goto err;
+            resp->certifiedKeyPair->certOrEncCert->type =
+                OSSL_CMP_CERTORENCCERT_CERTIFICATE;
+            if (!X509_up_ref(cert))
+                goto err;
+            resp->certifiedKeyPair->certOrEncCert->value.certificate = cert;
+
+            if (pkey != NULL) {
+#ifndef OPENSSL_NO_CMS
+                if ((resp->certifiedKeyPair->privateKey = enc_privkey(ctx, pkey)) == NULL)
+                    goto err;
 #else
-            ERR_raise(ERR_LIB_CMP, ERR_R_UNSUPPORTED);
-            goto err;
+                ERR_raise(ERR_LIB_CMP, ERR_R_UNSUPPORTED);
+                goto err;
 #endif
+            }
         }
     }
 

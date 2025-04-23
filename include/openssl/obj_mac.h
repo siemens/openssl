@@ -54,11 +54,11 @@
 #define OBJ_gmac                OBJ_iso,0L,9797L,3L,4L
 
 #define SN_id_kem_rsa           "id-kem-rsa"
-#define NID_id_kem_rsa          1323
+#define NID_id_kem_rsa          1623
 #define OBJ_id_kem_rsa          OBJ_iso,0L,18033L,2L,2L,4L
 
 #define SN_id_kdf_kdf2          "id-kdf-kdf2"
-#define NID_id_kdf_kdf2         1324
+#define NID_id_kdf_kdf2         1624
 #define OBJ_id_kdf_kdf2         OBJ_iso,0L,18033L,2L,5L,2L
 
 #define SN_hmac_md5             "HMAC-MD5"
@@ -535,7 +535,7 @@
 
 #define SN_id_KemBasedMac               "id-KemBasedMac"
 #define LN_id_KemBasedMac               "KEM based MAC"
-#define NID_id_KemBasedMac              1321
+#define NID_id_KemBasedMac              1621
 #define OBJ_id_KemBasedMac              OBJ_ISO_US,113533L,7L,66L,16L
 
 #define SN_rsadsi               "rsadsi"
@@ -792,7 +792,7 @@
 #define OBJ_id_smime_cti                OBJ_SMIME,6L
 
 #define SN_id_smime_ori         "id-smime-ori"
-#define NID_id_smime_ori                1325
+#define NID_id_smime_ori                1625
 #define OBJ_id_smime_ori                OBJ_SMIME,13L
 
 #define SN_id_smime_mod_cms             "id-smime-mod-cms"
@@ -1116,7 +1116,7 @@
 #define OBJ_id_smime_cti_ets_proofOfCreation            OBJ_id_smime_cti,6L
 
 #define SN_id_smime_ori_kem             "id-smime-ori-kem"
-#define NID_id_smime_ori_kem            1326
+#define NID_id_smime_ori_kem            1626
 #define OBJ_id_smime_ori_kem            OBJ_id_smime_ori,3L
 
 #define LN_friendlyName         "friendlyName"
@@ -1891,7 +1891,7 @@
 #define OBJ_id_it_crls          OBJ_id_it,23L
 
 #define SN_id_it_KemCiphertextInfo              "id-it-KemCiphertextInfo"
-#define NID_id_it_KemCiphertextInfo             1320
+#define NID_id_it_KemCiphertextInfo             1620
 #define OBJ_id_it_KemCiphertextInfo             OBJ_id_it,24L
 
 #define SN_id_regCtrl           "id-regCtrl"
@@ -5657,7 +5657,7 @@
 
 #define SN_hkdfWithSHA256               "hkdfWithSHA256"
 #define LN_hkdfWithSHA256               "HKDF with SHA256"
-#define NID_hkdfWithSHA256              1322
+#define NID_hkdfWithSHA256              1622
 #define OBJ_hkdfWithSHA256              OBJ_id_smime_alg,28L
 
 #define SN_sskdf                "SSKDF"

@@ -5924,3 +5924,8 @@ OSSL_AA_DIST_POINT_free                 6051	3_5_0	EXIST::FUNCTION:
 OSSL_AA_DIST_POINT_new                  6052	3_5_0	EXIST::FUNCTION:
 OSSL_AA_DIST_POINT_it                   6053	3_5_0	EXIST::FUNCTION:
 PEM_ASN1_write_bio_ctx                  6054	3_5_0	EXIST::FUNCTION:
+OSSL_CMP_MSG_get_extraCerts             ?	3_5_1	EXIST::FUNCTION:CMP
+OSSL_CMP_SRV_kem_get_ss                 ?	3_5_1	EXIST::FUNCTION:CMP
+OSSL_CMP_get_ssk                        ?	3_5_1	EXIST::FUNCTION:CMP
+OSSL_CMS_get0_enveloped                 ?	3_5_1	EXIST::FUNCTION:CMS
+OSSL_CRMF_MSG_certreq_encrcert_popo     ?	3_5_1	EXIST::FUNCTION:CRMF
