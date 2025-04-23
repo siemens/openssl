@@ -1,3 +1,11 @@
+# POC - Using Indirect POP for KEM certificate
+
+ [rfc4210bis](https://datatracker.ietf.org/doc/draft-ietf-lamps-rfc4210bis/)
+ * Perform below steps to test  
+    Open two terminal for server and end entity. Change directory to **openssl/test/recipes/80-test_cmp_http_data/Mock**.  
+        **server**   ```$openssl cmp -config server.cnf -verbosity 8 -port 1700```  
+        **client**   ```$openssl cmp -server 127.0.0.1:1700 -config test.cnf -section "Mock commands" -no_proxy 127.0.0.1 -cmd cr -cert signer.crt -key signer.key -certout out.test.pem -popo 2 -newkey kem.key -srvcert server.crt  -out_trusted root.crt```
+
 Welcome to the OpenSSL Project
 ==============================
 
