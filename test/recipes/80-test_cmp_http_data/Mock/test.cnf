@@ -11,7 +11,7 @@ out_trusted = ENROLL_Root.pem
 policies = certificatePolicies
 #policy_oids = 1.2.3.4
 #policy_oids_critical = 1
-#verbosity = 7
+verbosity = 8
 
 ############################# server-dependent configurations
 
@@ -26,7 +26,7 @@ server_path = pkix/
 path = $server_path
 ca_dn = /CN=Root CA
 recipient = $ca_dn
-server_dn = /C=DE/O=Siemens/OU=TestDepartment/CN=CMP_LRA_DOWNSTREAM_ENDENTITY
+server_dn = /CN=server.example
 expect_sender = $server_dn
 subject = "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=leaf"
 newkey = signer.key

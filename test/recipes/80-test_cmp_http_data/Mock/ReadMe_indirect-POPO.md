@@ -13,7 +13,7 @@ oqs provider is required to use PQ algorithms.
 To execute CMP client for KEM certificates- 
 ```
 $ cd test/recipes/80-test_cmp_http_data/Mock
-$ openssl cmp -server 127.0.0.1:1701 -config test.cnf -section "Mock commands" -no_proxy 127.0.0.1 -cmd cr -cert signer.crt -key signer.key -certout out.test.pem -popo 2 -newkey kyber1024.priv -srvcert server.crt  -out_trusted root.crt -provider oqsprovider -provider default
+$ openssl cmp -server 127.0.0.1:1700 -config test.cnf -section "Mock commands" -no_proxy 127.0.0.1 -cmd cr -cert signer.crt -key signer.key -certout out.test.pem -popo 2 -newkey kem.key -srvcert server.crt  -out_trusted root.crt -provider oqsprovider -provider default
 ````
 
 Following configuration need to be adapted:

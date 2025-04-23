@@ -10,9 +10,9 @@ no_check_time = 1
 srv_trusted = signer_root.crt
 no_cache_extracerts = 1
 
-ref_cert = signer_only.crt
-rsp_cert = signer_only.crt
-rsp_key = new.key
+ref_cert = kem.crt
+rsp_cert = kem.crt
+rsp_key = kem.key
 rsp_crl = newcrl.pem
 rsp_capubs = trusted.crt
 rsp_extracerts = signer_issuing.crt
