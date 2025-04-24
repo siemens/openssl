@@ -481,19 +481,19 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
         || ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) < 0;
 }
 
-#define RATS_NONCE_LEN 32
-static OSSL_CMP_ITAV *dummy_rats_nonce(void)
+#define DUMMY_NONCE_LEN 32
+static OSSL_CMP_ITAV *dummy_nonce(void)
 {
-    unsigned char *rand = OPENSSL_zalloc(RATS_NONCE_LEN);
+    unsigned char *rand = OPENSSL_zalloc(DUMMY_NONCE_LEN);
     OSSL_CMP_ITAV *itav = NULL;
 
     if (rand == NULL
-        || RAND_bytes(rand, RATS_NONCE_LEN) <= 0) {
+        || RAND_bytes(rand, DUMMY_NONCE_LEN) <= 0) {
         BIO_printf(bio_err, "RAND_bytes failed\n");
         return NULL;
     }
 
-    itav = OSSL_CMP_ITAV_new_ratsnonce(rand, RATS_NONCE_LEN);
+    itav = OSSL_CMP_ITAV_new_ratsnonce(rand, DUMMY_NONCE_LEN);
     return itav;
 }
 
@@ -582,7 +582,7 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
         }
         break;
     case NID_id_smime_aa_nonce:
-        rsp = dummy_rats_nonce();
+        rsp = dummy_nonce();
         break;
     default:
         rsp = OSSL_CMP_ITAV_dup(req);
