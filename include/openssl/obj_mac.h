@@ -1031,11 +1031,11 @@
 #define OBJ_id_aa_ets_archiveTimestampV2                OBJ_id_smime_aa,48L
 
 #define SN_id_smime_aa_nonce            "id-smime-aa-nonce"
-#define NID_id_smime_aa_nonce           1487
+#define NID_id_smime_aa_nonce           1600
 #define OBJ_id_smime_aa_nonce           OBJ_id_smime_aa,8888L
 
 #define SN_id_smime_aa_evidenceStatement                "id-smime-aa-evidenceStatement"
-#define NID_id_smime_aa_evidenceStatement               1488
+#define NID_id_smime_aa_evidenceStatement               1601
 #define OBJ_id_smime_aa_evidenceStatement               OBJ_id_smime_aa,999L
 
 #define SN_id_smime_alg_ESDHwith3DES            "id-smime-alg-ESDHwith3DES"

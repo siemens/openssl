@@ -5927,3 +5927,10 @@ PEM_ASN1_write_bio_ctx                  ?	3_5_0	EXIST::FUNCTION:
 OPENSSL_sk_set_thunks                   ?	3_6_0	EXIST::FUNCTION:
 i2d_PKCS8PrivateKey                     ?	3_6_0	EXIST::FUNCTION:
 OSSL_PARAM_set_octet_string_or_ptr      ?	3_6_0	EXIST::FUNCTION:
+OSSL_CMP_ITAV_new_ratsnonce             ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_get0_rats_nonce            ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_get0_reqExtensions         ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_certreq_cb                     ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_set_certreq_cb             ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_set_certreq_cb_arg         ?	3_6_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_get_certreq_cb_arg         ?	3_6_0	EXIST::FUNCTION:CMP

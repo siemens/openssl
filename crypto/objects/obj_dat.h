@@ -1352,7 +1352,7 @@ static const unsigned char so[9541] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x87,0x67,  /* [ 9528] OBJ_id_smime_aa_evidenceStatement */
 };
 
-#define NUM_NID 1496
+#define NUM_NID 1602
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2850,9 +2850,115 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"AES-128-CBC-HMAC-SHA512-ETM", "aes-128-cbc-hmac-sha512-etm", NID_aes_128_cbc_hmac_sha512_etm},
     {"AES-192-CBC-HMAC-SHA512-ETM", "aes-192-cbc-hmac-sha512-etm", NID_aes_192_cbc_hmac_sha512_etm},
     {"AES-256-CBC-HMAC-SHA512-ETM", "aes-256-cbc-hmac-sha512-etm", NID_aes_256_cbc_hmac_sha512_etm},
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    {"id-smime-aa-nonce", "id-smime-aa-nonce", NID_id_smime_aa_nonce, 12, &so[9516]},
+    {"id-smime-aa-evidenceStatement", "id-smime-aa-evidenceStatement", NID_id_smime_aa_evidenceStatement, 12, &so[9528]},
 };
 
-#define NUM_SN 1487
+#define NUM_SN 1489
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3689,11 +3795,11 @@ static const unsigned int sn_objs[NUM_SN] = {
      226,    /* "id-smime-aa-ets-sigPolicyId" */
      229,    /* "id-smime-aa-ets-signerAttr" */
      228,    /* "id-smime-aa-ets-signerLocation" */
-    1488,    /* "id-smime-aa-evidenceStatement" */
+    1601,    /* "id-smime-aa-evidenceStatement" */
      219,    /* "id-smime-aa-macValue" */
      214,    /* "id-smime-aa-mlExpandHistory" */
      216,    /* "id-smime-aa-msgSigDigest" */
-    1487,    /* "id-smime-aa-nonce" */
+    1600,    /* "id-smime-aa-nonce" */
      212,    /* "id-smime-aa-receiptRequest" */
      213,    /* "id-smime-aa-securityLabel" */
      239,    /* "id-smime-aa-signatureType" */
@@ -4345,7 +4451,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1487
+#define NUM_LN 1489
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -5311,11 +5417,11 @@ static const unsigned int ln_objs[NUM_LN] = {
      226,    /* "id-smime-aa-ets-sigPolicyId" */
      229,    /* "id-smime-aa-ets-signerAttr" */
      228,    /* "id-smime-aa-ets-signerLocation" */
-    1488,    /* "id-smime-aa-evidenceStatement" */
+    1601,    /* "id-smime-aa-evidenceStatement" */
      219,    /* "id-smime-aa-macValue" */
      214,    /* "id-smime-aa-mlExpandHistory" */
      216,    /* "id-smime-aa-msgSigDigest" */
-    1487,    /* "id-smime-aa-nonce" */
+    1600,    /* "id-smime-aa-nonce" */
      212,    /* "id-smime-aa-receiptRequest" */
      213,    /* "id-smime-aa-securityLabel" */
      239,    /* "id-smime-aa-signatureType" */
@@ -7172,8 +7278,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      957,    /* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
     1056,    /* OBJ_blake2b512                   1 3 6 1 4 1 1722 12 2 1 16 */
     1057,    /* OBJ_blake2s256                   1 3 6 1 4 1 1722 12 2 2 8 */
-    1488,    /* OBJ_id_smime_aa_evidenceStatement 1 2 840 113549 1 9 16 2 999 */
-    1487,    /* OBJ_id_smime_aa_nonce            1 2 840 113549 1 9 16 2 8888 */
+    1601,    /* OBJ_id_smime_aa_evidenceStatement 1 2 840 113549 1 9 16 2 999 */
+    1600,    /* OBJ_id_smime_aa_nonce            1 2 840 113549 1 9 16 2 8888 */
     1283,    /* OBJ_oracle_jdk_trustedkeyusage   2 16 840 1 113894 746875 1 1 */
     1159,    /* OBJ_dstu4145be                   1 2 804 2 1 1 1 1 3 1 1 1 1 */
     1160,    /* OBJ_uacurve0                     1 2 804 2 1 1 1 1 3 1 1 2 0 */
