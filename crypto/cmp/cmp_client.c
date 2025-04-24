@@ -872,7 +872,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
     int rid = is_p10 ? OSSL_CMP_CERTREQID_NONE : OSSL_CMP_CERTREQID;
     int rep_type = is_p10 ? OSSL_CMP_PKIBODY_CP : req_type + 1;
     X509 *result = NULL;
-    OSSL_CMP_app_cb_t app_cb = ctx->app_cb;
+    OSSL_CMP_certreq_cb_t certreq_cb = ctx->certreq_cb;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -883,7 +883,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
         if (!ossl_cmp_get_nonce(ctx))
             goto err;
     }
-    if (app_cb != NULL && !app_cb(ctx, ctx->app_cb_arg)) {
+    if (certreq_cb != NULL && !certreq_cb(ctx, ctx->certreq_cb_arg)) {
         ERR_raise(ERR_LIB_CMP, CMP_R_APPLICATION_CALLBACK_FAILED);
         goto err;
     }

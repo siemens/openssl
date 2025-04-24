@@ -860,9 +860,9 @@ DEFINE_OSSL_set(OSSL_CMP_CTX, transfer_cb_arg, void *)
  */
 DEFINE_OSSL_get(OSSL_CMP_CTX, transfer_cb_arg, void *, NULL)
 
-DEFINE_OSSL_set(OSSL_CMP_CTX, app_cb, OSSL_CMP_app_cb_t)
-DEFINE_OSSL_set(OSSL_CMP_CTX, app_cb_arg, void *)
-DEFINE_OSSL_get(OSSL_CMP_CTX, app_cb_arg, void *, NULL)
+DEFINE_OSSL_set(OSSL_CMP_CTX, certreq_cb, OSSL_CMP_certreq_cb_t)
+DEFINE_OSSL_set(OSSL_CMP_CTX, certreq_cb_arg, void *)
+DEFINE_OSSL_get(OSSL_CMP_CTX, certreq_cb_arg, void *, NULL)
 
 /** Set the HTTP server port to be used */
 DEFINE_OSSL_set(OSSL_CMP_CTX, serverPort, int)
