@@ -19,7 +19,7 @@
 static const ERR_STRING_DATA CMP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_ALGORITHM_NOT_SUPPORTED),
     "algorithm not supported"},
-    {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_APPLICATION_CALLBACK_FAILED),
+    {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_CERTREQ_CALLBACK_FAILED),
      "application callback failed"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_BAD_CHECKAFTER_IN_POLLREP),
     "bad checkafter in pollrep"},

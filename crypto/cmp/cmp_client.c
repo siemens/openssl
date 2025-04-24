@@ -884,7 +884,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
             goto err;
     }
     if (certreq_cb != NULL && !certreq_cb(ctx, ctx->certreq_cb_arg)) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_APPLICATION_CALLBACK_FAILED);
+        ERR_raise(ERR_LIB_CMP, CMP_R_CERTREQ_CALLBACK_FAILED);
         goto err;
     }
 
