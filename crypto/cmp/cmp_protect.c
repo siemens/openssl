@@ -125,6 +125,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
                               NULL, prot, &prot_part, NULL, ctx->pkey, md,
                               ctx->libctx, ctx->propq))
             return prot;
+        msg->header->protectionAlg = NULL; /* prevent double free */
         ASN1_BIT_STRING_free(prot);
         return NULL;
     }
