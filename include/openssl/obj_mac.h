@@ -63,6 +63,11 @@
 #define NID_hmac_sha1           781
 #define OBJ_hmac_sha1           OBJ_identified_organization,6L,1L,5L,5L,8L,1L,2L
 
+#define SN_siemens_ubp_hwid             "SIEMENS-UBP-HWID"
+#define LN_siemens_ubp_hwid             "siemens-ubp-hwid"
+#define NID_siemens_ubp_hwid            1496
+#define OBJ_siemens_ubp_hwid            1L,3L,6L,1L,4L,1L,4329L,6L,100L,4L,2L,1L,3L,2L
+
 #define SN_x509ExtAdmission             "x509ExtAdmission"
 #define LN_x509ExtAdmission             "Professional Information or basis for Admission"
 #define NID_x509ExtAdmission            1093

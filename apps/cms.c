@@ -1080,6 +1080,7 @@ int cms_main(int argc, char **argv)
                     flags |= CMS_STREAM;
             }
             flags |= CMS_PARTIAL;
+            flags |= CMS_SIEMENS_ID;
             cms = CMS_sign_ex(NULL, NULL, other, in, flags, libctx, app_get0_propq());
             if (cms == NULL) {
                 BIO_puts(bio_err, "CMS SignedData Creation Error\n");

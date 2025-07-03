@@ -500,6 +500,27 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             if (!add_sc)
                 goto err;
         }
+        if (flags & CMS_SIEMENS_ID) {
+            ASN1_OCTET_STRING *siemens_id = NULL;
+
+            if ((siemens_id = ASN1_OCTET_STRING_new()) == NULL
+                || !ASN1_OCTET_STRING_set(siemens_id, (unsigned char *)"HMI-001",
+                                          sizeof("HMI-001") - 1)) {
+                ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+                ASN1_OCTET_STRING_free(siemens_id);
+                goto err;
+            }
+            /*
+             * Add the Siemens UBP HWID attribute to the signer info.
+             * This is a custom attribute for Siemens devices.
+             */
+            if (!CMS_signed_add1_attr_by_NID(si, NID_siemens_ubp_hwid,
+                                             V_ASN1_OCTET_STRING,
+                                             siemens_id, -1)) {
+                ASN1_OCTET_STRING_free(siemens_id);
+                goto err;
+            }
+        }
         if (flags & CMS_REUSE_DIGEST) {
             if (!cms_copy_messageDigest(cms, si))
                 goto err;
