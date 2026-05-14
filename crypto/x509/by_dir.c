@@ -320,25 +320,28 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             }
 #ifndef OPENSSL_NO_POSIX_IO
 #ifdef _WIN32
-#define stat _stat
+#define lstat _stat
 #endif
             {
                 struct stat st;
-                if (stat(b->data, &st) < 0)
-                    break;
+                if (lstat(b->data, &st) < 0)
+                    break; /* symlink does not exist */
+#ifndef _WIN32
+                if (stat(b->data, &st) < 0) {
+                    k++;
+                    continue; /* symlink is broken */
+                }
+#endif
             }
 #endif
-            /* found one. */
-            if (type == X509_LU_X509) {
-                if ((X509_load_cert_file_ex(xl, b->data, ent->dir_type, libctx,
-                        propq))
-                    == 0)
-                    break;
-            } else if (type == X509_LU_CRL) {
-                if ((X509_load_crl_file(xl, b->data, ent->dir_type)) == 0)
-                    break;
-            }
+            /* found a file. Gracefully skip it if cert/CRL fails to load. */
+            ERR_set_mark();
+            if (type == X509_LU_X509)
+                (void)X509_load_cert_file_ex(xl, b->data, ent->dir_type, libctx, propq);
+             else if (type == X509_LU_CRL)
+                 (void)X509_load_crl_file(xl, b->data, ent->dir_type);
             /* else case will caught higher up */
+            ERR_pop_to_mark();
             k++;
         }
 
