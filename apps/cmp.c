@@ -474,7 +474,7 @@ const OPTIONS cmp_options[] = {
     { "server", OPT_SERVER, 's',
         "[http[s]://]host[:port][/path] of CMP server to use. Default port 80 or 443." },
     { OPT_MORE_STR, 0, 0,
-        "host may be DNS name or IP address; path can be overridden by -path" },
+        "host may be a DNS name or an IP address; path can be overridden by -path" },
     { "proxy", OPT_PROXY, 's',
         "[http[s]://]host[:port][/path] of HTTP(S) proxy to use; path is ignored" },
     { "no_proxy", OPT_NO_PROXY, 's',
@@ -864,7 +864,7 @@ static X509 *load_cert_pwd(const char *uri, const char *source, const char *desc
 /*
  * Set expected hostname/IP address and clears any email address in the given ts.
  * If the host is NULL, host name/address verification is disabled.
- * Otherwise, it is interpreted as an IP address if possible, otherwise as a domain name.
+ * It is interpreted as an IP address when possible, otherwise as a domain name.
  */
 static int truststore_set_host_etc(X509_STORE *ts, const char *host)
 {
@@ -880,8 +880,9 @@ static int truststore_set_host_etc(X509_STORE *ts, const char *host)
 
     X509_VERIFY_PARAM_set_hostflags(ts_vpm,
         X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT | X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-    return X509_VERIFY_PARAM_set1_ip_asc(ts_vpm, host)
-        || X509_VERIFY_PARAM_set1_host(ts_vpm, host, 0);
+    return host_is_ip_address(host)
+        ? X509_VERIFY_PARAM_set1_ip_asc(ts_vpm, host)
+        : X509_VERIFY_PARAM_set1_host(ts_vpm, host, 0);
 }
 
 /* write OSSL_CMP_MSG DER-encoded to the specified file name item */

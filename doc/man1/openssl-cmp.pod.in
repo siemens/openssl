@@ -531,8 +531,8 @@ of the CMP server to connect to via HTTP(S).
 An IP address may be for v4 or v6, such as C<127.0.0.1> or C<[::1]> for C<localhost>.
 If the I<host> string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 
-For TLS connections the I<host> is verified in TLS server certificate
-unless the B<-tls_host> option is given.
+For TLS connections, the name verified in server certificates is I<host>
+unless the B<-tls_host> option is used to specify a different name.
 If I<host> is a DNS name, it is also used for
 TLS Server Name Indication (SNI) according to RFC 3546 section 3.1.
 
