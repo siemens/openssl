@@ -21,6 +21,7 @@
 #define NI_MAXHOST 255
 #endif
 #include "crypto/ctype.h" /* for ossl_isspace() */
+#define OSSL_URL_SCHEME_SUFFIX "://"
 
 static void init_pstring(char **pstr)
 {
@@ -80,7 +81,6 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     }
 
     /* check for optional prefix "<scheme>://" as per RFC 3986: */
-#define OSSL_SCHEME_POSTFIX "://"
     scheme = scheme_end = p = url;
     if (ossl_isalpha(*p)) {
         while (*p != '\0'
@@ -88,9 +88,9 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
                 || ossl_isdigit(*p)
                 || strchr("+-.", *p) != NULL))
             p++;
-        if (HAS_PREFIX(p, OSSL_SCHEME_POSTFIX)) {
+        if (HAS_PREFIX(p, OSSL_URL_SCHEME_SUFFIX)) {
             scheme_end = p;
-            p += sizeof(OSSL_SCHEME_POSTFIX) - 1;
+            p += sizeof(OSSL_URL_SCHEME_SUFFIX) - 1;
         } else {
             p = url;
         }
