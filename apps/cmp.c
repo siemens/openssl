@@ -878,11 +878,15 @@ static int truststore_set_host_etc(X509_STORE *ts, const char *host)
     if (host == NULL)
         return 1;
 
+#ifndef OPENSSL_NO_SOCK
     X509_VERIFY_PARAM_set_hostflags(ts_vpm,
         X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT | X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
     return host_is_ip_address(host)
         ? X509_VERIFY_PARAM_set1_ip_asc(ts_vpm, host)
         : X509_VERIFY_PARAM_set1_host(ts_vpm, host, 0);
+#else
+    return 1;
+#endif
 }
 
 /* write OSSL_CMP_MSG DER-encoded to the specified file name item */
