@@ -135,9 +135,9 @@ ClientHello extension defined in RFC 3546 section 3.1
 to contain the value I<name> of type B<TLSEXT_NAMETYPE_host_name>.
 If I<name> is NULL it clears the SNI extension.
 
-Using this function may be crucial also for correct routing of connection requests.
-TLS clients are recommended to use this function as well as L<SSL_set1_dnsname(3)>
-or L<SSL_add1_dnsname(3)> for validation of server hostname(s).
+Using this function may also be important for correct routing of connection requests.
+TLS clients should call this function alongside L<SSL_set1_dnsname(3)> or
+L<SSL_add1_dnsname(3)> to set the expected server hostname(s) for certificate validation.
 
 The SSL_set_tlsext_host_name() function should only be called on SSL objects
 that will act as clients; otherwise the configured I<name> will be ignored.
