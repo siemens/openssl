@@ -497,6 +497,92 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
         || ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) < 0;
 }
 
+#define SN_id_smime_aa_nonce            "id-smime-aa-nonce"
+#define NID_id_smime_aa_nonce           1600
+#define OBJ_id_smime_aa_nonce           OBJ_id_smime_aa,8888L
+
+static int add_object(unsigned char *data, int len, int nid, const char *name)
+{
+    ASN1_OBJECT *obj;
+    int res;
+
+    ERR_set_mark();
+    res = OBJ_nid2obj(nid) != NULL;
+    ERR_pop_to_mark();
+    if (res)
+        return 1;
+
+    if ((obj = ASN1_OBJECT_create(nid, data, len, name, name)) == NULL)
+        return 0;
+    res = OBJ_add_object(obj) != NID_undef;
+    ASN1_OBJECT_free(obj);
+    if (!res)
+        BIO_printf(bio_err, "Error adding info for ASN.1 object %s", name);
+    return res;
+}
+
+static int add_test_asn1_objects(void)
+{
+    static unsigned char so_smime_aa_nonce[]      = { OBJ_id_smime_aa_nonce };
+     if (!add_object(so_smime_aa_nonce, sizeof(so_smime_aa_nonce),
+                    NID_id_smime_aa_nonce, SN_id_smime_aa_nonce))
+            return 0;
+    return 1;
+}
+
+
+#define DUMMY_NONCE_LEN 32
+static OSSL_CMP_ITAV *dummy_nonce(void)
+{
+    unsigned char *rand = OPENSSL_zalloc(DUMMY_NONCE_LEN);
+    OSSL_CMP_ITAV *itav = NULL;
+    ASN1_OCTET_STRING* octetstring = NULL;
+    ASN1_TYPE* val = NULL;
+    ASN1_OBJECT *type = NULL;
+
+    if (rand == NULL
+        || RAND_bytes(rand, DUMMY_NONCE_LEN) <= 0) {
+        BIO_printf(bio_err, "RAND_bytes failed\n");
+        return NULL;
+    }
+    
+    octetstring = ASN1_OCTET_STRING_new();
+    if (octetstring == NULL) {
+        BIO_printf(bio_err,"ASN1_OCTET_STRING_new failed");
+        goto err;
+    }
+    if (!ASN1_OCTET_STRING_set(
+            octetstring, rand, DUMMY_NONCE_LEN)) {
+        BIO_printf(bio_err,"ASN1_OCTET_STRING_set failed");
+            goto err;
+    }
+    OPENSSL_free(rand);
+
+    val = ASN1_TYPE_new();
+    if (val == NULL) {
+        BIO_printf(bio_err,"ASN1_TYPE_new failed");
+        goto err;
+    }
+    ASN1_TYPE_set(val, V_ASN1_OCTET_STRING, octetstring);
+    type = OBJ_nid2obj(NID_id_smime_aa_nonce);
+    if (type == NULL) {
+        BIO_printf(bio_err,"OBJ_nid2obj failed");
+        goto err;
+    }
+
+    itav = OSSL_CMP_ITAV_create(type, val);
+    if (itav == NULL) {
+        BIO_printf(bio_err,"OSSL_CMP_ITAV_create failed");
+        goto err;
+    }
+    return itav;
+err:
+    OPENSSL_free(rand);
+    ASN1_OCTET_STRING_free(octetstring);
+    OSSL_CMP_ITAV_free(itav);
+    return NULL;
+}
+
 static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
     const OSSL_CMP_ITAV *req)
 {
@@ -576,6 +662,10 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
         OSSL_CMP_ATAVS_free(keyspec);
         return NULL;
     } break;
+
+    case NID_id_smime_aa_nonce:
+        rsp = dummy_nonce();
+        break;
     default:
         rsp = OSSL_CMP_ITAV_dup(req);
     }
@@ -754,6 +844,9 @@ OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_CMP_SRV_CTX *srv_ctx = OSSL_CMP_SRV_CTX_new(libctx, propq);
     mock_srv_ctx *ctx = mock_srv_ctx_new();
+
+    if(!add_test_asn1_objects())
+        return NULL;
 
     if (srv_ctx != NULL && ctx != NULL
         && OSSL_CMP_SRV_CTX_init(srv_ctx, ctx, process_cert_request,
