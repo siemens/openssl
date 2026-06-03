@@ -15,6 +15,7 @@
 #include <openssl/cmp.h>
 #include <openssl/err.h>
 #include <openssl/cmperr.h>
+#include "atg_verifier_wrapper.h"
 
 /* the context for the CMP mock server */
 typedef struct {
@@ -497,9 +498,22 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
         || ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) < 0;
 }
 
+static void print_hex(const char *label, uint8_t *data, size_t len, int verbosity)
+{
+    printf("\n----%s---%zu bytes---", label, len);
+    if (verbosity >= 8) {
+        printf("\n");
+        for (size_t i = 0; i < len; i++) {
+            printf("%02x", data[i]);
+        }
+        printf("\n____________________________\n");
+    }
+}
+
+
 #define SN_id_smime_aa_nonce            "id-smime-aa-nonce"
 #define NID_id_smime_aa_nonce           1600
-#define OBJ_id_smime_aa_nonce           OBJ_id_smime_aa,8888L
+//#define OBJ_id_smime_aa_nonce           OBJ_id_smime_aa,8888L
 
 static int add_object(unsigned char *data, int len, int nid, const char *name)
 {
@@ -523,7 +537,7 @@ static int add_object(unsigned char *data, int len, int nid, const char *name)
 
 static int add_test_asn1_objects(void)
 {
-    static unsigned char so_smime_aa_nonce[]      = { OBJ_id_smime_aa_nonce };
+    static unsigned char so_smime_aa_nonce[]      = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x10, 0x02, 0xC5, 0x38 };
      if (!add_object(so_smime_aa_nonce, sizeof(so_smime_aa_nonce),
                     NID_id_smime_aa_nonce, SN_id_smime_aa_nonce))
             return 0;
@@ -545,7 +559,6 @@ static OSSL_CMP_ITAV *dummy_nonce(void)
         BIO_printf(bio_err, "RAND_bytes failed\n");
         return NULL;
     }
-    
     octetstring = ASN1_OCTET_STRING_new();
     if (octetstring == NULL) {
         BIO_printf(bio_err,"ASN1_OCTET_STRING_new failed");
@@ -581,6 +594,112 @@ err:
     ASN1_OCTET_STRING_free(octetstring);
     OSSL_CMP_ITAV_free(itav);
     return NULL;
+}
+
+#define MAX_CHALLENGE_LEN 600
+#define MAX_SECRET_LEN 64
+static OSSL_CMP_ITAV *keyattestation_generatechallenge(mock_srv_ctx *ctx,
+                                                       unsigned char *cred_blob,
+                                                       size_t cred_blob_size,
+                                                       int verbosity)
+{
+    unsigned char *challenge = NULL, *plain_secret = NULL;
+    size_t challenge_size = 0, plain_secret_size = 0;
+    OSSL_CMP_ITAV *itav = NULL;
+    ASN1_OCTET_STRING* octetstring = NULL;
+    ASN1_TYPE* val = NULL;
+    ASN1_OBJECT *type = NULL;
+
+    challenge = OPENSSL_zalloc(MAX_CHALLENGE_LEN);
+    if (challenge == NULL) {
+        BIO_printf(bio_err, "Challenge: OPENSSL_zalloc failed\n");
+        return NULL;
+    }
+    plain_secret = OPENSSL_zalloc(MAX_SECRET_LEN);
+    if (plain_secret == NULL) {
+        BIO_printf(bio_err, "Plain Secret: OPENSSL_zalloc failed\n");
+        goto err;
+    }
+
+    print_hex("Received TPM KEY DATA", cred_blob, cred_blob_size, verbosity);
+
+    challenge_size = HandleChallenge(cred_blob, challenge,MAX_CHALLENGE_LEN);
+    if (challenge_size == 0) {
+        BIO_printf(bio_err, "GenerateChallenge failed\n");
+        goto err;
+    }
+    print_hex("Generated Challenge", challenge, challenge_size, verbosity);
+    print_hex("Generated Plain Secret", plain_secret, plain_secret_size, verbosity);
+
+    // if (!mock_set1_keyattest_gensecret(ctx, plain_secret,
+    //                                      plain_secret_size)) {
+    //     BIO_printf(bio_err, "mock_set1_keyattest_gensecret failed\n");
+    //     goto err;
+    // }
+#if DUMMY_CHALLENGE
+    if (challenge == NULL
+        || RAND_bytes(challenge, DUMMY_CHALLENGE_LEN) <= 0) {
+        BIO_printf(bio_err, "RAND_bytes failed\n");
+        return NULL;
+    }
+#endif
+
+    //itav = OSSL_CMP_ITAV_new_keyattest_challenge(challenge, challenge_size);
+    octetstring = ASN1_OCTET_STRING_new();
+    if (octetstring == NULL) {
+        BIO_printf(bio_err,"ASN1_OCTET_STRING_new failed");
+        goto err;
+    }
+    if (!ASN1_OCTET_STRING_set(
+            octetstring, challenge, challenge_size)) {
+        BIO_printf(bio_err,"ASN1_OCTET_STRING_set failed");
+            goto err;
+    }
+    OPENSSL_free(challenge);
+
+    val = ASN1_TYPE_new();
+    if (val == NULL) {
+        BIO_printf(bio_err,"ASN1_TYPE_new failed");
+        goto err;
+    }
+    ASN1_TYPE_set(val, V_ASN1_OCTET_STRING, octetstring);
+    type = OBJ_nid2obj(NID_id_smime_aa_nonce);
+    if (type == NULL) {
+        BIO_printf(bio_err,"OBJ_nid2obj failed");
+        goto err;
+    }
+
+    itav = OSSL_CMP_ITAV_create(type, val);
+    if (itav == NULL) {
+        BIO_printf(bio_err,"OSSL_CMP_ITAV_create failed");
+        goto err;
+    }
+    return itav;
+
+ err:
+    ASN1_OCTET_STRING_free(octetstring);
+    OSSL_CMP_ITAV_free(itav);
+    OPENSSL_free(challenge);
+    OPENSSL_free(plain_secret);
+    return NULL;
+}
+static OSSL_CMP_ITAV *keyattestation_challengeITAV(mock_srv_ctx *ctx, const OSSL_CMP_ITAV *req)
+{
+    int verbosity = 8;
+
+    /* Get infoValue (ASN1_TYPE) from the ITAV */
+    ASN1_TYPE *infoValue = OSSL_CMP_ITAV_get0_value(req);
+    if (infoValue == NULL || infoValue->type != V_ASN1_OCTET_STRING) {
+        BIO_printf(bio_err, "keyattestation_challengeITAV: missing or wrong infoValue type\n");
+        return NULL;
+    }
+
+    /* Extract the octet string bytes */
+    ASN1_OCTET_STRING *octet_str = infoValue->value.octet_string;
+    const unsigned char *cred_blob = ASN1_STRING_get0_data(octet_str);
+    size_t cred_blob_size = (size_t)ASN1_STRING_length(octet_str);
+
+    return keyattestation_generatechallenge(ctx, cred_blob, cred_blob_size, verbosity);
 }
 
 static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
@@ -664,8 +783,18 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
     } break;
 
     case NID_id_smime_aa_nonce:
-        rsp = dummy_nonce();
+
+    //     rsp = dummy_nonce();
+    //     break;
+    // //case NID_id_smime_aa_keyattest_TPMData:
+       // ASN1_OCTET_STRING *tpmdata = NULL;
+    //TODO- fetch octet string from ASN1_TYPE in req and pass it to keyattestation_generatechallenge
+        // if (!OSSL_CMP_ITAV_get0_KeyAttestationTPMData(req, &tpmdata))
+        //     return NULL;
+
+        rsp = keyattestation_challengeITAV(ctx, req);
         break;
+
     default:
         rsp = OSSL_CMP_ITAV_dup(req);
     }
@@ -846,7 +975,7 @@ OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx, const char *propq)
     mock_srv_ctx *ctx = mock_srv_ctx_new();
 
     if(!add_test_asn1_objects())
-        return NULL;
+        goto err;
 
     if (srv_ctx != NULL && ctx != NULL
         && OSSL_CMP_SRV_CTX_init(srv_ctx, ctx, process_cert_request,
@@ -855,7 +984,7 @@ OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx, const char *propq)
         && OSSL_CMP_SRV_CTX_init_trans(srv_ctx,
             delayed_delivery, clean_transaction))
         return srv_ctx;
-
+ err:
     mock_srv_ctx_free(ctx);
     OSSL_CMP_SRV_CTX_free(srv_ctx);
     return NULL;
