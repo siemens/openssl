@@ -678,6 +678,16 @@ static OSSL_CMP_ITAV *keyattestation_generatechallenge(mock_srv_ctx *ctx,
    
 
     /*
+
+        NonceResponseTypeInfo ::= SEQUENCE {
+            type ATTESTATION-NONCE-RESPONSE.&id(
+                        {AttestationNonceResponseSet}),
+            -- identifies the nonce-response syntax for the selected
+            --   attestation statement type
+            respInfo ATTESTATION-NONCE-RESPONSE.&Type(
+                        {AttestationNonceResponseSet}{@type}) OPTIONAL
+            -- contains type-specific nonce-response information
+        }
         NonceResponse ::= SEQUENCE {
             nonce OCTET STRING (SIZE(0 | 8..64)),
             -- Contains the nonce of length len
@@ -686,13 +696,7 @@ static OSSL_CMP_ITAV *keyattestation_generatechallenge(mock_srv_ctx *ctx,
             expiry INTEGER OPTIONAL,
             -- Indicates how long in seconds the nonce issuer
             --   considers the nonce valid
-            type ATTESTATION-NONCE-RESPONSE.&id(
-                {AttestationNonceResponseSet}) OPTIONAL,
-            -- Identifies the nonce-response syntax for the
-            --   selected Attestation statement type
-            respInfo ATTESTATION-NONCE-RESPONSE.&Type(
-                {AttestationNonceResponseSet}{@type}) OPTIONAL
-            -- Contains type-specific nonce-response information
+            respTypeInfo NonceResponseTypeInfo OPTIONAL
         }
     */
     nonceptype = OBJ_nid2obj(NID_id_smime_attest_nonce_rsp);
@@ -706,73 +710,117 @@ static OSSL_CMP_ITAV *keyattestation_generatechallenge(mock_srv_ctx *ctx,
         goto err;
     }
 
-    /* Build NonceResponse SEQUENCE:
-     *   nonce    OCTET STRING (0 length) -- no freshness proof required
-     *   type     OID OPTIONAL            -- attestation nonce-response syntax
-     *   respInfo OCTET STRING OPTIONAL   -- challenge bytes
+    /*
+     * Build NonceResponse SEQUENCE (outer):
+     *   nonce        OCTET STRING (SIZE(0)) -- zero-length, no freshness proof
+     *   respTypeInfo NonceResponseTypeInfo SEQUENCE (OPTIONAL):
+     *     type     OID      -- identifies attestation nonce-response syntax
+     *     respInfo OCTET STRING -- challenge bytes
      */
     {
-        ASN1_SEQUENCE_ANY *nonce_rsp = sk_ASN1_TYPE_new_null();
-        ASN1_TYPE *nonce_t = NULL, *type_t = NULL, *respinfo_t = NULL;
-        ASN1_OCTET_STRING *empty_nonce = NULL;
-        unsigned char *seq_der = NULL;
-        int seq_der_len;
-        ASN1_STRING *seq_str = NULL;
+        /* --- inner: NonceResponseTypeInfo SEQUENCE { type OID, respInfo OCTET STRING } --- */
+        ASN1_SEQUENCE_ANY *resp_type_info = sk_ASN1_TYPE_new_null();
+        ASN1_TYPE *type_t = NULL, *respinfo_t = NULL;
+        unsigned char *inner_der = NULL;
+        int inner_der_len;
+        ASN1_STRING *inner_str = NULL;
 
-        if (nonce_rsp == NULL)
+        /* --- outer: NonceResponse SEQUENCE { nonce OCTET STRING, respTypeInfo SEQUENCE } --- */
+        ASN1_SEQUENCE_ANY *nonce_rsp = NULL;
+        ASN1_TYPE *nonce_t = NULL, *resptype_t = NULL;
+        ASN1_OCTET_STRING *empty_nonce = NULL;
+        unsigned char *outer_der = NULL;
+        int outer_der_len;
+        ASN1_STRING *outer_str = NULL;
+
+        if (resp_type_info == NULL)
             goto err;
 
+        /* type: OID -- identifies attestation nonce-response syntax */
+        type_t = ASN1_TYPE_new();
+        if (type_t == NULL
+                || !sk_ASN1_TYPE_push(resp_type_info, type_t)) {
+            ASN1_TYPE_free(type_t);
+            sk_ASN1_TYPE_pop_free(resp_type_info, ASN1_TYPE_free);
+            goto err;
+        }
+        ASN1_TYPE_set(type_t, V_ASN1_OBJECT, nonceptype);
+        nonceptype = NULL; /* ownership transferred to type_t */
+
+        /* respInfo: OCTET STRING -- challenge bytes */
+        respinfo_t = ASN1_TYPE_new();
+        if (respinfo_t == NULL
+                || !sk_ASN1_TYPE_push(resp_type_info, respinfo_t)) {
+            ASN1_TYPE_free(respinfo_t);
+            sk_ASN1_TYPE_pop_free(resp_type_info, ASN1_TYPE_free);
+            goto err;
+        }
+        ASN1_TYPE_set(respinfo_t, V_ASN1_OCTET_STRING, octetstring);
+        octetstring = NULL; /* ownership transferred to respinfo_t */
+
+        /* DER-encode inner NonceResponseTypeInfo SEQUENCE */
+        inner_der_len = i2d_ASN1_SEQUENCE_ANY(resp_type_info, &inner_der);
+        sk_ASN1_TYPE_pop_free(resp_type_info, ASN1_TYPE_free);
+        if (inner_der_len <= 0 || inner_der == NULL)
+            goto err;
+
+        inner_str = ASN1_STRING_new();
+        if (inner_str == NULL
+                || !ASN1_STRING_set(inner_str, inner_der, inner_der_len)) {
+            ASN1_STRING_free(inner_str);
+            OPENSSL_free(inner_der);
+            goto err;
+        }
+        OPENSSL_free(inner_der);
+
+        /* --- outer NonceResponse SEQUENCE --- */
+        nonce_rsp = sk_ASN1_TYPE_new_null();
+        if (nonce_rsp == NULL) {
+            ASN1_STRING_free(inner_str);
+            goto err;
+        }
+
         /* nonce: zero-length OCTET STRING */
-        empty_nonce = ASN1_OCTET_STRING_new(); /* new() gives length 0 by default */
+        empty_nonce = ASN1_OCTET_STRING_new();
         nonce_t = ASN1_TYPE_new();
         if (empty_nonce == NULL || nonce_t == NULL
                 || !sk_ASN1_TYPE_push(nonce_rsp, nonce_t)) {
             ASN1_OCTET_STRING_free(empty_nonce);
             ASN1_TYPE_free(nonce_t);
+            ASN1_STRING_free(inner_str);
             sk_ASN1_TYPE_pop_free(nonce_rsp, ASN1_TYPE_free);
             goto err;
         }
         ASN1_TYPE_set(nonce_t, V_ASN1_OCTET_STRING, empty_nonce);
         empty_nonce = NULL; /* ownership transferred to nonce_t */
 
-        /* type: OID OPTIONAL -- identifies attestation nonce-response syntax */
-        type_t = ASN1_TYPE_new();
-        if (type_t == NULL
-                || !sk_ASN1_TYPE_push(nonce_rsp, type_t)) {
-            ASN1_TYPE_free(type_t);
+        /* respTypeInfo: nested SEQUENCE (full TLV already in inner_str) */
+        resptype_t = ASN1_TYPE_new();
+        if (resptype_t == NULL
+                || !sk_ASN1_TYPE_push(nonce_rsp, resptype_t)) {
+            ASN1_TYPE_free(resptype_t);
+            ASN1_STRING_free(inner_str);
             sk_ASN1_TYPE_pop_free(nonce_rsp, ASN1_TYPE_free);
             goto err;
         }
-        ASN1_TYPE_set(type_t, V_ASN1_OBJECT, nonceptype);
-        nonceptype = NULL; /* ownership transferred to type_t */
+        ASN1_TYPE_set(resptype_t, V_ASN1_SEQUENCE, inner_str);
+        inner_str = NULL; /* ownership transferred to resptype_t */
 
-        /* respInfo: OCTET STRING OPTIONAL -- challenge bytes */
-        respinfo_t = ASN1_TYPE_new();
-        if (respinfo_t == NULL
-                || !sk_ASN1_TYPE_push(nonce_rsp, respinfo_t)) {
-            ASN1_TYPE_free(respinfo_t);
-            sk_ASN1_TYPE_pop_free(nonce_rsp, ASN1_TYPE_free);
-            goto err;
-        }
-        ASN1_TYPE_set(respinfo_t, V_ASN1_OCTET_STRING, octetstring);
-        octetstring = NULL; /* ownership transferred to respinfo_t */
-
-        /* Encode SEQUENCE to DER (full TLV: 0x30 + length + contents) */
-        seq_der_len = i2d_ASN1_SEQUENCE_ANY(nonce_rsp, &seq_der);
+        /* DER-encode outer NonceResponse SEQUENCE */
+        outer_der_len = i2d_ASN1_SEQUENCE_ANY(nonce_rsp, &outer_der);
         sk_ASN1_TYPE_pop_free(nonce_rsp, ASN1_TYPE_free);
-        if (seq_der_len <= 0 || seq_der == NULL)
+        if (outer_der_len <= 0 || outer_der == NULL)
             goto err;
 
-        /* Store in val as V_ASN1_SEQUENCE (full TLV per OpenSSL convention) */
-        seq_str = ASN1_STRING_new();
-        if (seq_str == NULL
-                || !ASN1_STRING_set(seq_str, seq_der, seq_der_len)) {
-            ASN1_STRING_free(seq_str);
-            OPENSSL_free(seq_der);
+        outer_str = ASN1_STRING_new();
+        if (outer_str == NULL
+                || !ASN1_STRING_set(outer_str, outer_der, outer_der_len)) {
+            ASN1_STRING_free(outer_str);
+            OPENSSL_free(outer_der);
             goto err;
         }
-        OPENSSL_free(seq_der);
-        ASN1_TYPE_set(val, V_ASN1_SEQUENCE, seq_str);
+        OPENSSL_free(outer_der);
+        ASN1_TYPE_set(val, V_ASN1_SEQUENCE, outer_str);
     }
 
     genptype = OBJ_nid2obj(NID_id_it_nonceResponse);
@@ -809,16 +857,20 @@ static OSSL_CMP_ITAV *keyattestation_challengeITAV(mock_srv_ctx *ctx, const OSSL
     /* Extract the octet string bytes */
     ASN1_STRING *octet_str = infoValue->value.sequence;
     /*
-        NonceRequest ::= SEQUENCE {
-            len    INTEGER (8..64) OPTIONAL,
-            -- indicates the required length of the requested nonce
-            type   ATTESTATION-NONCE-REQUEST.&id(
-                    {AttestationNonceRequestSet}) OPTIONAL,
+            NonceRequestTypeInfo ::= SEQUENCE {
+            type ATTESTATION-NONCE-REQUEST.&id(
+                        {AttestationNonceRequestSet}),
             -- identifies the nonce-request syntax for the selected
             --   attestation statement type
-            reqInfo ATTESTATION-NONCE-REQUEST.&Type(
-                    {AttestationNonceRequestSet}{@type}) OPTIONAL
+            reqInfo  ATTESTATION-NONCE-REQUEST.&Type(
+                        {AttestationNonceRequestSet}{@type}) OPTIONAL
             -- contains type-specific nonce-request information
+        }
+
+        NonceRequest ::= SEQUENCE {
+            len      INTEGER (8..64) OPTIONAL,
+            -- indicates the required length of the requested nonce
+            reqTypeInfo NonceRequestTypeInfo OPTIONAL
         }
     */
 
@@ -839,7 +891,20 @@ static OSSL_CMP_ITAV *keyattestation_challengeITAV(mock_srv_ctx *ctx, const OSSL
     long nonce_len_val = -1;
     const unsigned char *cred_blob = NULL;
     size_t cred_blob_size = 0;
+    /*
+     * Kept alive until after keyattestation_generatechallenge() returns
+     * because cred_blob is a borrowed pointer into inner's octet string.
+     * Freeing inner before that call would be a use-after-free.
+     */
+    ASN1_SEQUENCE_ANY *inner = NULL;
 
+    /*
+     * Iterate over NonceRequest fields:
+     *   [0] len         INTEGER (8..64) OPTIONAL
+     *   [1] reqTypeInfo NonceRequestTypeInfo SEQUENCE OPTIONAL:
+     *             [0] type    OID
+     *             [1] reqInfo OCTET STRING (TPM credential blob)
+     */
     for (int i = 0; i < sk_ASN1_TYPE_num(fields); i++) {
         ASN1_TYPE *f = sk_ASN1_TYPE_value(fields, i);
 
@@ -847,24 +912,54 @@ static OSSL_CMP_ITAV *keyattestation_challengeITAV(mock_srv_ctx *ctx, const OSSL
             /* len: INTEGER (8..64) OPTIONAL */
             nonce_len_val = ASN1_INTEGER_get(f->value.integer);
             BIO_printf(bio_err, "NonceRequest.len = %ld\n", nonce_len_val);
-        } else if (f->type == V_ASN1_OBJECT) {
-            /* type: OID OPTIONAL -- skip */
-        } else if (f->type == V_ASN1_OCTET_STRING) {
-            /* reqInfo: OCTET STRING -- raw TPM credential blob bytes */
-            cred_blob = ASN1_STRING_get0_data(f->value.octet_string);
-            cred_blob_size = (size_t)ASN1_STRING_length(f->value.octet_string);
+        } else if (f->type == V_ASN1_SEQUENCE && inner == NULL) {
+            /* reqTypeInfo: NonceRequestTypeInfo SEQUENCE { type OID, reqInfo OCTET STRING }.
+             * The `inner == NULL` guard ensures we process only the first
+             * reqTypeInfo; any further SEQUENCE elements are ignored rather
+             * than causing a leak of a previously decoded inner structure.
+             */
+            const unsigned char *inner_der = ASN1_STRING_get0_data(f->value.sequence);
+            long inner_der_len = (long)ASN1_STRING_length(f->value.sequence);
+
+            inner = d2i_ASN1_SEQUENCE_ANY(NULL, &inner_der, inner_der_len);
+            if (inner == NULL) {
+                BIO_printf(bio_err, "keyattestation_challengeITAV: "
+                           "failed to decode NonceRequestTypeInfo SEQUENCE\n");
+                sk_ASN1_TYPE_pop_free(fields, ASN1_TYPE_free);
+                return NULL;
+            }
+
+            for (int j = 0; j < sk_ASN1_TYPE_num(inner); j++) {
+                ASN1_TYPE *g = sk_ASN1_TYPE_value(inner, j);
+
+                if (g->type == V_ASN1_OBJECT) {
+                    /* type: OID -- identifies attestation nonce-request syntax */
+                    /* (no action needed for the mock server) */
+                } else if (g->type == V_ASN1_OCTET_STRING) {
+                    /* reqInfo: OCTET STRING -- raw TPM credential blob bytes.
+                     * Borrowed pointer into `inner`; do NOT free `inner`
+                     * until after keyattestation_generatechallenge() returns.
+                     */
+                    cred_blob = ASN1_STRING_get0_data(g->value.octet_string);
+                    cred_blob_size = (size_t)ASN1_STRING_length(g->value.octet_string);
+                }
+            }
+            /* NOTE: inner is intentionally NOT freed here; see cleanup below */
         }
     }
 
     if (cred_blob == NULL || cred_blob_size == 0) {
         BIO_printf(bio_err, "keyattestation_challengeITAV: "
                    "missing reqInfo in NonceRequest\n");
+        sk_ASN1_TYPE_pop_free(inner, ASN1_TYPE_free);  /* NULL-safe */
         sk_ASN1_TYPE_pop_free(fields, ASN1_TYPE_free);
         return NULL;
     }
 
     OSSL_CMP_ITAV *result = keyattestation_generatechallenge(
         ctx, (unsigned char *)cred_blob, cred_blob_size, verbosity);
+    /* cred_blob is no longer referenced after this point; safe to free inner */
+    sk_ASN1_TYPE_pop_free(inner, ASN1_TYPE_free);
     sk_ASN1_TYPE_pop_free(fields, ASN1_TYPE_free);
     return result;
 }
