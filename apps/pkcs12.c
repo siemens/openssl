@@ -195,6 +195,13 @@ const OPTIONS pkcs12_options[] = {
     { NULL }
 };
 
+#define WARN_DUP(opt, var) \
+    { \
+        if (var) \
+            BIO_printf(bio_err, "Warning: earlier -%s option argument is ignored: %s\n", opt, var); \
+    }
+#define SET_WARN_DUP(opt, var) { WARN_DUP(opt, var); var = opt_arg(); }
+#define SET_INT_WARN_DUP(opt, var) { WARN_DUP(opt, var); var = opt_int_arg(); }
 int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
@@ -261,7 +268,7 @@ int pkcs12_main(int argc, char **argv)
             options |= (NOKEYS | NOCERTS);
             break;
         case OPT_JDKTRUST:
-            jdktrust = opt_arg();
+            SET_WARN_DUP("jdktrust", jdktrust);
             /* Adding jdk trust implies nokeys */
             options |= NOKEYS;
             break;
@@ -296,10 +303,12 @@ int pkcs12_main(int argc, char **argv)
             ciphername = NULL;
             break;
         case OPT_CIPHER:
+            WARN_DUP("cipher", ciphername);
             enc_name = ciphername = opt_unknown();
             break;
         case OPT_ITER:
-            maciter = iter = opt_int_arg();
+            SET_INT_WARN_DUP("iter", iter);
+            maciter = iter;
             break;
         case OPT_NOITER:
             iter = 1;
@@ -311,26 +320,28 @@ int pkcs12_main(int argc, char **argv)
             maciter = 1;
             break;
         case OPT_MACSALTLEN:
-            macsaltlen = opt_int_arg();
+            SET_INT_WARN_DUP("macsaltlen", macsaltlen)
             break;
         case OPT_NOMAC:
             cert_pbe = -1;
             maciter = -1;
             break;
         case OPT_MACALG:
-            macalg = opt_arg();
+            SET_WARN_DUP("macalg", macalg);
             break;
         case OPT_PBMAC1_PBKDF2:
             pbmac1_pbkdf2 = 1;
             break;
         case OPT_PBMAC1_PBKDF2_MD:
-            pbmac1_pbkdf2_md = opt_arg();
+            SET_WARN_DUP("pbmac1_pbkdf2_md", pbmac1_pbkdf2_md);
             break;
         case OPT_CERTPBE:
+            WARN_DUP("certpbe", cert_pbe);
             if (!set_pbe(&cert_pbe, opt_arg()))
                 goto opthelp;
             break;
         case OPT_KEYPBE:
+            WARN_DUP("keypbe", key_pbe);
             if (!set_pbe(&key_pbe, opt_arg()))
                 goto opthelp;
             break;
@@ -339,25 +350,25 @@ int pkcs12_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_INKEY:
-            keyname = opt_arg();
+            SET_WARN_DUP("inkey", keyname);
             break;
         case OPT_CERTFILE:
-            certfile = opt_arg();
+            SET_WARN_DUP("certfile", certfile);
             break;
         case OPT_UNTRUSTED:
-            untrusted = opt_arg();
+            SET_WARN_DUP("untrusted", untrusted);
             break;
         case OPT_PASSCERTS:
-            passcertsarg = opt_arg();
+            SET_WARN_DUP("passcerts", passcertsarg);
             break;
         case OPT_NAME:
-            name = opt_arg();
+            SET_WARN_DUP("name", name);
             break;
         case OPT_LMK:
             add_lmk = 1;
             break;
         case OPT_CSP:
-            csp_name = opt_arg();
+            SET_WARN_DUP("csp", csp_name);
             break;
         case OPT_CANAME:
             if (canames == NULL
@@ -367,28 +378,28 @@ int pkcs12_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_IN:
-            infile = opt_arg();
+            SET_WARN_DUP("in", infile);
             break;
         case OPT_OUT:
-            outfile = opt_arg();
+            SET_WARN_DUP("out", outfile);
             break;
         case OPT_PASSIN:
-            passinarg = opt_arg();
+            SET_WARN_DUP("passin", passinarg);
             break;
         case OPT_PASSOUT:
-            passoutarg = opt_arg();
+            SET_WARN_DUP("passout", passoutarg);
             break;
         case OPT_PASSWORD:
-            passarg = opt_arg();
+            SET_WARN_DUP("password", passarg);
             break;
         case OPT_CAPATH:
-            CApath = opt_arg();
+            SET_WARN_DUP("CApath", CApath);
             break;
         case OPT_CASTORE:
-            CAstore = opt_arg();
+            SET_WARN_DUP("CAstore", CAstore);
             break;
         case OPT_CAFILE:
-            CAfile = opt_arg();
+            SET_WARN_DUP("CAfile", CAfile);
             break;
         case OPT_NOCAPATH:
             noCApath = 1;
