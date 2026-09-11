@@ -401,7 +401,11 @@ static int save_senderNonce_if_waiting(OSSL_CMP_CTX *ctx,
     const OSSL_CMP_MSG *rep, int rid)
 {
     /*
-     * Lightweight CMP Profile section 4.4 states: the senderNonce of the
+     * Lightweight CMP Profile section 4.4 states:
+     * When initiating delayed delivery of a message received from an EE,
+     * the PKI management entity MUST respond with a message
+     * including the status "waiting". [...] On receiving this response,
+     * the EE MUST store in its transaction context the senderNonce of the
      * preceding request message because this value will be needed for checking
      * the recipNonce of the final response to be received after polling.
      */

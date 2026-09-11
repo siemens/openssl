@@ -112,6 +112,10 @@ or else from the subject name provided for certification requests.
 As required by RFC 9810 section 5.1.1., if the sender name is not known
 to the client it set to the NULL-DN. In this case for identification at least
 the senderKID must be set, which we take from any referenceValue provided.
+The recipient field is set to a copy of B<ctx->next_recipient> if present,
+supporting any GENERAL_NAME choice. Otherwise, it is determined from
+B<ctx->recipient>, B<ctx->srvCert>, B<ctx->issuer>, B<ctx->oldCert>, or B<ctx->cert>
+via ossl_cmp_hdr_set1_recipient().
 
 =head1 NOTES
 

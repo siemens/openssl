@@ -196,7 +196,8 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         && ossl_cmp_ctx_set1_first_senderNonce(ctx, NULL)
         && OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
         && OSSL_CMP_CTX_set1_senderNonce(ctx, NULL)
-        && ossl_cmp_ctx_set1_recipNonce(ctx, NULL);
+        && ossl_cmp_ctx_set1_recipNonce(ctx, NULL)
+        && ossl_cmp_ctx_set0_next_recipient(ctx, NULL);
 }
 
 /* Frees OSSL_CMP_CTX variables allocated in OSSL_CMP_CTX_new() */
@@ -233,6 +234,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     EVP_MD_free(ctx->pbm_owf);
 
     X509_NAME_free(ctx->recipient);
+    GENERAL_NAME_free(ctx->next_recipient);
     EVP_MD_free(ctx->digest);
     ASN1_OCTET_STRING_free(ctx->transactionID);
     ASN1_OCTET_STRING_free(ctx->senderNonce);
@@ -625,6 +627,7 @@ DEFINE_OSSL_CMP_CTX_get1_certs(caPubs)
 
     /* Set the X509 name of the recipient to be placed in the PKIHeader */
     DEFINE_OSSL_CMP_CTX_set1(recipient, X509_NAME)
+    DEFINE_OSSL_set0(ossl_cmp_ctx, next_recipient, GENERAL_NAME)
 
     /* Store the X509 name of the expected sender in the PKIHeader of responses */
     DEFINE_OSSL_CMP_CTX_set1(expected_sender, X509_NAME)

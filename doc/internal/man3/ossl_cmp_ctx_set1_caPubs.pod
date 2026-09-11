@@ -9,7 +9,9 @@ ossl_cmp_ctx_set0_statusString,
 ossl_cmp_ctx_set_failInfoCode,
 ossl_cmp_ctx_set0_newCert,
 ossl_cmp_ctx_set1_extraCertsIn,
-ossl_cmp_ctx_set1_recipNonce
+ossl_cmp_ctx_set1_recipNonce,
+ossl_cmp_ctx_set0_next_recipient,
+ossl_cmp_ctx_set1_recipient_from_sender
 - internal functions for managing the CMP client context datastructure
 
 =head1 SYNOPSIS
@@ -27,6 +29,9 @@ ossl_cmp_ctx_set1_recipNonce
                                     STACK_OF(X509) *extraCertsIn);
  int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
                                   const ASN1_OCTET_STRING *nonce);
+ int ossl_cmp_ctx_set0_next_recipient(OSSL_CMP_CTX *ctx, GENERAL_NAME *val);
+ int ossl_cmp_ctx_set1_recipient_from_sender(OSSL_CMP_CTX *ctx,
+                                             const OSSL_CMP_MSG *src);
 
 =head1 DESCRIPTION
 
@@ -51,6 +56,15 @@ ossl_cmp_ctx_set1_extraCertsIn() sets the extraCertsIn field of the context.
 The reference counts of those certificates handled successfully are increased.
 
 ossl_cmp_ctx_set1_recipNonce() sets the given recipient nonce in the context.
+
+ossl_cmp_ctx_set0_next_recipient() sets the next_recipient field of the context
+to B<val>, freeing any previously stored next_recipient.
+Ownership of B<val> is transferred to B<ctx> (unless B<val> is NULL).
+
+ossl_cmp_ctx_set1_recipient_from_sender() extracts the sender GENERAL_NAME
+from the header of the message B<src> (if present) and stores a copy of it in the
+next_recipient field of B<ctx> via ossl_cmp_ctx_set0_next_recipient().
+If B<src> or its header or sender field is NULL, no error is raised.
 
 =head1 NOTES
 

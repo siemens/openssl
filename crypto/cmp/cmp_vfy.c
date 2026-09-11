@@ -883,6 +883,9 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      */
     if (!ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce))
         return 0;
+    /* Likewise for sender/recipient field according to RFC 9483 section 3.1 */
+    if (!ossl_cmp_ctx_set1_recipient_from_sender(ctx, msg))
+        return 0;
 
     if (ossl_cmp_hdr_get_protection_nid(hdr) == NID_id_PasswordBasedMAC) {
         /*

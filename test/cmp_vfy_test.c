@@ -409,7 +409,8 @@ static int execute_msg_check_test(CMP_VFY_TEST_FIXTURE *fixture)
         return 1;
     if (OSSL_CMP_CTX_get_option(fixture->cmp_ctx, OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES))
         return 1;
-    return TEST_int_eq(0, ASN1_OCTET_STRING_cmp(ossl_cmp_hdr_get0_senderNonce(hdr), fixture->cmp_ctx->recipNonce))
+    return TEST_int_eq(0, GENERAL_NAME_cmp(hdr->sender, fixture->cmp_ctx->next_recipient))
+        && TEST_int_eq(0, ASN1_OCTET_STRING_cmp(ossl_cmp_hdr_get0_senderNonce(hdr), fixture->cmp_ctx->recipNonce))
         && TEST_int_eq(0,
             ASN1_OCTET_STRING_cmp(tid,
                 fixture->cmp_ctx->transactionID));

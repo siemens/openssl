@@ -83,7 +83,8 @@ struct ossl_cmp_ctx_st {
     int pbm_mac; /* NID of MAC algorithm, default: HMAC-SHA1 as per RFC 4210 */
 
     /* CMP message header and extra certificates */
-    X509_NAME *recipient; /* to set in recipient in pkiheader */
+    X509_NAME *recipient; /* to set recipient of first message in transaction */
+    GENERAL_NAME *next_recipient; /* taken from sender of previous message */
     EVP_MD *digest; /* digest used in MSG_SIG_ALG and POPO, default SHA256 */
     ASN1_OCTET_STRING *transactionID; /* the current transaction ID */
     ASN1_OCTET_STRING *senderNonce; /* last nonce sent */
@@ -883,6 +884,8 @@ ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name);
 int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
 int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
+int ossl_cmp_ctx_set1_recipient_from_sender(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *src);
+int ossl_cmp_ctx_set0_next_recipient(OSSL_CMP_CTX *ctx, GENERAL_NAME *val);
 int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
     const ASN1_OCTET_STRING *senderKID);

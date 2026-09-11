@@ -570,8 +570,12 @@ the subjectKeyIdentifier of the CMP signer certificate as far as present.
 If not present or when MAC-based protection is used
 the I<ref> value is taken as the fallback value for the senderKID.
 
-OSSL_CMP_CTX_set1_recipient() sets the recipient name that will be used in the
-PKIHeader of CMP request messages, i.e. the X509 name of the (CA) server.
+OSSL_CMP_CTX_set1_recipient() sets in I<ctx> the recipient name to use
+in the PKIHeader of the initial CMP request message of a transaction.
+This usually is the the X509 name of the (CA) server being addressed.
+For each subsequent message of a transaction,
+the sender of the previous message will be used instead.
+This implements the requirements of RFC 9483 section 3.1.
 
 The recipient field in the header of a CMP message is mandatory.
 If not given explicitly the recipient is determined in the following order:

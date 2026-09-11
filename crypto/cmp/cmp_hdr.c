@@ -101,6 +101,21 @@ int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm)
     return GENERAL_NAME_set1_X509_NAME(&hdr->recipient, nm);
 }
 
+int ossl_cmp_ctx_set1_recipient_from_sender(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *src)
+{
+    GENERAL_NAME *rcp;
+
+    if (!ossl_assert(ctx != NULL))
+        return 0;
+
+    if (src == NULL || src->header == NULL || src->header->sender == NULL)
+        return 1;
+
+    if ((rcp = GENERAL_NAME_dup(src->header->sender)) == NULL)
+        return 0;
+    return ossl_cmp_ctx_set0_next_recipient(ctx, rcp);
+}
+
 int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr)
 {
     if (!ossl_assert(hdr != NULL))
@@ -286,18 +301,20 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     /* determine recipient entry in PKIHeader */
-    if (ctx->recipient != NULL)
-        rcp = ctx->recipient;
-    else if (ctx->srvCert != NULL)
-        rcp = X509_get_subject_name(ctx->srvCert);
-    else if (ctx->issuer != NULL)
-        rcp = ctx->issuer;
-    else if (ctx->oldCert != NULL)
-        rcp = X509_get_issuer_name(ctx->oldCert);
-    else if (ctx->cert != NULL)
-        rcp = X509_get_issuer_name(ctx->cert);
-    if (!ossl_cmp_hdr_set1_recipient(hdr, rcp))
-        return 0;
+    if (ctx->recipient == NULL && ctx->next_recipient != NULL) {
+        /* due to linearity, no duplication is needed; just transfer ownership */
+        hdr->recipient = ctx->next_recipient;
+        ctx->next_recipient = NULL;
+    } else {
+        rcp = ctx->recipient != NULL ? ctx->recipient
+            : ctx->srvCert != NULL   ? X509_get_subject_name(ctx->srvCert)
+            : ctx->issuer != NULL    ? ctx->issuer
+            : ctx->oldCert != NULL   ? X509_get_issuer_name(ctx->oldCert)
+            : ctx->cert != NULL      ? X509_get_issuer_name(ctx->cert)
+                                     : NULL;
+        if (!ossl_cmp_hdr_set1_recipient(hdr, rcp))
+            return 0;
+    }
 
     /* set current time as message time */
     if (!ossl_cmp_hdr_update_messageTime(hdr))

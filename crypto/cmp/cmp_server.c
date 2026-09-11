@@ -621,6 +621,8 @@ static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
         ret = 0;
     if (!OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL))
         ret = 0;
+    if (!ossl_cmp_ctx_set0_next_recipient(srv_ctx->ctx, NULL))
+        ret = 0;
     return ret;
 }
 
@@ -653,11 +655,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
      * Some things need to be done already before validating the message in
      * order to be able to send an error message as far as needed and possible.
      */
-    if (hdr->sender->type != GEN_DIRNAME) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
-        goto err;
-    }
-    if (!OSSL_CMP_CTX_set1_recipient(ctx, hdr->sender->d.directoryName))
+    if (!ossl_cmp_ctx_set1_recipient_from_sender(ctx, req))
         goto err;
 
     if (assuming_new_transaction(ctx, req)) {
