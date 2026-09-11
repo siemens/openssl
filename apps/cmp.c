@@ -1678,10 +1678,13 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx)
         if (opt_cert != NULL || opt_key != NULL)
             CMP_warn("-cert and -key not used for protection since -secret is given");
     }
-    if (opt_ref != NULL
-        && !OSSL_CMP_CTX_set1_referenceValue(ctx, (unsigned char *)opt_ref,
-            (int)strlen(opt_ref)))
-        return 0;
+    if (opt_ref != NULL) {
+        if (opt_secret == NULL)
+            CMP_warn("Using the -ref option without -secret makes little sense");
+        if (!OSSL_CMP_CTX_set1_referenceValue(ctx, (unsigned char *)opt_ref,
+                (int)strlen(opt_ref)))
+            return 0;
+    }
 
     if (opt_key != NULL) {
         EVP_PKEY *pkey = load_key_pwd(opt_key, opt_keyform, opt_keypass,
